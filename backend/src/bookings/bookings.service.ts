@@ -10,6 +10,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Queue } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
+import { PaymentsService } from '../payments/payments.service';
 import {
   Booking,
   BookingStatus,
@@ -20,9 +21,9 @@ import {
 import { RequestUser } from '../auth/interfaces/jwt-payload.interface';
 import { CancelBookingDto } from './dto/cancel-booking.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { BOOKING_TTL_JOB, BOOKING_TTL_QUEUE } from './bookings.constants';
 
-export const BOOKING_TTL_QUEUE = 'booking-ttl';
-export const BOOKING_TTL_JOB = 'cancel-expired-booking';
+export { BOOKING_TTL_QUEUE, BOOKING_TTL_JOB };
 
 const DEPOSIT_RATIO = 0.3;
 const HOUR_MS = 60 * 60 * 1000;
@@ -53,6 +54,7 @@ export class BookingsService {
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     @InjectQueue(BOOKING_TTL_QUEUE) private readonly ttlQueue: Queue,
+    private readonly paymentsService: PaymentsService,
   ) {}
 
   /**
@@ -317,6 +319,20 @@ export class BookingsService {
       where: { id },
       data: { status: BookingStatus.cancelled },
     });
+
+    // Hoàn cọc tự động (module payments) — lỗi ở đây không nên làm hỏng response
+    // huỷ booking (booking đã huỷ thành công), chỉ log để staff xử lý tay nếu cần.
+    try {
+      await this.paymentsService.refundForBooking(
+        id,
+        refundPercentage,
+        refundAmount.toFixed(2),
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Không xử lý được hoàn cọc tự động cho booking ${id}: ${(error as Error).message}`,
+      );
+    }
 
     return {
       booking: updated,

@@ -129,6 +129,8 @@ model Payment {
 
   booking Booking @relation(fields: [bookingId], references: [id])
 
+  @@index([bookingId], map: "idx_payments_booking_id")
+  @@index([transactionId], map: "idx_payments_transaction_id")
   @@map("payments")
 }
 
@@ -143,6 +145,7 @@ model Maintenance {
   device   Device @relation(fields: [deviceId], references: [id])
   reporter User   @relation("ReportedBy", fields: [reportedBy], references: [id])
 
+  @@index([deviceId, status], map: "idx_maintenance_device_status")
   @@map("maintenance")
 }
 

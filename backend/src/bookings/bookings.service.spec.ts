@@ -29,6 +29,7 @@ describe('BookingsService', () => {
   };
   let configService: { get: jest.Mock };
   let ttlQueue: { add: jest.Mock; getJob: jest.Mock };
+  let paymentsService: { refundForBooking: jest.Mock };
 
   const deviceId = 'device-1';
   const customer: RequestUser = {
@@ -93,11 +94,15 @@ describe('BookingsService', () => {
       add: jest.fn().mockResolvedValue(undefined),
       getJob: jest.fn().mockResolvedValue(null),
     };
+    paymentsService = {
+      refundForBooking: jest.fn().mockResolvedValue(undefined),
+    };
 
     service = new BookingsService(
       prisma as unknown as PrismaService,
       configService as any,
       ttlQueue as any,
+      paymentsService as any,
     );
   });
 
