@@ -131,3 +131,16 @@
     @apply font-sans;
   }
 }
+
+@layer utilities {
+  /* Lưới "blueprint" mờ dùng cho nền Hero/CTA — fade dần ra mép bằng mask
+     radial để không cắt cứng, giống hiệu ứng nền của Linear/Vercel. */
+  .hero-grid {
+    background-image:
+      linear-gradient(to right, oklch(1 0 0 / 6%) 1px, transparent 1px),
+      linear-gradient(to bottom, oklch(1 0 0 / 6%) 1px, transparent 1px);
+    background-size: 44px 44px;
+    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black, transparent);
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black, transparent);
+  }
+}

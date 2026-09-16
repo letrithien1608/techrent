@@ -87,11 +87,16 @@ export function Header() {
             </DropdownMenu>
           ) : (
             <>
-              <Button variant="ghost" size="sm" render={<Link href="/login" />}>
+              <Button
+                variant="ghost"
+                size="sm"
+                nativeButton={false}
+                render={<Link href="/login" />}
+              >
                 <UserIcon />
                 Đăng nhập
               </Button>
-              <Button size="sm" render={<Link href="/register" />}>
+              <Button size="sm" nativeButton={false} render={<Link href="/register" />}>
                 Đăng ký
               </Button>
             </>

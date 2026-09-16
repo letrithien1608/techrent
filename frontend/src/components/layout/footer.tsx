@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 export function Footer() {
   const year = new Date().getFullYear();
 
@@ -13,11 +11,6 @@ export function Footer() {
           Tech<span className="text-primary">Rent</span>
         </div>
         <p>© {year} TechRent — Nền tảng cho thuê thiết bị công nghệ.</p>
-        <div className="flex items-center gap-4">
-          <Link href="/" className="transition-colors hover:text-foreground">
-            Trang chủ
-          </Link>
-        </div>
       </div>
     </footer>
   );
