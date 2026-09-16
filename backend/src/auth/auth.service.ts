@@ -1,7 +1,10 @@
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -9,36 +12,36 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import type { StringValue } from 'ms';
 import { Role, User } from '../generated/prisma/client';
+import { MailService } from '../mail/mail.service';
 import { RedisService } from '../redis/redis.service';
-import { UsersService } from '../users/users.service';
+import { SafeUser, UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import { JwtPayload } from './interfaces/jwt-payload.interface';
+import {
+  EmailVerificationPayload,
+  JwtPayload,
+} from './interfaces/jwt-payload.interface';
 
 const PASSWORD_SALT_ROUNDS = 10;
 const INVALID_CREDENTIALS_MESSAGE = 'Email hoặc mật khẩu không đúng';
+const INVALID_VERIFICATION_TOKEN_MESSAGE =
+  'Token xác thực email không hợp lệ hoặc đã hết hạn';
 
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
 }
 
-export interface SafeUser {
-  id: string;
-  name: string;
-  email: string;
-  role: Role;
-  phone: string | null;
-  createdAt: Date;
-}
-
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly redisService: RedisService,
+    private readonly mailService: MailService,
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthTokens & { user: SafeUser }> {
@@ -56,8 +59,10 @@ export class AuthService {
       role: Role.customer,
     });
 
+    await this.sendVerificationEmail(user);
+
     const tokens = await this.issueTokens(user);
-    return { ...tokens, user: this.sanitizeUser(user) };
+    return { ...tokens, user: this.usersService.sanitize(user) };
   }
 
   async login(dto: LoginDto): Promise<AuthTokens & { user: SafeUser }> {
@@ -75,7 +80,7 @@ export class AuthService {
     }
 
     const tokens = await this.issueTokens(user);
-    return { ...tokens, user: this.sanitizeUser(user) };
+    return { ...tokens, user: this.usersService.sanitize(user) };
   }
 
   async refreshTokens(refreshToken: string): Promise<AuthTokens> {
@@ -113,6 +118,58 @@ export class AuthService {
   async logout(userId: string, accessToken: string): Promise<void> {
     await this.blacklistAccessToken(accessToken);
     await this.usersService.updateRefreshTokenHash(userId, null);
+  }
+
+  async verifyEmail(token: string): Promise<void> {
+    let payload: EmailVerificationPayload;
+    try {
+      payload = await this.jwtService.verifyAsync<EmailVerificationPayload>(
+        token,
+        {
+          secret: this.configService.get<string>('EMAIL_VERIFICATION_SECRET'),
+        },
+      );
+    } catch {
+      throw new BadRequestException(INVALID_VERIFICATION_TOKEN_MESSAGE);
+    }
+
+    if (payload.purpose !== 'email-verification') {
+      throw new BadRequestException(INVALID_VERIFICATION_TOKEN_MESSAGE);
+    }
+
+    const user = await this.usersService.findById(payload.sub);
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy người dùng');
+    }
+
+    if (!user.emailVerifiedAt) {
+      await this.usersService.markEmailVerified(user.id);
+    }
+  }
+
+  private async sendVerificationEmail(user: User): Promise<void> {
+    const token = await this.jwtService.signAsync(
+      {
+        sub: user.id,
+        purpose: 'email-verification',
+      } satisfies EmailVerificationPayload,
+      {
+        secret: this.configService.get<string>('EMAIL_VERIFICATION_SECRET'),
+        expiresIn: this.configService.get<string>(
+          'EMAIL_VERIFICATION_EXPIRES_IN',
+        ) as StringValue,
+      },
+    );
+
+    const apiBaseUrl = `http://localhost:${this.configService.get<string>('PORT') ?? '3001'}`;
+    const verificationUrl = `${apiBaseUrl}/auth/verify-email?token=${token}`;
+
+    this.logger.log(`Gửi email xác thực cho ${user.email}`);
+    await this.mailService.sendVerificationEmail(
+      user.email,
+      user.name,
+      verificationUrl,
+    );
   }
 
   private async blacklistAccessToken(accessToken: string): Promise<void> {
@@ -171,16 +228,5 @@ export class AuthService {
     return (
       tokenHash.length === stored.length && timingSafeEqual(tokenHash, stored)
     );
-  }
-
-  private sanitizeUser(user: User): SafeUser {
-    return {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      phone: user.phone,
-      createdAt: user.createdAt,
-    };
   }
 }

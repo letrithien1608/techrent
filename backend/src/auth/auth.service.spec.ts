@@ -1,5 +1,10 @@
 import { createHash } from 'node:crypto';
-import { ConflictException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { Role, User } from '../generated/prisma/client';
@@ -9,8 +14,11 @@ describe('AuthService', () => {
   let usersService: {
     findByEmail: jest.Mock;
     findById: jest.Mock;
+    findByIdOrThrow: jest.Mock;
     create: jest.Mock;
     updateRefreshTokenHash: jest.Mock;
+    markEmailVerified: jest.Mock;
+    sanitize: jest.Mock;
   };
   let jwtService: {
     signAsync: jest.Mock;
@@ -22,6 +30,7 @@ describe('AuthService', () => {
     blacklistToken: jest.Mock;
     isTokenBlacklisted: jest.Mock;
   };
+  let mailService: { sendVerificationEmail: jest.Mock };
 
   const baseUser: User = {
     id: 'user-1',
@@ -32,6 +41,7 @@ describe('AuthService', () => {
     role: Role.customer,
     phone: null,
     cccdEncrypted: null,
+    emailVerifiedAt: null,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
   };
 
@@ -40,14 +50,28 @@ describe('AuthService', () => {
     JWT_ACCESS_EXPIRES_IN: '15m',
     JWT_REFRESH_SECRET: 'refresh-secret',
     JWT_REFRESH_EXPIRES_IN: '7d',
+    EMAIL_VERIFICATION_SECRET: 'email-verification-secret',
+    EMAIL_VERIFICATION_EXPIRES_IN: '24h',
+    PORT: '3001',
   };
 
   beforeEach(() => {
     usersService = {
       findByEmail: jest.fn(),
       findById: jest.fn(),
+      findByIdOrThrow: jest.fn(),
       create: jest.fn(),
       updateRefreshTokenHash: jest.fn(),
+      markEmailVerified: jest.fn(),
+      sanitize: jest.fn((user: User) => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        phone: user.phone,
+        emailVerifiedAt: user.emailVerifiedAt,
+        createdAt: user.createdAt,
+      })),
     };
     jwtService = {
       signAsync: jest.fn(),
@@ -56,22 +80,27 @@ describe('AuthService', () => {
     };
     configService = { get: jest.fn((key: string) => configValues[key]) };
     redisService = { blacklistToken: jest.fn(), isTokenBlacklisted: jest.fn() };
+    mailService = {
+      sendVerificationEmail: jest.fn().mockResolvedValue(undefined),
+    };
 
     service = new AuthService(
       usersService as any,
       jwtService as any,
       configService as any,
       redisService as any,
+      mailService as any,
     );
 
-    // Mỗi lần issueTokens() gọi 2 lần signAsync (access rồi refresh) trong 1 Promise.all
-    jwtService.signAsync.mockImplementation((_payload: any, opts: any) =>
-      Promise.resolve(
-        opts.secret === configValues.JWT_ACCESS_SECRET
-          ? 'access-token'
-          : 'refresh-token',
-      ),
-    );
+    // Mỗi lần issueTokens() gọi 2 lần signAsync (access rồi refresh) trong 1 Promise.all;
+    // sendVerificationEmail (trong register) gọi thêm 1 lần signAsync với secret verification
+    jwtService.signAsync.mockImplementation((_payload: any, opts: any) => {
+      if (opts.secret === configValues.JWT_ACCESS_SECRET)
+        return Promise.resolve('access-token');
+      if (opts.secret === configValues.JWT_REFRESH_SECRET)
+        return Promise.resolve('refresh-token');
+      return Promise.resolve('email-verification-token');
+    });
   });
 
   describe('register', () => {
@@ -122,6 +151,26 @@ describe('AuthService', () => {
       expect(usersService.updateRefreshTokenHash).toHaveBeenCalledWith(
         baseUser.id,
         expect.not.stringMatching('refresh-token'),
+      );
+    });
+
+    it('gửi email xác thực chứa link kèm token sau khi tạo user', async () => {
+      usersService.findByEmail.mockResolvedValue(null);
+      usersService.create.mockResolvedValue({
+        ...baseUser,
+        email: 'new@example.com',
+      });
+
+      await service.register({
+        name: 'Nguyễn Văn A',
+        email: 'new@example.com',
+        password: 'Str0ngP@ssword',
+      });
+
+      expect(mailService.sendVerificationEmail).toHaveBeenCalledWith(
+        'new@example.com',
+        baseUser.name,
+        expect.stringContaining('email-verification-token'),
       );
     });
   });
@@ -258,6 +307,70 @@ describe('AuthService', () => {
         baseUser.id,
         null,
       );
+    });
+  });
+
+  describe('verifyEmail', () => {
+    it('ném BadRequestException nếu token sai chữ ký / hết hạn', async () => {
+      jwtService.verifyAsync.mockRejectedValue(new Error('invalid signature'));
+
+      await expect(service.verifyEmail('bad-token')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+    });
+
+    it('ném BadRequestException nếu token không có purpose "email-verification" (chống dùng nhầm access token)', async () => {
+      jwtService.verifyAsync.mockResolvedValue({
+        sub: baseUser.id,
+        purpose: 'something-else',
+      });
+
+      await expect(service.verifyEmail('some-token')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(usersService.markEmailVerified).not.toHaveBeenCalled();
+    });
+
+    it('ném NotFoundException nếu không tìm thấy user', async () => {
+      jwtService.verifyAsync.mockResolvedValue({
+        sub: 'ghost-id',
+        purpose: 'email-verification',
+      });
+      usersService.findById.mockResolvedValue(null);
+
+      await expect(service.verifyEmail('some-token')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+
+    it('đánh dấu emailVerifiedAt khi token hợp lệ và email chưa xác thực', async () => {
+      jwtService.verifyAsync.mockResolvedValue({
+        sub: baseUser.id,
+        purpose: 'email-verification',
+      });
+      usersService.findById.mockResolvedValue({
+        ...baseUser,
+        emailVerifiedAt: null,
+      });
+
+      await service.verifyEmail('valid-token');
+
+      expect(usersService.markEmailVerified).toHaveBeenCalledWith(baseUser.id);
+    });
+
+    it('không gọi lại markEmailVerified nếu email đã xác thực từ trước (idempotent)', async () => {
+      jwtService.verifyAsync.mockResolvedValue({
+        sub: baseUser.id,
+        purpose: 'email-verification',
+      });
+      usersService.findById.mockResolvedValue({
+        ...baseUser,
+        emailVerifiedAt: new Date('2026-01-02T00:00:00.000Z'),
+      });
+
+      await service.verifyEmail('valid-token');
+
+      expect(usersService.markEmailVerified).not.toHaveBeenCalled();
     });
   });
 });

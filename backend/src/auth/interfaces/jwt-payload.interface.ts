@@ -13,3 +13,13 @@ export interface RequestUser {
   email: string;
   role: Role;
 }
+
+/**
+ * Payload riêng cho token xác thực email — ký bằng EMAIL_VERIFICATION_SECRET
+ * (khác secret access/refresh) và có `purpose` để không thể dùng nhầm access
+ * token vào chỗ này hay ngược lại.
+ */
+export interface EmailVerificationPayload {
+  sub: string;
+  purpose: 'email-verification';
+}

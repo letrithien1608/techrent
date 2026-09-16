@@ -9,6 +9,7 @@ describe('AuthController', () => {
     login: jest.Mock;
     refreshTokens: jest.Mock;
     logout: jest.Mock;
+    verifyEmail: jest.Mock;
   };
 
   beforeEach(() => {
@@ -17,6 +18,7 @@ describe('AuthController', () => {
       login: jest.fn(),
       refreshTokens: jest.fn(),
       logout: jest.fn(),
+      verifyEmail: jest.fn(),
     };
     controller = new AuthController(authService as unknown as AuthService);
   });
@@ -75,5 +77,14 @@ describe('AuthController', () => {
     const user = { userId: 'u1', email: 'a@example.com', role: Role.customer };
 
     expect(controller.profile(user)).toBe(user);
+  });
+
+  it('verifyEmail() gọi AuthService.verifyEmail với token trong query string', async () => {
+    authService.verifyEmail.mockResolvedValue(undefined);
+
+    const result = await controller.verifyEmail('some-token');
+
+    expect(authService.verifyEmail).toHaveBeenCalledWith('some-token');
+    expect(result).toEqual({ message: 'Xác thực email thành công' });
   });
 });
