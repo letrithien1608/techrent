@@ -3,8 +3,11 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { CategoriesModule } from './categories/categories.module';
+import { DevicesModule } from './devices/devices.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
+import { UploadModule } from './upload/upload.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -17,6 +20,9 @@ import { UsersModule } from './users/users.module';
     RedisModule,
     UsersModule,
     AuthModule,
+    UploadModule,
+    CategoriesModule,
+    DevicesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
