@@ -20,6 +20,13 @@ export class MailService {
         user: this.configService.get<string>('SMTP_USER'),
         pass: this.configService.get<string>('SMTP_PASSWORD'),
       },
+      // Nodemailer mặc định KHÔNG set timeout (socketTimeout mặc định ~10 phút) —
+      // nếu SMTP treo (VD Gmail rate-limit), AuthService.register() await lời gọi
+      // này nên CẢ REQUEST /auth/register sẽ treo theo. Đặt timeout ngắn để lỗi
+      // nhanh, rơi vào catch bên dưới, không làm treo luồng đăng ký.
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 15_000,
     });
   }
 
