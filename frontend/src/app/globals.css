@@ -55,19 +55,19 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: #4f46e5;
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: #06b6d4;
+  --primary-foreground: oklch(0.145 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.94 0.03 275);
-  --accent-foreground: #4f46e5;
+  --accent: oklch(0.94 0.03 200);
+  --accent-foreground: #0e7490;
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: #4f46e5;
-  --chart-1: #4f46e5;
+  --ring: #06b6d4;
+  --chart-1: #06b6d4;
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
@@ -75,46 +75,49 @@
   --radius: 0.75rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: #4f46e5;
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.94 0.03 275);
-  --sidebar-accent-foreground: #4f46e5;
+  --sidebar-primary: #06b6d4;
+  --sidebar-primary-foreground: oklch(0.145 0 0);
+  --sidebar-accent: oklch(0.94 0.03 200);
+  --sidebar-accent-foreground: #0e7490;
   --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: #4f46e5;
+  --sidebar-ring: #06b6d4;
 }
 
+/* Nền tối (dark mode) là giao diện MẶC ĐỊNH của TechRent — xem mục 3.1 Roadmap
+   (đối tượng người dùng chính: gamer/dân công nghệ). Khối :root ở trên chỉ là
+   fallback cho trường hợp hiếm khi người dùng tự chuyển sang nền sáng. */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: #6366f1;
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
+  --background: oklch(0.13 0.01 240);
+  --foreground: oklch(0.96 0 0);
+  --card: oklch(0.19 0.015 240);
+  --card-foreground: oklch(0.96 0 0);
+  --popover: oklch(0.19 0.015 240);
+  --popover-foreground: oklch(0.96 0 0);
+  --primary: #22d3ee;
+  --primary-foreground: oklch(0.145 0 0);
+  --secondary: oklch(0.25 0.015 240);
+  --secondary-foreground: oklch(0.96 0 0);
+  --muted: oklch(0.25 0.015 240);
   --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.3 0.05 275);
-  --accent-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.28 0.06 210);
+  --accent-foreground: #67e8f9;
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: #6366f1;
-  --chart-1: #6366f1;
+  --ring: #22d3ee;
+  --chart-1: #22d3ee;
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: #6366f1;
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.3 0.05 275);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar: oklch(0.16 0.012 240);
+  --sidebar-foreground: oklch(0.96 0 0);
+  --sidebar-primary: #22d3ee;
+  --sidebar-primary-foreground: oklch(0.145 0 0);
+  --sidebar-accent: oklch(0.28 0.06 210);
+  --sidebar-accent-foreground: #67e8f9;
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: #6366f1;
+  --sidebar-ring: #22d3ee;
 }
 
 @layer base {
