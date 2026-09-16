@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
+import { useMotionValueEvent, useScroll } from "framer-motion";
 import { LogOut, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "cn";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +34,12 @@ function initialsOf(name: string): string {
 export function Header() {
   const router = useRouter();
   const { user, hasHydrated, clearAuth } = useAuthStore();
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  const { scrollY } = useScroll();
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    setIsScrolled(latest > 8);
+  });
 
   const logoutMutation = useMutation({
     mutationFn: logoutRequest,
@@ -42,20 +51,24 @@ export function Header() {
   });
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur">
+    <header
+      className={cn(
+        "sticky top-0 z-40 border-b transition-all duration-300",
+        isScrolled
+          ? "border-border/60 bg-background/85 shadow-sm shadow-black/5 backdrop-blur-md"
+          : "border-transparent bg-background/40 backdrop-blur-sm",
+      )}
+    >
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-2 font-heading text-lg font-semibold tracking-tight">
+        <Link
+          href="/"
+          className="flex items-center gap-2 font-heading text-lg font-semibold tracking-tight"
+        >
           <span className="inline-flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             T
           </span>
           Tech<span className="text-primary">Rent</span>
         </Link>
-
-        <nav className="hidden items-center gap-6 text-sm font-medium text-muted-foreground sm:flex">
-          <Link href="/" className="transition-colors hover:text-foreground">
-            Trang chủ
-          </Link>
-        </nav>
 
         <div className="flex items-center gap-2">
           {!hasHydrated ? null : user ? (
