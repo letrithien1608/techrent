@@ -53,6 +53,9 @@ export function DeviceCard({ device }: { device: Device }) {
           </div>
         )}
 
+        {/* Overlay tối nhẹ đáy ảnh — giữ badge/chữ luôn đọc rõ dù ảnh sáng màu */}
+        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/40 via-black/0 to-transparent" />
+
         <span className="absolute left-3 top-3 rounded-full bg-black/40 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
           {device.category.name}
         </span>
@@ -67,18 +70,18 @@ export function DeviceCard({ device }: { device: Device }) {
       </div>
 
       <div className="relative p-4">
-        <h3 className="truncate font-heading font-semibold">{device.name}</h3>
-        <p className="mt-0.5 truncate text-sm text-muted-foreground">
+        <h3 className="truncate font-heading text-base font-bold">{device.name}</h3>
+        <p className="mt-0.5 truncate text-xs text-muted-foreground">
           {device.category.name}
         </p>
 
         <div className="mt-3 flex items-baseline gap-2">
-          <span className="font-heading text-lg font-bold text-foreground">
+          <span className="bg-gradient-to-r from-primary to-cyan-300 bg-clip-text font-heading text-xl font-extrabold text-transparent">
             {formatVnd(device.pricePerDay)}
           </span>
           <span className="text-sm text-muted-foreground">/ngày</span>
         </div>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground/70">
           hoặc {formatVnd(device.pricePerHour)}/giờ
         </p>
       </div>

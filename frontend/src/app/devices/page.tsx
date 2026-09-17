@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { SiteBackground } from "@/components/home/site-background";
 import { DevicesExplorer } from "@/components/devices/devices-explorer";
-import { fetchCategories } from "@/lib/devices-api";
+import { DevicesPageHeader } from "@/components/devices/devices-page-header";
+import { fetchCategories, fetchDevices } from "@/lib/devices-api";
 
 export const metadata: Metadata = {
   title: "Thiết bị | TechRent",
@@ -8,18 +10,16 @@ export const metadata: Metadata = {
 };
 
 export default async function DevicesPage() {
-  const categories = await fetchCategories();
+  const [categories, { result }] = await Promise.all([
+    fetchCategories(),
+    fetchDevices({ limit: 1 }),
+  ]);
+  const totalDevices = result?.meta.total ?? 0;
 
   return (
-    <div className="flex flex-1 flex-col">
-      <div className="mx-auto w-full max-w-6xl px-4 pt-10 sm:px-6">
-        <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
-          Thiết bị
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          Tìm đúng thiết bị công nghệ bạn cần, đặt thuê chỉ trong vài phút.
-        </p>
-      </div>
+    <div className="relative flex flex-1 flex-col">
+      <SiteBackground />
+      <DevicesPageHeader totalDevices={totalDevices} />
       <DevicesExplorer categories={categories} />
     </div>
   );
