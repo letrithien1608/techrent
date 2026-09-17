@@ -292,6 +292,19 @@ describe('BookingsService', () => {
         service.findOneForUser(baseBooking.id, admin),
       ).resolves.toEqual(baseBooking);
     });
+
+    it('kèm thông tin thiết bị (device) trong kết quả truy vấn', async () => {
+      prisma.booking.findUnique.mockResolvedValue(baseBooking);
+
+      await service.findOneForUser(baseBooking.id, admin);
+
+      expect(prisma.booking.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: baseBooking.id },
+          include: expect.objectContaining({ device: expect.anything() }),
+        }),
+      );
+    });
   });
 
   describe('state machine (confirm/start/complete)', () => {

@@ -2,11 +2,22 @@
 
 import { cn } from "cn";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import axios from "axios";
+import { ChevronRight, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { StarRating } from "@/components/devices/star-rating";
+import {
+  BookingSchedulePicker,
+  type BookingSchedule,
+} from "@/components/devices/booking-schedule-picker";
+import { checkAvailability, createBooking } from "@/lib/bookings-api";
 import { DEVICE_STATUS_LABEL, formatVnd } from "@/lib/device-format";
+import { getErrorMessage } from "@/lib/get-error-message";
+import { useAuthStore } from "@/stores/auth-store";
 import type { Device } from "@/lib/devices-api";
 
 interface Props {
@@ -16,11 +27,61 @@ interface Props {
 }
 
 export function DeviceBookingPanel({ device, avgRating, reviewCount }: Props) {
+  const router = useRouter();
+  const { user, hasHydrated } = useAuthStore();
   const [priceMode, setPriceMode] = useState<"day" | "hour">("day");
+  const [schedule, setSchedule] = useState<BookingSchedule | null>(null);
   const isAvailable = device.status === "available";
   const status = DEVICE_STATUS_LABEL[device.status];
   const activePrice = priceMode === "day" ? device.pricePerDay : device.pricePerHour;
   const activeUnit = priceMode === "day" ? "/ngày" : "/giờ";
+
+  const bookMutation = useMutation({
+    mutationFn: async (value: BookingSchedule) => {
+      const startTime = value.startTime.toISOString();
+      const endTime = value.endTime.toISOString();
+      const available = await checkAvailability(device.id, startTime, endTime);
+      if (!available) {
+        throw new Error("SLOT_TAKEN");
+      }
+      return createBooking(device.id, startTime, endTime);
+    },
+    onSuccess: (booking) => {
+      toast.success("Đặt thuê thành công! Vui lòng thanh toán trong 5 phút.");
+      router.push(`/bookings/${booking.id}`);
+    },
+    onError: (error: unknown) => {
+      const isSlotTaken =
+        (error instanceof Error && error.message === "SLOT_TAKEN") ||
+        (axios.isAxiosError(error) && error.response?.status === 409);
+      if (isSlotTaken) {
+        toast.error(
+          "Thiết bị đã được đặt trong khung giờ này, vui lòng chọn thời gian khác",
+        );
+        return;
+      }
+      toast.error(getErrorMessage(error, "Không thể tạo đơn đặt thuê, vui lòng thử lại"));
+    },
+  });
+
+  function handleBookNow() {
+    if (!hasHydrated) return;
+    if (!user) {
+      router.push(`/login?redirect=${encodeURIComponent(`/devices/${device.id}`)}`);
+      return;
+    }
+    if (!schedule) {
+      toast.error("Vui lòng chọn thời gian thuê trước");
+      return;
+    }
+    bookMutation.mutate(schedule);
+  }
+
+  const ctaLabel = !isAvailable
+    ? "Hết hàng"
+    : bookMutation.isPending
+      ? "Đang xử lý..."
+      : "Đặt thuê ngay";
 
   return (
     <div className="lg:sticky lg:top-20 lg:self-start">
@@ -100,24 +161,20 @@ export function DeviceBookingPanel({ device, avgRating, reviewCount }: Props) {
           </span>
         </p>
 
-        {/* Placeholder chọn ngày/giờ — chưa submit thật, chỉ dựng UI trước */}
-        <div className="mt-5 grid grid-cols-2 gap-2">
-          <div className="rounded-lg border border-border/60 p-2.5">
-            <p className="text-xs text-muted-foreground">Bắt đầu</p>
-            <p className="text-sm font-medium">Chọn ngày, giờ</p>
+        {isAvailable && (
+          <div className="mt-5">
+            <BookingSchedulePicker value={schedule} onChange={setSchedule} />
           </div>
-          <div className="rounded-lg border border-border/60 p-2.5">
-            <p className="text-xs text-muted-foreground">Kết thúc</p>
-            <p className="text-sm font-medium">Chọn ngày, giờ</p>
-          </div>
-        </div>
+        )}
 
         <Button
           size="lg"
-          disabled={!isAvailable}
+          disabled={!isAvailable || bookMutation.isPending}
+          onClick={handleBookNow}
           className="mt-5 w-full shadow-lg shadow-primary/40 hover:shadow-primary/60"
         >
-          {isAvailable ? "Đặt thuê ngay" : "Hết hàng"}
+          {bookMutation.isPending && <Loader2 className="animate-spin" />}
+          {ctaLabel}
         </Button>
         {!isAvailable && (
           <p className="mt-2 text-center text-xs text-muted-foreground">
@@ -137,10 +194,12 @@ export function DeviceBookingPanel({ device, avgRating, reviewCount }: Props) {
           </p>
           <Button
             size="lg"
-            disabled={!isAvailable}
+            disabled={!isAvailable || bookMutation.isPending}
+            onClick={handleBookNow}
             className="shadow-lg shadow-primary/40"
           >
-            {isAvailable ? "Đặt thuê ngay" : "Hết hàng"}
+            {bookMutation.isPending && <Loader2 className="animate-spin" />}
+            {ctaLabel}
           </Button>
         </div>
       </div>

@@ -35,6 +35,20 @@ const ACTIVE_BOOKING_STATUSES: BookingStatus[] = [
   BookingStatus.ongoing,
 ];
 
+// Kèm thông tin thiết bị gọn (tên/ảnh) khi khách xem danh sách/chi tiết booking
+// của mình ở frontend — tránh phải gọi thêm N request GET /devices/:id riêng.
+const bookingWithDevice = {
+  include: {
+    device: {
+      select: { id: true, name: true, images: true, categoryId: true },
+    },
+  },
+} satisfies Prisma.BookingDefaultArgs;
+
+export type BookingWithDevice = Prisma.BookingGetPayload<
+  typeof bookingWithDevice
+>;
+
 export interface PaginatedResult<T> {
   data: T[];
   meta: { page: number; limit: number; total: number; totalPages: number };
@@ -183,7 +197,7 @@ export class BookingsService {
   async findAll(
     currentUser: RequestUser,
     filter: { page: number; limit: number; status?: BookingStatus },
-  ): Promise<PaginatedResult<Booking>> {
+  ): Promise<PaginatedResult<BookingWithDevice>> {
     const where: Prisma.BookingWhereInput = {
       ...(currentUser.role === Role.customer
         ? { userId: currentUser.userId }
@@ -197,6 +211,7 @@ export class BookingsService {
         skip: (filter.page - 1) * filter.limit,
         take: filter.limit,
         orderBy: { createdAt: 'desc' },
+        ...bookingWithDevice,
       }),
       this.prisma.booking.count({ where }),
     ]);
@@ -220,8 +235,23 @@ export class BookingsService {
     return booking;
   }
 
-  async findOneForUser(id: string, currentUser: RequestUser): Promise<Booking> {
-    const booking = await this.findByIdOrThrow(id);
+  /** Dùng cho `GET /bookings/:id` — kèm thông tin thiết bị gọn để frontend hiển thị. */
+  async findByIdWithDeviceOrThrow(id: string): Promise<BookingWithDevice> {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id },
+      ...bookingWithDevice,
+    });
+    if (!booking) {
+      throw new NotFoundException('Không tìm thấy booking');
+    }
+    return booking;
+  }
+
+  async findOneForUser(
+    id: string,
+    currentUser: RequestUser,
+  ): Promise<BookingWithDevice> {
+    const booking = await this.findByIdWithDeviceOrThrow(id);
     this.assertOwnerOrStaff(booking, currentUser);
     return booking;
   }

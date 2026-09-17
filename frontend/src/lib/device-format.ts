@@ -18,6 +18,17 @@ export function formatVnd(value: string | number): string {
   }).format(Number(value));
 }
 
+export function formatDateTimeVi(value: string | Date): string {
+  const date = typeof value === "string" ? new Date(value) : value;
+  return date.toLocaleString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 /** Tên field specs (camelCase/snake_case) -> nhãn tiếng Việt dễ đọc, xem prisma/seed.ts backend. */
 const SPEC_LABEL_MAP: Record<string, string> = {
   battery: "Pin",

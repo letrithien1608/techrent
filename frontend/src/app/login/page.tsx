@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
@@ -27,8 +27,18 @@ import {
 } from "@/lib/validation/auth-schemas";
 import { useAuthStore } from "@/stores/auth-store";
 
-export default function LoginPage() {
+/** Chỉ cho phép redirect nội bộ (bắt đầu bằng "/", không phải "//..." kiểu protocol-relative) — tránh open redirect. */
+function sanitizeRedirect(target: string | null): string {
+  if (!target || !target.startsWith("/") || target.startsWith("//")) {
+    return "/";
+  }
+  return target;
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = sanitizeRedirect(searchParams.get("redirect"));
   const { user, hasHydrated, setAuth } = useAuthStore();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -46,7 +56,7 @@ export default function LoginPage() {
     onSuccess: (data) => {
       setAuth(data);
       toast.success(`Chào mừng trở lại, ${data.user.name}!`);
-      router.push("/");
+      router.push(redirectTo);
     },
     onError: (error) => {
       setErrorMessage(
@@ -57,9 +67,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (hasHydrated && user) {
-      router.replace("/");
+      router.replace(redirectTo);
     }
-  }, [hasHydrated, user, router]);
+  }, [hasHydrated, user, router, redirectTo]);
 
   const onSubmit = (values: LoginFormValues) => {
     setErrorMessage(null);
@@ -138,5 +148,13 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }
