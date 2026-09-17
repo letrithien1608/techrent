@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { useMotionValueEvent, useScroll } from "framer-motion";
 import { LogOut, Ticket, User as UserIcon } from "lucide-react";
@@ -33,6 +33,7 @@ function initialsOf(name: string): string {
 
 export function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, hasHydrated, clearAuth } = useAuthStore();
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -49,6 +50,13 @@ export function Header() {
       router.push("/");
     },
   });
+
+  // Trang Admin có chrome riêng (sidebar + topbar) — không cần Header khách hàng.
+  // Đặt SAU mọi hook (useMutation ở trên) để không phá vỡ quy tắc "hook cùng thứ
+  // tự mỗi lần render" — early return trước khi gọi hook sẽ lỗi rules-of-hooks.
+  if (pathname?.startsWith("/admin")) {
+    return null;
+  }
 
   return (
     <header

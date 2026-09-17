@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Globe, Mail, MessageCircle } from "lucide-react";
 
 const PRODUCT_LINKS = [
@@ -20,7 +23,12 @@ const SUPPORT_LINKS = [
 const SOCIAL_ICONS = [Globe, Mail, MessageCircle];
 
 export function Footer() {
+  const pathname = usePathname();
   const year = new Date().getFullYear();
+
+  if (pathname?.startsWith("/admin")) {
+    return null;
+  }
 
   return (
     <footer className="relative border-t border-border/60 bg-background">

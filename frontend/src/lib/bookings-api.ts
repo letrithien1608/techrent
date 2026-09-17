@@ -88,3 +88,20 @@ export async function cancelBooking(
   );
   return data;
 }
+
+// ---- Staff/admin: chuyển trạng thái theo state machine (mục 3.6/Tuần 12) ----
+
+export async function confirmBooking(id: string): Promise<Booking> {
+  const { data } = await api.patch<Booking>(`/bookings/${id}/confirm`);
+  return data;
+}
+
+export async function startBooking(id: string): Promise<Booking> {
+  const { data } = await api.patch<Booking>(`/bookings/${id}/start`);
+  return data;
+}
+
+export async function completeBooking(id: string): Promise<Booking> {
+  const { data } = await api.patch<Booking>(`/bookings/${id}/complete`);
+  return data;
+}

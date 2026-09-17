@@ -1,0 +1,354 @@
+"use client";
+
+import Link from "next/link";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { Boxes, DollarSign, Package, WifiOff, Wrench } from "lucide-react";
+import { cn } from "cn";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { fetchBookings, type Booking } from "@/lib/bookings-api";
+import { fetchDevices } from "@/lib/devices-api";
+import { BOOKING_STATUS_LABEL } from "@/lib/booking-format";
+import { formatDateTimeVi, formatVnd } from "@/lib/device-format";
+
+// Booking đã qua bước thanh toán cọc (pending chưa trả tiền, cancelled không tính) —
+// dùng làm ước tính "doanh thu" vì backend chưa có endpoint tổng hợp payments riêng
+// (xem ghi chú CLAUDE.md mục 1).
+const REVENUE_STATUSES = new Set(["confirmed", "ongoing", "completed"]);
+const CHART_DAYS = 14;
+// Giới hạn tối đa 1 lần gọi API cho phép (ràng buộc `@Max(100)` ở backend) —
+// đủ cho quy mô dữ liệu demo hiện tại (25 thiết bị), xem giới hạn đã ghi ở CLAUDE.md.
+const STATS_FETCH_LIMIT = 100;
+
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  tone,
+}: {
+  icon: typeof DollarSign;
+  label: string;
+  value: string;
+  tone: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card/50 p-5">
+      <div
+        className={cn(
+          "inline-flex size-9 items-center justify-center rounded-lg",
+          tone,
+        )}
+      >
+        <Icon className="size-4.5" />
+      </div>
+      <p className="mt-3 font-heading text-2xl font-bold tracking-tight">
+        {value}
+      </p>
+      <p className="text-sm text-muted-foreground">{label}</p>
+    </div>
+  );
+}
+
+function dayKey(value: string | Date): string {
+  const date = typeof value === "string" ? new Date(value) : value;
+  return date.toISOString().slice(0, 10);
+}
+
+function formatChartLabel(key: string): string {
+  const date = new Date(key);
+  return date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
+}
+
+function buildRevenueChart(bookings: Booking[]) {
+  const buckets = new Map<string, number>();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  for (let i = CHART_DAYS - 1; i >= 0; i -= 1) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    buckets.set(dayKey(date), 0);
+  }
+
+  for (const booking of bookings) {
+    if (!REVENUE_STATUSES.has(booking.status)) continue;
+    const key = dayKey(booking.createdAt);
+    if (!buckets.has(key)) continue;
+    buckets.set(key, (buckets.get(key) ?? 0) + Number(booking.depositAmount));
+  }
+
+  return Array.from(buckets.entries()).map(([key, revenue]) => ({
+    date: formatChartLabel(key),
+    revenue,
+  }));
+}
+
+function buildTopDevices(bookings: Booking[]) {
+  const counts = new Map<string, { name: string; count: number }>();
+  for (const booking of bookings) {
+    if (!booking.device) continue;
+    const current = counts.get(booking.deviceId);
+    if (current) {
+      current.count += 1;
+    } else {
+      counts.set(booking.deviceId, { name: booking.device.name, count: 1 });
+    }
+  }
+  return Array.from(counts.values())
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+}
+
+export default function AdminDashboardPage() {
+  const devicesQuery = useQuery({
+    queryKey: ["admin", "devices", "stats"],
+    queryFn: () => fetchDevices({ limit: STATS_FETCH_LIMIT }),
+  });
+
+  const bookingsQuery = useQuery({
+    queryKey: ["admin", "bookings", "stats"],
+    queryFn: () => fetchBookings({ limit: STATS_FETCH_LIMIT }),
+  });
+
+  const isPending = devicesQuery.isPending || bookingsQuery.isPending;
+  const isError =
+    devicesQuery.isError ||
+    bookingsQuery.isError ||
+    devicesQuery.data?.hasError;
+
+  const devicesData = devicesQuery.data?.result?.data;
+  const bookingsData = bookingsQuery.data?.data;
+  const devices = useMemo(() => devicesData ?? [], [devicesData]);
+  const bookings = useMemo(() => bookingsData ?? [], [bookingsData]);
+
+  const stats = useMemo(() => {
+    const revenue = bookings
+      .filter((b) => REVENUE_STATUSES.has(b.status))
+      .reduce((sum, b) => sum + Number(b.depositAmount), 0);
+    const processing = bookings.filter(
+      (b) => b.status === "pending" || b.status === "confirmed",
+    ).length;
+    const rented = devices.filter((d) => d.status === "rented").length;
+    const maintenance = devices.filter((d) => d.status === "maintenance").length;
+    return { revenue, processing, rented, maintenance };
+  }, [bookings, devices]);
+
+  const chartData = useMemo(() => buildRevenueChart(bookings), [bookings]);
+  const topDevices = useMemo(() => buildTopDevices(bookings), [bookings]);
+  const recentBookings = useMemo(
+    () =>
+      [...bookings]
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        )
+        .slice(0, 5),
+    [bookings],
+  );
+
+  if (isPending) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-28 rounded-2xl" />
+          ))}
+        </div>
+        <Skeleton className="h-72 rounded-2xl" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border/60 py-20 text-center">
+        <WifiOff className="size-10 text-muted-foreground/50" />
+        <p className="text-muted-foreground">
+          Không thể tải dữ liệu tổng quan lúc này.
+        </p>
+        <Button
+          onClick={() => {
+            devicesQuery.refetch();
+            bookingsQuery.refetch();
+          }}
+        >
+          Thử lại
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          icon={DollarSign}
+          label="Tổng doanh thu (ước tính)"
+          value={formatVnd(stats.revenue)}
+          tone="bg-emerald-500/15 text-emerald-400"
+        />
+        <StatCard
+          icon={Boxes}
+          label="Đơn đang xử lý"
+          value={String(stats.processing)}
+          tone="bg-amber-500/15 text-amber-400"
+        />
+        <StatCard
+          icon={Package}
+          label="Thiết bị đang cho thuê"
+          value={String(stats.rented)}
+          tone="bg-cyan-500/15 text-cyan-400"
+        />
+        <StatCard
+          icon={Wrench}
+          label="Thiết bị cần bảo trì"
+          value={String(stats.maintenance)}
+          tone="bg-destructive/15 text-destructive"
+        />
+      </div>
+
+      <div className="rounded-2xl border border-border/60 bg-card/50 p-5">
+        <h2 className="font-heading text-base font-semibold">
+          Doanh thu {CHART_DAYS} ngày gần nhất
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Tổng hợp từ tiền cọc các đơn đã xác nhận/đang thuê/hoàn tất.
+        </p>
+        <div className="mt-4 h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis
+                dataKey="date"
+                stroke="var(--muted-foreground)"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis
+                stroke="var(--muted-foreground)"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+                width={40}
+              />
+              <Tooltip
+                formatter={(value) => formatVnd(Number(value))}
+                contentStyle={{
+                  background: "var(--popover)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 8,
+                  color: "var(--popover-foreground)",
+                  fontSize: 12,
+                }}
+              />
+              <Bar dataKey="revenue" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="rounded-2xl border border-border/60 bg-card/50 p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="font-heading text-base font-semibold">
+              Đơn thuê gần đây
+            </h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              nativeButton={false}
+              render={<Link href="/admin/bookings" />}
+            >
+              Xem tất cả
+            </Button>
+          </div>
+          {recentBookings.length === 0 ? (
+            <p className="mt-4 text-sm text-muted-foreground">
+              Chưa có đơn thuê nào.
+            </p>
+          ) : (
+            <Table className="mt-3">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Thiết bị</TableHead>
+                  <TableHead>Trạng thái</TableHead>
+                  <TableHead className="text-right">Giá trị</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentBookings.map((booking) => {
+                  const status = BOOKING_STATUS_LABEL[booking.status];
+                  return (
+                    <TableRow key={booking.id}>
+                      <TableCell>
+                        <div className="max-w-[160px] truncate font-medium">
+                          {booking.device?.name ?? "Thiết bị"}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {formatDateTimeVi(booking.createdAt)}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-xs font-medium",
+                            status.className,
+                          )}
+                        >
+                          {status.label}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatVnd(booking.totalPrice)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+
+        <div className="rounded-2xl border border-border/60 bg-card/50 p-5">
+          <h2 className="font-heading text-base font-semibold">
+            Thiết bị được thuê nhiều nhất
+          </h2>
+          {topDevices.length === 0 ? (
+            <p className="mt-4 text-sm text-muted-foreground">
+              Chưa có dữ liệu.
+            </p>
+          ) : (
+            <ul className="mt-3 space-y-2.5">
+              {topDevices.map((device, index) => (
+                <li key={index} className="flex items-center justify-between gap-3 text-sm">
+                  <span className="truncate">{device.name}</span>
+                  <span className="shrink-0 font-medium text-muted-foreground">
+                    {device.count} lượt thuê
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
