@@ -143,4 +143,39 @@
     -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black, transparent);
     mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black, transparent);
   }
+
+  /* Noise/grain rất nhẹ phủ toàn trang — tránh cảm giác "nhựa phẳng" của flat
+     design thuần màu. SVG feTurbulence nhúng trực tiếp qua data URI, không cần
+     tải file ảnh riêng. */
+  .bg-noise {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 180px 180px;
+  }
+
+  /* Băng chữ chạy ngang vô hạn (danh mục thiết bị, chuỗi testimonial...) —
+     nhân đôi nội dung bên trong rồi trượt đúng 50% để loop liền mạch. */
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  .animate-marquee {
+    animation: marquee 28s linear infinite;
+  }
+
+  /* Viền gradient xoay liên tục cho khối CTA cuối trang — dùng kỹ thuật
+     "khối conic-gradient lớn hơn container, xoay rồi bị cắt bởi overflow-hidden
+     + padding mỏng" thay vì @property (tương thích trình duyệt rộng hơn). */
+  @keyframes spin-slow {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  .animate-spin-slow {
+    animation: spin-slow 6s linear infinite;
+  }
 }

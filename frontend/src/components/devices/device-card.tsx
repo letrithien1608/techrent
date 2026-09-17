@@ -1,19 +1,43 @@
+"use client";
+
 import { cn } from "cn";
 import { Package } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRef, type MouseEvent } from "react";
 import { DEVICE_STATUS_LABEL, formatVnd } from "@/lib/device-format";
 import type { Device } from "@/lib/devices-api";
 
 export function DeviceCard({ device }: { device: Device }) {
   const status = DEVICE_STATUS_LABEL[device.status];
   const image = device.images?.[0];
+  const cardRef = useRef<HTMLAnchorElement>(null);
+
+  // Hiệu ứng "spotlight" theo con trỏ chuột — set thẳng CSS custom property qua
+  // ref (KHÔNG dùng React state) để tránh re-render cả cây component mỗi khi
+  // chuột di chuyển, giữ animation mượt trong lưới nhiều card cùng lúc.
+  function handleMouseMove(event: MouseEvent<HTMLAnchorElement>) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    cardRef.current?.style.setProperty("--spot-x", `${event.clientX - rect.left}px`);
+    cardRef.current?.style.setProperty("--spot-y", `${event.clientY - rect.top}px`);
+  }
 
   return (
     <Link
+      ref={cardRef}
       href={`/devices/${device.id}`}
-      className="group block cursor-pointer overflow-hidden rounded-2xl border border-border/60 bg-card/50 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl hover:shadow-black/20"
+      onMouseMove={handleMouseMove}
+      className="group relative block cursor-pointer overflow-hidden rounded-2xl border border-border/60 bg-card/50 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl hover:shadow-black/20"
     >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-10 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        style={{
+          background:
+            "radial-gradient(240px circle at var(--spot-x, 50%) var(--spot-y, 50%), oklch(0.85 0.15 200 / 12%), transparent 70%)",
+        }}
+      />
+
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
         {image ? (
           <Image
@@ -42,7 +66,7 @@ export function DeviceCard({ device }: { device: Device }) {
         </span>
       </div>
 
-      <div className="p-4">
+      <div className="relative p-4">
         <h3 className="truncate font-heading font-semibold">{device.name}</h3>
         <p className="mt-0.5 truncate text-sm text-muted-foreground">
           {device.category.name}
