@@ -24,4 +24,12 @@ export class ListReviewsQueryDto {
   @IsOptional()
   @IsUUID()
   deviceId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Lọc theo booking cụ thể (dùng để kiểm tra 1 booking đã được đánh giá chưa)',
+  })
+  @IsOptional()
+  @IsUUID()
+  bookingId?: string;
 }

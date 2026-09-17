@@ -18,6 +18,7 @@ export interface ListReviewsFilter {
   page: number;
   limit: number;
   deviceId?: string;
+  bookingId?: string;
 }
 
 // Review là dữ liệu công khai (@Public()) — lộ kèm tên khách hàng (KHÔNG
@@ -75,9 +76,10 @@ export class ReviewsService {
   async findAll(
     filter: ListReviewsFilter,
   ): Promise<PaginatedResult<ReviewWithReviewer>> {
-    const where = filter.deviceId
-      ? { booking: { deviceId: filter.deviceId } }
-      : {};
+    const where: Prisma.ReviewWhereInput = {
+      ...(filter.deviceId ? { booking: { deviceId: filter.deviceId } } : {}),
+      ...(filter.bookingId ? { bookingId: filter.bookingId } : {}),
+    };
 
     const [data, total] = await this.prisma.$transaction([
       this.prisma.review.findMany({

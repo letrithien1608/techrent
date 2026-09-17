@@ -112,5 +112,18 @@ describe('ReviewsService', () => {
         }),
       );
     });
+
+    it('lọc theo bookingId khi có truyền bookingId (VD kiểm tra 1 booking đã được đánh giá chưa)', async () => {
+      prisma.review.findMany.mockResolvedValue([]);
+      prisma.review.count.mockResolvedValue(0);
+
+      await service.findAll({ page: 1, limit: 20, bookingId: 'booking-1' });
+
+      expect(prisma.review.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { bookingId: 'booking-1' },
+        }),
+      );
+    });
   });
 });

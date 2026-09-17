@@ -19,6 +19,7 @@ export class ReviewsController {
       page: query.page ?? 1,
       limit: query.limit ?? 20,
       deviceId: query.deviceId,
+      bookingId: query.bookingId,
     });
   }
 

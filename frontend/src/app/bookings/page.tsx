@@ -10,9 +10,12 @@ import { PackageSearch, Package, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CancelBookingDialog } from "@/components/bookings/cancel-booking-dialog";
+import { BookingReviewDisplay } from "@/components/reviews/booking-review-display";
+import { ReviewBookingDialog } from "@/components/reviews/review-booking-dialog";
 import { fetchBookings, type Booking, type BookingStatus } from "@/lib/bookings-api";
 import { BOOKING_STATUS_LABEL } from "@/lib/booking-format";
 import { formatDateTimeVi, formatVnd } from "@/lib/device-format";
+import { fetchReviewByBookingId } from "@/lib/reviews-api";
 import { useAuthStore } from "@/stores/auth-store";
 
 const FILTERS: { value: BookingStatus | "all"; label: string }[] = [
@@ -27,40 +30,64 @@ const FILTERS: { value: BookingStatus | "all"; label: string }[] = [
 function BookingCard({ booking, onChanged }: { booking: Booking; onChanged: () => void }) {
   const status = BOOKING_STATUS_LABEL[booking.status];
   const canCancel = booking.status === "pending" || booking.status === "confirmed";
+  const isCompleted = booking.status === "completed";
   const image = booking.device?.images?.[0];
 
+  const reviewQuery = useQuery({
+    queryKey: ["review", booking.id],
+    queryFn: () => fetchReviewByBookingId(booking.id),
+    enabled: isCompleted,
+  });
+
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-border/60 bg-card/50 p-4 sm:flex-row sm:items-center">
-      <Link
-        href={`/bookings/${booking.id}`}
-        className="flex flex-1 items-center gap-4"
-      >
-        <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
-          {image ? (
-            <Image src={image} alt={booking.device?.name ?? ""} fill sizes="64px" className="object-cover" />
+    <div className="rounded-2xl border border-border/60 bg-card/50 p-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <Link
+          href={`/bookings/${booking.id}`}
+          className="flex flex-1 items-center gap-4"
+        >
+          <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
+            {image ? (
+              <Image src={image} alt={booking.device?.name ?? ""} fill sizes="64px" className="object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                <Package className="size-6" />
+              </div>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-heading font-semibold">
+              {booking.device?.name ?? "Thiết bị"}
+            </p>
+            <p className="truncate text-sm text-muted-foreground">
+              {formatDateTimeVi(booking.startTime)} → {formatDateTimeVi(booking.endTime)}
+            </p>
+            <p className="mt-1 text-sm font-medium">{formatVnd(booking.totalPrice)}</p>
+          </div>
+        </Link>
+
+        <div className="flex items-center gap-3 sm:flex-col sm:items-end sm:gap-2">
+          <span className={cn("shrink-0 rounded-full px-2.5 py-1 text-xs font-medium", status.className)}>
+            {status.label}
+          </span>
+          {canCancel && <CancelBookingDialog booking={booking} onCancelled={onChanged} />}
+        </div>
+      </div>
+
+      {isCompleted && (
+        <div className="mt-4 border-t border-border/60 pt-4">
+          {reviewQuery.isPending ? (
+            <Skeleton className="h-14 w-full rounded-lg" />
+          ) : reviewQuery.data ? (
+            <BookingReviewDisplay review={reviewQuery.data} />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-              <Package className="size-6" />
-            </div>
+            <ReviewBookingDialog
+              bookingId={booking.id}
+              onSubmitted={() => reviewQuery.refetch()}
+            />
           )}
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-heading font-semibold">
-            {booking.device?.name ?? "Thiết bị"}
-          </p>
-          <p className="truncate text-sm text-muted-foreground">
-            {formatDateTimeVi(booking.startTime)} → {formatDateTimeVi(booking.endTime)}
-          </p>
-          <p className="mt-1 text-sm font-medium">{formatVnd(booking.totalPrice)}</p>
-        </div>
-      </Link>
-
-      <div className="flex items-center gap-3 sm:flex-col sm:items-end sm:gap-2">
-        <span className={cn("shrink-0 rounded-full px-2.5 py-1 text-xs font-medium", status.className)}>
-          {status.label}
-        </span>
-        {canCancel && <CancelBookingDialog booking={booking} onCancelled={onChanged} />}
-      </div>
+      )}
     </div>
   );
 }
