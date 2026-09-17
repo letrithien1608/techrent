@@ -51,9 +51,9 @@ export function DeviceReviews({
         </div>
       ) : (
         <>
-          <div className="mt-6 flex flex-col gap-8 sm:flex-row sm:items-center">
-            <div className="shrink-0 text-center sm:w-40">
-              <p className="font-heading text-5xl font-bold tracking-tight">
+          <div className="mt-6 flex flex-col gap-8 rounded-2xl border border-border/60 bg-card/40 p-6 sm:flex-row sm:items-center">
+            <div className="shrink-0 text-center sm:w-40 sm:border-r sm:border-border/60 sm:pr-6">
+              <p className="bg-gradient-to-r from-primary to-cyan-300 bg-clip-text font-heading text-5xl font-bold tracking-tight text-transparent">
                 {avgRating.toFixed(1)}
               </p>
               <div className="mt-2 flex justify-center">
@@ -72,7 +72,7 @@ export function DeviceReviews({
                   </span>
                   <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
                     <div
-                      className="h-full rounded-full bg-amber-400"
+                      className="h-full rounded-full bg-gradient-to-r from-primary to-cyan-300 transition-all duration-500"
                       style={{
                         width: `${reviewCount ? (count / reviewCount) * 100 : 0}%`,
                       }}
@@ -88,8 +88,11 @@ export function DeviceReviews({
 
           <div className="mt-8 divide-y divide-border/60">
             {reviews.map((review) => (
-              <div key={review.id} className="flex items-start gap-3 py-5 first:pt-0">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground">
+              <div
+                key={review.id}
+                className="-mx-3 flex items-start gap-3 rounded-xl px-3 py-5 transition-colors first:pt-3 hover:bg-muted/30"
+              >
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-cyan-400 text-sm font-medium text-primary-foreground">
                   {initialsOf(review.booking.user.name)}
                 </div>
                 <div className="min-w-0 flex-1">

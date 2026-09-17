@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { SiteBackground } from "@/components/home/site-background";
 import { DeviceBookingPanel } from "@/components/devices/device-booking-panel";
 import { DeviceGallery } from "@/components/devices/device-gallery";
 import { DeviceReviews } from "@/components/devices/device-reviews";
@@ -47,7 +48,8 @@ export default async function DeviceDetailPage({ params }: PageParams) {
     .slice(0, 4);
 
   return (
-    <div className="flex flex-1 flex-col pb-24 lg:pb-0">
+    <div className="relative flex flex-1 flex-col pb-24 lg:pb-0">
+      <SiteBackground />
       <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1.1fr_0.9fr]">
           <DeviceGallery images={device.images} deviceName={device.name} />

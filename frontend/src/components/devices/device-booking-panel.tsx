@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
+import { AnimatePresence, motion } from "framer-motion";
 import { ChevronRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,20 @@ interface Props {
   avgRating: number;
   reviewCount: number;
 }
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] as const },
+  },
+};
+
+const container = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.08 } },
+};
 
 export function DeviceBookingPanel({ device, avgRating, reviewCount }: Props) {
   const router = useRouter();
@@ -85,106 +100,130 @@ export function DeviceBookingPanel({ device, avgRating, reviewCount }: Props) {
 
   return (
     <div className="lg:sticky lg:top-20 lg:self-start">
-      <nav className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
-        <Link href="/" className="transition-colors hover:text-foreground">
-          Trang chủ
-        </Link>
-        <ChevronRight className="size-3.5 shrink-0" />
-        <Link href="/devices" className="transition-colors hover:text-foreground">
-          {device.category.name}
-        </Link>
-        <ChevronRight className="size-3.5 shrink-0" />
-        <span className="truncate text-foreground">{device.name}</span>
-      </nav>
-
-      <h1 className="mt-3 text-balance font-heading text-3xl font-bold tracking-tight sm:text-4xl">
-        {device.name}
-      </h1>
-
-      <div className="mt-2 flex items-center gap-2">
-        {reviewCount > 0 ? (
-          <>
-            <StarRating rating={avgRating} />
-            <span className="text-sm text-muted-foreground">
-              {avgRating.toFixed(1)} ({reviewCount} đánh giá)
-            </span>
-          </>
-        ) : (
-          <span className="text-sm text-muted-foreground">
-            Chưa có đánh giá nào
-          </span>
-        )}
-      </div>
-
-      <div className="mt-6 rounded-2xl border border-border/60 bg-card/60 p-5">
-        <div className="flex items-center justify-between gap-3">
-          <div className="inline-flex rounded-full border border-border/60 p-0.5 text-sm">
-            <button
-              type="button"
-              onClick={() => setPriceMode("day")}
-              className={cn(
-                "rounded-full px-3 py-1 font-medium transition-colors",
-                priceMode === "day"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              Theo ngày
-            </button>
-            <button
-              type="button"
-              onClick={() => setPriceMode("hour")}
-              className={cn(
-                "rounded-full px-3 py-1 font-medium transition-colors",
-                priceMode === "hour"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              Theo giờ
-            </button>
-          </div>
-          <span
-            className={cn(
-              "shrink-0 rounded-full px-2.5 py-1 text-xs font-medium",
-              status.className,
-            )}
-          >
-            {status.label}
-          </span>
-        </div>
-
-        <p className="mt-4 font-heading text-3xl font-bold tracking-tight">
-          {formatVnd(activePrice)}
-          <span className="text-base font-normal text-muted-foreground">
-            {activeUnit}
-          </span>
-        </p>
-
-        {isAvailable && (
-          <div className="mt-5">
-            <BookingSchedulePicker value={schedule} onChange={setSchedule} />
-          </div>
-        )}
-
-        <Button
-          size="lg"
-          disabled={!isAvailable || bookMutation.isPending}
-          onClick={handleBookNow}
-          className="mt-5 w-full shadow-lg shadow-primary/40 hover:shadow-primary/60"
+      <motion.div variants={container} initial="hidden" animate="show">
+        <motion.nav
+          variants={fadeUp}
+          className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground"
         >
-          {bookMutation.isPending && <Loader2 className="animate-spin" />}
-          {ctaLabel}
-        </Button>
-        {!isAvailable && (
-          <p className="mt-2 text-center text-xs text-muted-foreground">
-            Hiện đang hết hàng, vui lòng quay lại sau
-          </p>
-        )}
-      </div>
+          <Link href="/" className="transition-colors hover:text-foreground">
+            Trang chủ
+          </Link>
+          <ChevronRight className="size-3.5 shrink-0" />
+          <Link href="/devices" className="transition-colors hover:text-foreground">
+            {device.category.name}
+          </Link>
+          <ChevronRight className="size-3.5 shrink-0" />
+          <span className="truncate text-foreground">{device.name}</span>
+        </motion.nav>
+
+        <motion.h1
+          variants={fadeUp}
+          className="mt-3 text-balance font-heading text-3xl font-bold tracking-tight sm:text-4xl"
+        >
+          {device.name}
+        </motion.h1>
+
+        <motion.div variants={fadeUp} className="mt-2 flex items-center gap-2">
+          {reviewCount > 0 ? (
+            <>
+              <StarRating rating={avgRating} />
+              <span className="text-sm text-muted-foreground">
+                {avgRating.toFixed(1)} ({reviewCount} đánh giá)
+              </span>
+            </>
+          ) : (
+            <span className="text-sm text-muted-foreground">
+              Chưa có đánh giá nào
+            </span>
+          )}
+        </motion.div>
+
+        <motion.div
+          variants={fadeUp}
+          className="mt-6 rounded-2xl border border-border/60 bg-card/60 p-5 shadow-sm shadow-black/5"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="relative inline-flex rounded-full border border-border/60 p-0.5 text-sm">
+              {(["day", "hour"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setPriceMode(mode)}
+                  className="relative rounded-full px-3 py-1 font-medium transition-colors"
+                >
+                  {priceMode === mode && (
+                    <motion.span
+                      layoutId="price-mode-pill"
+                      className="absolute inset-0 rounded-full bg-primary"
+                      transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                    />
+                  )}
+                  <span
+                    className={cn(
+                      "relative z-10",
+                      priceMode === mode
+                        ? "text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {mode === "day" ? "Theo ngày" : "Theo giờ"}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <span
+              className={cn(
+                "shrink-0 rounded-full px-2.5 py-1 text-xs font-medium",
+                status.className,
+              )}
+            >
+              {status.label}
+            </span>
+          </div>
+
+          <div className="mt-4 flex items-baseline gap-2 overflow-hidden">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span
+                key={priceMode}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                className="bg-gradient-to-r from-primary to-cyan-300 bg-clip-text font-heading text-3xl font-extrabold tracking-tight text-transparent"
+              >
+                {formatVnd(activePrice)}
+              </motion.span>
+            </AnimatePresence>
+            <span className="text-base font-normal text-muted-foreground">
+              {activeUnit}
+            </span>
+          </div>
+
+          {isAvailable && (
+            <div className="mt-5">
+              <BookingSchedulePicker value={schedule} onChange={setSchedule} />
+            </div>
+          )}
+
+          <Button
+            size="lg"
+            disabled={!isAvailable || bookMutation.isPending}
+            onClick={handleBookNow}
+            className="mt-5 w-full shadow-lg shadow-primary/40 hover:shadow-primary/60"
+          >
+            {bookMutation.isPending && <Loader2 className="animate-spin" />}
+            {ctaLabel}
+          </Button>
+          {!isAvailable && (
+            <p className="mt-2 text-center text-xs text-muted-foreground">
+              Hiện đang hết hàng, vui lòng quay lại sau
+            </p>
+          )}
+        </motion.div>
+      </motion.div>
 
       {/* Mobile: thanh cố định dưới cùng màn hình thay cho sidebar sticky */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-background/95 px-4 py-3 backdrop-blur-md lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-background/95 px-4 py-3 shadow-[0_-12px_30px_-12px_rgba(0,0,0,0.35)] backdrop-blur-md lg:hidden">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
           <p className="font-heading text-lg font-bold">
             {formatVnd(device.pricePerDay)}

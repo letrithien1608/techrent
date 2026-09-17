@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "cn";
 import { motion } from "framer-motion";
 import { specLabel } from "@/lib/device-format";
 
@@ -21,11 +22,14 @@ export function DeviceSpecs({
       <h2 className="font-heading text-2xl font-semibold tracking-tight">
         Thông số kỹ thuật
       </h2>
-      <dl className="mt-4 divide-y divide-border/60">
-        {entries.map(([key, value]) => (
+      <dl className="mt-4 overflow-hidden rounded-2xl border border-border/60">
+        {entries.map(([key, value], index) => (
           <div
             key={key}
-            className="flex items-center justify-between gap-4 py-3 text-sm"
+            className={cn(
+              "flex items-center justify-between gap-4 px-4 py-3.5 text-sm transition-colors hover:bg-muted/50",
+              index % 2 === 1 && "bg-muted/20",
+            )}
           >
             <dt className="text-muted-foreground">{specLabel(key)}</dt>
             <dd className="text-right font-medium text-foreground">
