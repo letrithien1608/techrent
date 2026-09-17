@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { BookingStatus, Review } from '../generated/prisma/client';
+import { BookingStatus, Prisma, Review } from '../generated/prisma/client';
 import { CreateReviewDto } from './dto/create-review.dto';
 
 export interface PaginatedResult<T> {
@@ -19,6 +19,19 @@ export interface ListReviewsFilter {
   limit: number;
   deviceId?: string;
 }
+
+// Review là dữ liệu công khai (@Public()) — lộ kèm tên khách hàng (KHÔNG
+// email/thông tin nhạy cảm khác) để hiển thị trên trang chi tiết thiết bị,
+// giống Amazon/Airbnb hiển thị tên người đánh giá trên review công khai.
+const reviewWithReviewer = {
+  include: {
+    booking: { select: { user: { select: { name: true } } } },
+  },
+} satisfies Prisma.ReviewDefaultArgs;
+
+export type ReviewWithReviewer = Prisma.ReviewGetPayload<
+  typeof reviewWithReviewer
+>;
 
 @Injectable()
 export class ReviewsService {
@@ -59,7 +72,9 @@ export class ReviewsService {
     });
   }
 
-  async findAll(filter: ListReviewsFilter): Promise<PaginatedResult<Review>> {
+  async findAll(
+    filter: ListReviewsFilter,
+  ): Promise<PaginatedResult<ReviewWithReviewer>> {
     const where = filter.deviceId
       ? { booking: { deviceId: filter.deviceId } }
       : {};
@@ -70,6 +85,7 @@ export class ReviewsService {
         skip: (filter.page - 1) * filter.limit,
         take: filter.limit,
         orderBy: { createdAt: 'desc' },
+        ...reviewWithReviewer,
       }),
       this.prisma.review.count({ where }),
     ]);

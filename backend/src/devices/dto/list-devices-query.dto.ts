@@ -1,7 +1,24 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { DeviceStatus } from '../../generated/prisma/client';
+
+export const DEVICE_SORT_VALUES = [
+  'newest',
+  'price_asc',
+  'price_desc',
+] as const;
+export type DeviceSort = (typeof DEVICE_SORT_VALUES)[number];
 
 export class ListDevicesQueryDto {
   @ApiPropertyOptional({ default: 1 })
@@ -25,10 +42,26 @@ export class ListDevicesQueryDto {
   categoryId?: string;
 
   @ApiPropertyOptional({
+    description: 'Tìm theo tên thiết bị (không phân biệt hoa thường)',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  search?: string;
+
+  @ApiPropertyOptional({
     enum: DeviceStatus,
     description: 'Lọc theo trạng thái',
   })
   @IsOptional()
   @IsEnum(DeviceStatus)
   status?: DeviceStatus;
+
+  @ApiPropertyOptional({
+    enum: DEVICE_SORT_VALUES,
+    description: 'Sắp xếp: mới nhất / giá tăng dần / giá giảm dần',
+  })
+  @IsOptional()
+  @IsIn(DEVICE_SORT_VALUES)
+  sort?: DeviceSort;
 }

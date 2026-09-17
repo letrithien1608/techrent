@@ -85,6 +85,52 @@ describe('DevicesService', () => {
         where: { categoryId: 'cat-1', status: DeviceStatus.maintenance },
       });
     });
+
+    it('mặc định sắp xếp theo mới nhất khi không truyền sort', async () => {
+      prisma.device.findMany.mockResolvedValue([]);
+      prisma.device.count.mockResolvedValue(0);
+
+      await service.findAll({ page: 1, limit: 20 });
+
+      expect(prisma.device.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ orderBy: { createdAt: 'desc' } }),
+      );
+    });
+
+    it('sort=price_asc sắp xếp theo giá/ngày tăng dần', async () => {
+      prisma.device.findMany.mockResolvedValue([]);
+      prisma.device.count.mockResolvedValue(0);
+
+      await service.findAll({ page: 1, limit: 20, sort: 'price_asc' });
+
+      expect(prisma.device.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ orderBy: { pricePerDay: 'asc' } }),
+      );
+    });
+
+    it('sort=price_desc sắp xếp theo giá/ngày giảm dần', async () => {
+      prisma.device.findMany.mockResolvedValue([]);
+      prisma.device.count.mockResolvedValue(0);
+
+      await service.findAll({ page: 1, limit: 20, sort: 'price_desc' });
+
+      expect(prisma.device.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ orderBy: { pricePerDay: 'desc' } }),
+      );
+    });
+
+    it('lọc theo tên thiết bị (search) không phân biệt hoa thường', async () => {
+      prisma.device.findMany.mockResolvedValue([]);
+      prisma.device.count.mockResolvedValue(0);
+
+      await service.findAll({ page: 1, limit: 20, search: 'macbook' });
+
+      expect(prisma.device.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { name: { contains: 'macbook', mode: 'insensitive' } },
+        }),
+      );
+    });
   });
 
   describe('findByIdOrThrow', () => {

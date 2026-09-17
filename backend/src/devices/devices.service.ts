@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { Device, DeviceStatus } from '../generated/prisma/client';
+import { DeviceSort } from './dto/list-devices-query.dto';
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -18,6 +19,8 @@ export interface ListDevicesFilter {
   limit: number;
   categoryId?: string;
   status?: DeviceStatus;
+  sort?: DeviceSort;
+  search?: string;
 }
 
 const deviceWithCategory = {
@@ -35,18 +38,25 @@ export class DevicesService {
   async findAll(
     filter: ListDevicesFilter,
   ): Promise<PaginatedResult<DeviceWithCategory>> {
-    const { page, limit, categoryId, status } = filter;
+    const { page, limit, categoryId, status, sort, search } = filter;
     const where: Prisma.DeviceWhereInput = {
       ...(categoryId ? { categoryId } : {}),
       ...(status ? { status } : {}),
+      ...(search ? { name: { contains: search, mode: 'insensitive' } } : {}),
     };
+    const orderBy: Prisma.DeviceOrderByWithRelationInput =
+      sort === 'price_asc'
+        ? { pricePerDay: 'asc' }
+        : sort === 'price_desc'
+          ? { pricePerDay: 'desc' }
+          : { createdAt: 'desc' };
 
     const [devices, total] = await this.prisma.$transaction([
       this.prisma.device.findMany({
         where,
         skip: (page - 1) * limit,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         ...deviceWithCategory,
       }),
       this.prisma.device.count({ where }),

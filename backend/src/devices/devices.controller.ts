@@ -44,6 +44,8 @@ export class DevicesController {
       limit: query.limit ?? 20,
       categoryId: query.categoryId,
       status: query.status,
+      sort: query.sort,
+      search: query.search,
     });
   }
 

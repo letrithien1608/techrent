@@ -60,15 +60,26 @@ export function Header() {
       )}
     >
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
-        <Link
-          href="/"
-          className="flex items-center gap-2 font-heading text-lg font-semibold tracking-tight"
-        >
-          <span className="inline-flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            T
-          </span>
-          Tech<span className="text-primary">Rent</span>
-        </Link>
+        <div className="flex items-center gap-8">
+          <Link
+            href="/"
+            className="flex items-center gap-2 font-heading text-lg font-semibold tracking-tight"
+          >
+            <span className="inline-flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              T
+            </span>
+            Tech<span className="text-primary">Rent</span>
+          </Link>
+
+          <nav className="hidden items-center gap-6 text-sm font-medium sm:flex">
+            <Link
+              href="/devices"
+              className="text-foreground/80 transition-colors hover:text-foreground"
+            >
+              Thiết bị
+            </Link>
+          </nav>
+        </div>
 
         <div className="flex items-center gap-2">
           {!hasHydrated ? null : user ? (
