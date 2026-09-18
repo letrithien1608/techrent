@@ -10,6 +10,7 @@ export interface AuthUser {
   role: UserRole;
   phone?: string | null;
   emailVerifiedAt?: string | null;
+  createdAt?: string;
 }
 
 interface AuthState {
@@ -24,6 +25,8 @@ interface AuthState {
     refreshToken: string;
   }) => void;
   setTokens: (accessToken: string, refreshToken: string) => void;
+  /** Cập nhật một phần thông tin user hiện tại (VD sau khi lưu trang /profile) — không đụng token. */
+  updateUser: (patch: Partial<AuthUser>) => void;
   clearAuth: () => void;
   setHasHydrated: (value: boolean) => void;
 }
@@ -39,6 +42,8 @@ export const useAuthStore = create<AuthState>()(
         set({ user, accessToken, refreshToken }),
       setTokens: (accessToken, refreshToken) =>
         set({ accessToken, refreshToken }),
+      updateUser: (patch) =>
+        set((state) => (state.user ? { user: { ...state.user, ...patch } } : state)),
       clearAuth: () =>
         set({ user: null, accessToken: null, refreshToken: null }),
       setHasHydrated: (value) => set({ hasHydrated: value }),

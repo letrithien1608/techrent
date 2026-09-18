@@ -1,4 +1,4 @@
-import { ConflictException } from '@nestjs/common';
+import { ConflictException, ForbiddenException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { RequestUser } from '../auth/interfaces/jwt-payload.interface';
 import { Role } from '../generated/prisma/client';
@@ -9,6 +9,12 @@ const currentAdmin: RequestUser = {
   userId: 'admin-1',
   email: 'admin@example.com',
   role: Role.admin,
+};
+
+const currentCustomer: RequestUser = {
+  userId: 'customer-1',
+  email: 'customer@example.com',
+  role: Role.customer,
 };
 
 describe('UsersController', () => {
@@ -162,6 +168,63 @@ describe('UsersController', () => {
         expect.objectContaining({ role: Role.staff }),
         currentAdmin.userId,
       );
+    });
+
+    // Route này CỐ Ý mở cho customer/staff tự sửa hồ sơ chính mình (trang
+    // /profile) — method-level @Roles override class-level @Roles(admin).
+    // Phải tự kiểm tra quyền trong controller vì RolesGuard chỉ còn chặn
+    // "đã đăng nhập", không còn chặn theo role cho riêng route update() nữa.
+    describe('khách hàng/staff tự sửa hồ sơ (không phải admin)', () => {
+      it('cho phép tự sửa tên/SĐT của CHÍNH mình', async () => {
+        usersService.update.mockImplementation((_id, data) =>
+          Promise.resolve({ id: 'customer-1', ...data }),
+        );
+
+        await controller.update(
+          'customer-1',
+          { name: 'Tên mới', phone: '0900000000' },
+          currentCustomer,
+        );
+
+        expect(usersService.update).toHaveBeenCalledWith(
+          'customer-1',
+          expect.objectContaining({ name: 'Tên mới', phone: '0900000000' }),
+          currentCustomer.userId,
+        );
+      });
+
+      it('ném ForbiddenException nếu cố sửa người dùng KHÁC (id khác currentUser.userId)', async () => {
+        await expect(
+          controller.update(
+            'someone-else-id',
+            { name: 'Hack' },
+            currentCustomer,
+          ),
+        ).rejects.toBeInstanceOf(ForbiddenException);
+        expect(usersService.update).not.toHaveBeenCalled();
+      });
+
+      it('ném ForbiddenException nếu cố gửi kèm field role (kể cả sửa đúng chính mình)', async () => {
+        await expect(
+          controller.update(
+            'customer-1',
+            { role: Role.admin },
+            currentCustomer,
+          ),
+        ).rejects.toBeInstanceOf(ForbiddenException);
+        expect(usersService.update).not.toHaveBeenCalled();
+      });
+
+      it('ném ForbiddenException nếu cố gửi kèm field password (phải đổi qua /auth/change-password)', async () => {
+        await expect(
+          controller.update(
+            'customer-1',
+            { password: 'NewStr0ngPass1' },
+            currentCustomer,
+          ),
+        ).rejects.toBeInstanceOf(ForbiddenException);
+        expect(usersService.update).not.toHaveBeenCalled();
+      });
     });
   });
 

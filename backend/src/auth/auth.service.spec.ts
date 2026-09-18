@@ -16,6 +16,7 @@ describe('AuthService', () => {
     findById: jest.Mock;
     findByIdOrThrow: jest.Mock;
     create: jest.Mock;
+    update: jest.Mock;
     updateRefreshTokenHash: jest.Mock;
     markEmailVerified: jest.Mock;
     sanitize: jest.Mock;
@@ -61,6 +62,7 @@ describe('AuthService', () => {
       findById: jest.fn(),
       findByIdOrThrow: jest.fn(),
       create: jest.fn(),
+      update: jest.fn(),
       updateRefreshTokenHash: jest.fn(),
       markEmailVerified: jest.fn(),
       sanitize: jest.fn((user: User) => ({
@@ -303,6 +305,79 @@ describe('AuthService', () => {
 
       await service.logout(baseUser.id, 'some-access-token');
 
+      expect(usersService.updateRefreshTokenHash).toHaveBeenCalledWith(
+        baseUser.id,
+        null,
+      );
+    });
+  });
+
+  describe('changePassword', () => {
+    it('ném UnauthorizedException nếu mật khẩu hiện tại không khớp', async () => {
+      const passwordHash = await bcrypt.hash('CorrectPass1', 10);
+      usersService.findByIdOrThrow.mockResolvedValue({
+        ...baseUser,
+        passwordHash,
+      });
+
+      await expect(
+        service.changePassword(
+          baseUser.id,
+          { currentPassword: 'WrongPass1', newPassword: 'NewStr0ngPass1' },
+          'some-access-token',
+        ),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+      expect(usersService.update).not.toHaveBeenCalled();
+      expect(usersService.updateRefreshTokenHash).not.toHaveBeenCalled();
+    });
+
+    it('đổi mật khẩu thành công khi mật khẩu hiện tại đúng — lưu hash MỚI (khác hash cũ)', async () => {
+      const passwordHash = await bcrypt.hash('CorrectPass1', 10);
+      usersService.findByIdOrThrow.mockResolvedValue({
+        ...baseUser,
+        passwordHash,
+      });
+      usersService.update.mockResolvedValue({ ...baseUser });
+      jwtService.decode.mockReturnValue({
+        exp: Math.floor(Date.now() / 1000) + 60,
+      });
+
+      await service.changePassword(
+        baseUser.id,
+        { currentPassword: 'CorrectPass1', newPassword: 'NewStr0ngPass1' },
+        'some-access-token',
+      );
+
+      expect(usersService.update).toHaveBeenCalledWith(
+        baseUser.id,
+        { passwordHash: expect.any(String) },
+        baseUser.id,
+      );
+      const savedHash = usersService.update.mock.calls[0][1].passwordHash;
+      expect(savedHash).not.toBe(passwordHash);
+      expect(await bcrypt.compare('NewStr0ngPass1', savedHash)).toBe(true);
+    });
+
+    it('thu hồi phiên đăng nhập hiện tại sau khi đổi mật khẩu (blacklist access token + xoá refreshTokenHash) — bắt đăng nhập lại', async () => {
+      const passwordHash = await bcrypt.hash('CorrectPass1', 10);
+      usersService.findByIdOrThrow.mockResolvedValue({
+        ...baseUser,
+        passwordHash,
+      });
+      usersService.update.mockResolvedValue({ ...baseUser });
+      const nowSeconds = Math.floor(Date.now() / 1000);
+      jwtService.decode.mockReturnValue({ exp: nowSeconds + 120 });
+
+      await service.changePassword(
+        baseUser.id,
+        { currentPassword: 'CorrectPass1', newPassword: 'NewStr0ngPass1' },
+        'some-access-token',
+      );
+
+      expect(redisService.blacklistToken).toHaveBeenCalledWith(
+        'some-access-token',
+        expect.any(Number),
+      );
       expect(usersService.updateRefreshTokenHash).toHaveBeenCalledWith(
         baseUser.id,
         null,

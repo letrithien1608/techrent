@@ -15,6 +15,7 @@ import { Role, User } from '../generated/prisma/client';
 import { MailService } from '../mail/mail.service';
 import { RedisService } from '../redis/redis.service';
 import { SafeUser, UsersService } from '../users/users.service';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import {
@@ -26,6 +27,7 @@ const PASSWORD_SALT_ROUNDS = 10;
 const INVALID_CREDENTIALS_MESSAGE = 'Email hoặc mật khẩu không đúng';
 const INVALID_VERIFICATION_TOKEN_MESSAGE =
   'Token xác thực email không hợp lệ hoặc đã hết hạn';
+const INVALID_CURRENT_PASSWORD_MESSAGE = 'Mật khẩu hiện tại không đúng';
 
 export interface AuthTokens {
   accessToken: string;
@@ -118,6 +120,42 @@ export class AuthService {
   async logout(userId: string, accessToken: string): Promise<void> {
     await this.blacklistAccessToken(accessToken);
     await this.usersService.updateRefreshTokenHash(userId, null);
+  }
+
+  /**
+   * Khách hàng TỰ đổi mật khẩu của chính mình — KHÁC hẳn `PATCH /users/:id`
+   * (dành cho admin, đổi được mật khẩu của bất kỳ ai mà KHÔNG cần biết mật
+   * khẩu cũ). Ở đây bắt buộc verify `currentPassword` trước, chống trường
+   * hợp ai đó chiếm được access token tạm thời rồi tự đổi mật khẩu chiếm
+   * quyền dài hạn tài khoản.
+   *
+   * Sau khi đổi thành công, coi access/refresh token hiện tại là KHÔNG còn
+   * đáng tin (cùng nguyên tắc với `logout()`) — blacklist access token +
+   * xoá refresh token hash, bắt đăng nhập lại bằng mật khẩu mới.
+   */
+  async changePassword(
+    userId: string,
+    dto: ChangePasswordDto,
+    accessToken: string,
+  ): Promise<void> {
+    const user = await this.usersService.findByIdOrThrow(userId);
+
+    const currentPasswordMatches = await bcrypt.compare(
+      dto.currentPassword,
+      user.passwordHash,
+    );
+    if (!currentPasswordMatches) {
+      throw new UnauthorizedException(INVALID_CURRENT_PASSWORD_MESSAGE);
+    }
+
+    const passwordHash = await bcrypt.hash(
+      dto.newPassword,
+      PASSWORD_SALT_ROUNDS,
+    );
+    await this.usersService.update(user.id, { passwordHash }, user.id);
+
+    await this.blacklistAccessToken(accessToken);
+    await this.usersService.updateRefreshTokenHash(user.id, null);
   }
 
   async verifyEmail(token: string): Promise<void> {

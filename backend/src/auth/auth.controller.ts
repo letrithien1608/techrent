@@ -13,6 +13,7 @@ import { Request } from 'express';
 import { AuthService } from './auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -55,6 +56,19 @@ export class AuthController {
   @Get('profile')
   profile(@CurrentUser() user: RequestUser) {
     return user;
+  }
+
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @Post('change-password')
+  async changePassword(
+    @CurrentUser() user: RequestUser,
+    @Body() dto: ChangePasswordDto,
+    @Req() req: Request,
+  ) {
+    const accessToken = req.headers.authorization?.replace('Bearer ', '') ?? '';
+    await this.authService.changePassword(user.userId, dto, accessToken);
+    return { message: 'Đổi mật khẩu thành công' };
   }
 
   @Public()

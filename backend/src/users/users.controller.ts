@@ -3,6 +3,7 @@ import {
   ConflictException,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -65,12 +66,39 @@ export class UsersController {
     return this.usersService.sanitize(user);
   }
 
+  /**
+   * Class ở trên khoá `@Roles(Role.admin)` cho MỌI route — riêng route này
+   * mở lại cho mọi role đã đăng nhập (method-level `@Roles` override class-level,
+   * xem `RolesGuard.getAllAndOverride`) để khách hàng tự sửa HỒ SƠ CHÍNH MÌNH
+   * (trang `/profile`) qua thẳng API này, KHÔNG cần thêm endpoint riêng.
+   *
+   * Không phải admin thì bị giới hạn chặt: chỉ được sửa ĐÚNG bản ghi của
+   * chính mình, và TUYỆT ĐỐI không được kèm `role` (tự nâng/hạ quyền) hay
+   * `password` (đổi mật khẩu không cần biết mật khẩu cũ — đúng lỗ hổng đã
+   * vá cho admin tự-sửa-mình, ở đây phòng thủ luôn cho customer/staff, đổi
+   * mật khẩu phải đi qua `POST /auth/change-password` có verify mật khẩu cũ).
+   * Kiểm tra ở TẦNG BACKEND (không tin frontend không gửi field đó lên).
+   */
+  @Roles(Role.customer, Role.staff, Role.admin)
   @Patch(':id')
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateUserDto,
     @CurrentUser() currentUser: RequestUser,
   ) {
+    if (currentUser.role !== Role.admin) {
+      if (id !== currentUser.userId) {
+        throw new ForbiddenException(
+          'Bạn chỉ có thể sửa thông tin của chính mình',
+        );
+      }
+      if (dto.role !== undefined || dto.password !== undefined) {
+        throw new ForbiddenException(
+          'Chỉ có thể tự sửa tên và số điện thoại của chính mình — đổi mật khẩu vui lòng dùng chức năng riêng',
+        );
+      }
+    }
+
     const passwordHash = dto.password
       ? await bcrypt.hash(dto.password, PASSWORD_SALT_ROUNDS)
       : undefined;

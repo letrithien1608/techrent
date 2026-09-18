@@ -9,6 +9,7 @@ describe('AuthController', () => {
     login: jest.Mock;
     refreshTokens: jest.Mock;
     logout: jest.Mock;
+    changePassword: jest.Mock;
     verifyEmail: jest.Mock;
   };
 
@@ -18,6 +19,7 @@ describe('AuthController', () => {
       login: jest.fn(),
       refreshTokens: jest.fn(),
       logout: jest.fn(),
+      changePassword: jest.fn(),
       verifyEmail: jest.fn(),
     };
     controller = new AuthController(authService as unknown as AuthService);
@@ -77,6 +79,22 @@ describe('AuthController', () => {
     const user = { userId: 'u1', email: 'a@example.com', role: Role.customer };
 
     expect(controller.profile(user)).toBe(user);
+  });
+
+  it('changePassword() lấy access token từ header Authorization và gọi AuthService.changePassword với đúng userId + DTO', async () => {
+    const req = { headers: { authorization: 'Bearer my-access-token' } } as any;
+    const user = { userId: 'u1', email: 'a@example.com', role: Role.customer };
+    const dto = { currentPassword: 'OldPass1', newPassword: 'NewPass1' };
+    authService.changePassword.mockResolvedValue(undefined);
+
+    const result = await controller.changePassword(user, dto, req);
+
+    expect(authService.changePassword).toHaveBeenCalledWith(
+      'u1',
+      dto,
+      'my-access-token',
+    );
+    expect(result).toEqual({ message: 'Đổi mật khẩu thành công' });
   });
 
   it('verifyEmail() gọi AuthService.verifyEmail với token trong query string', async () => {

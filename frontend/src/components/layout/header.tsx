@@ -5,7 +5,7 @@ import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { useMotionValueEvent, useScroll } from "framer-motion";
-import { LogOut, Ticket, User as UserIcon } from "lucide-react";
+import { LogOut, Settings, Ticket, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "cn";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -107,6 +107,10 @@ export function Header() {
                   </span>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem render={<Link href="/profile" />}>
+                  <Settings />
+                  Tài khoản của tôi
+                </DropdownMenuItem>
                 <DropdownMenuItem render={<Link href="/bookings" />}>
                   <Ticket />
                   Đơn của tôi
