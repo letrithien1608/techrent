@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -98,14 +99,16 @@ export function Header() {
                 </Avatar>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" sideOffset={8}>
-                <DropdownMenuLabel className="flex flex-col gap-0.5 px-2 py-1.5">
-                  <span className="text-sm font-medium text-foreground">
-                    {user.name}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {ROLE_LABEL[user.role] ?? user.role}
-                  </span>
-                </DropdownMenuLabel>
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="flex flex-col gap-0.5 px-2 py-1.5">
+                    <span className="text-sm font-medium text-foreground">
+                      {user.name}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {ROLE_LABEL[user.role] ?? user.role}
+                    </span>
+                  </DropdownMenuLabel>
+                </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem render={<Link href="/profile" />}>
                   <Settings />
