@@ -1,9 +1,17 @@
-import { ConflictException, ForbiddenException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { RequestUser } from '../auth/interfaces/jwt-payload.interface';
-import { Role } from '../generated/prisma/client';
+import { Prisma, Role } from '../generated/prisma/client';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
+
+function makeP2002Error(target: string[]): Prisma.PrismaClientKnownRequestError {
+  return new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+    code: 'P2002',
+    clientVersion: 'test',
+    meta: { target },
+  });
+}
 
 const currentAdmin: RequestUser = {
   userId: 'admin-1',
@@ -26,8 +34,10 @@ describe('UsersController', () => {
     update: jest.Mock;
     remove: jest.Mock;
     findAll: jest.Mock;
+    revealCccd: jest.Mock;
     sanitize: jest.Mock;
   };
+  let configService: { get: jest.Mock };
 
   beforeEach(() => {
     usersService = {
@@ -37,13 +47,20 @@ describe('UsersController', () => {
       update: jest.fn(),
       remove: jest.fn(),
       findAll: jest.fn(),
+      revealCccd: jest.fn(),
       sanitize: jest.fn((user) => ({
         id: user.id,
         email: user.email,
         role: user.role,
       })),
     };
-    controller = new UsersController(usersService as unknown as UsersService);
+    configService = {
+      get: jest.fn().mockReturnValue('a'.repeat(64)),
+    };
+    controller = new UsersController(
+      usersService as unknown as UsersService,
+      configService as any,
+    );
   });
 
   describe('create', () => {
@@ -94,6 +111,20 @@ describe('UsersController', () => {
       });
 
       expect(usersService.create.mock.calls[0][0].role).toBe(Role.staff);
+    });
+
+    it('dịch lỗi P2002 (trùng phone) thành ConflictException thân thiện, không lộ lỗi Prisma thô', async () => {
+      usersService.findByEmail.mockResolvedValue(null);
+      usersService.create.mockRejectedValue(makeP2002Error(['phone']));
+
+      await expect(
+        controller.create({
+          name: 'A',
+          email: 'a@example.com',
+          password: 'Str0ngP@ssword',
+          phone: '0901234567',
+        }),
+      ).rejects.toBeInstanceOf(ConflictException);
     });
   });
 
@@ -226,6 +257,14 @@ describe('UsersController', () => {
         expect(usersService.update).not.toHaveBeenCalled();
       });
     });
+
+    it('dịch lỗi P2002 (trùng phone) thành ConflictException thân thiện', async () => {
+      usersService.update.mockRejectedValue(makeP2002Error(['phone']));
+
+      await expect(
+        controller.update('u1', { phone: '0901234567' }, currentAdmin),
+      ).rejects.toBeInstanceOf(ConflictException);
+    });
   });
 
   describe('remove', () => {
@@ -233,6 +272,28 @@ describe('UsersController', () => {
       await controller.remove('u1', currentAdmin);
 
       expect(usersService.remove).toHaveBeenCalledWith('u1', currentAdmin.userId);
+    });
+  });
+
+  describe('revealCccd', () => {
+    it('đọc CCCD_ENCRYPTION_KEY từ ConfigService và gọi UsersService.revealCccd', async () => {
+      usersService.revealCccd.mockResolvedValue('079203012345');
+
+      const result = await controller.revealCccd('u1');
+
+      expect(configService.get).toHaveBeenCalledWith('CCCD_ENCRYPTION_KEY');
+      expect(usersService.revealCccd).toHaveBeenCalledWith('u1', 'a'.repeat(64));
+      expect(result).toEqual({ cccd: '079203012345' });
+    });
+
+    it('ném lại NotFoundException nếu UsersService.revealCccd báo user chưa có CCCD', async () => {
+      usersService.revealCccd.mockRejectedValue(
+        new NotFoundException('Người dùng này chưa có CCCD trong hồ sơ'),
+      );
+
+      await expect(controller.revealCccd('u1')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
   });
 });

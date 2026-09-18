@@ -61,12 +61,17 @@ describe('Payments VNPay Sandbox (e2e)', () => {
     deviceId = device.id;
 
     const server = app.getHttpServer();
+    // phone/cccd giờ bắt buộc khi đăng ký (mục 7 Roadmap, KYC) — không dùng
+    // để test gì ở đây (booking được tạo trực tiếp qua Prisma, không qua
+    // BookingsService nên không đụng tới lớp chặn CCCD), chỉ cần hợp lệ định dạng.
     await request(server)
       .post('/auth/register')
       .send({
         name: 'VNPay Tester',
         email: userEmail,
         password: 'Str0ngP@ssword',
+        phone: `090${Date.now().toString().slice(-7)}`,
+        cccd: `${Date.now().toString().slice(-12)}`,
       })
       .expect(201);
     const login = await request(server)

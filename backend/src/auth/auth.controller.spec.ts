@@ -10,6 +10,7 @@ describe('AuthController', () => {
     refreshTokens: jest.Mock;
     logout: jest.Mock;
     changePassword: jest.Mock;
+    addCccd: jest.Mock;
     verifyEmail: jest.Mock;
   };
 
@@ -20,6 +21,7 @@ describe('AuthController', () => {
       refreshTokens: jest.fn(),
       logout: jest.fn(),
       changePassword: jest.fn(),
+      addCccd: jest.fn(),
       verifyEmail: jest.fn(),
     };
     controller = new AuthController(authService as unknown as AuthService);
@@ -30,6 +32,8 @@ describe('AuthController', () => {
       name: 'A',
       email: 'a@example.com',
       password: 'Str0ngP@ssword',
+      phone: '0901234567',
+      cccd: '079203012345',
     };
     authService.register.mockResolvedValue({
       accessToken: 'a',
@@ -95,6 +99,17 @@ describe('AuthController', () => {
       'my-access-token',
     );
     expect(result).toEqual({ message: 'Đổi mật khẩu thành công' });
+  });
+
+  it('addCccd() gọi AuthService.addCccd với userId của người đang đăng nhập + DTO', async () => {
+    const user = { userId: 'u1', email: 'a@example.com', role: Role.customer };
+    const dto = { cccd: '079203012345' };
+    authService.addCccd.mockResolvedValue({ id: 'u1', cccdMasked: '********2345' });
+
+    const result = await controller.addCccd(user, dto);
+
+    expect(authService.addCccd).toHaveBeenCalledWith('u1', dto);
+    expect(result).toEqual({ id: 'u1', cccdMasked: '********2345' });
   });
 
   it('verifyEmail() gọi AuthService.verifyEmail với token trong query string', async () => {

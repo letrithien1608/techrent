@@ -11,10 +11,17 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import type { StringValue } from 'ms';
+import {
+  encryptCccd,
+  hashCccd,
+  maskCccd,
+} from '../common/crypto/cccd-crypto.util';
+import { translateUniqueConstraintError } from '../common/prisma-error.util';
 import { Role, User } from '../generated/prisma/client';
 import { MailService } from '../mail/mail.service';
 import { RedisService } from '../redis/redis.service';
 import { SafeUser, UsersService } from '../users/users.service';
+import { AddCccdDto } from './dto/add-cccd.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -28,6 +35,10 @@ const INVALID_CREDENTIALS_MESSAGE = 'Email hoặc mật khẩu không đúng';
 const INVALID_VERIFICATION_TOKEN_MESSAGE =
   'Token xác thực email không hợp lệ hoặc đã hết hạn';
 const INVALID_CURRENT_PASSWORD_MESSAGE = 'Mật khẩu hiện tại không đúng';
+const DUPLICATE_CCCD_MESSAGE =
+  'Số CCCD này đã được đăng ký bởi một tài khoản khác';
+const DUPLICATE_PHONE_MESSAGE =
+  'Số điện thoại này đã được đăng ký bởi một tài khoản khác';
 
 export interface AuthTokens {
   accessToken: string;
@@ -46,25 +57,93 @@ export class AuthService {
     private readonly mailService: MailService,
   ) {}
 
+  /**
+   * KYC bắt buộc từ khi triển khai chống-1-người-nhiều-tài-khoản (mục 7
+   * Roadmap): mỗi tài khoản "sạch" mới tạo rất khó bị chặn nếu không gắn với
+   * 1 định danh duy nhất (CCCD). Kiểm tra trùng CCCD qua hash TRƯỚC KHI tạo
+   * user để trả lỗi rõ ràng ngay — KHÔNG tiết lộ email/thông tin tài khoản
+   * đang giữ CCCD đó (tránh dò thông tin người khác qua message lỗi).
+   *
+   * Unique constraint cấp DATABASE trên `cccd_hash`/`phone` (xem schema) vẫn
+   * là lớp bảo vệ CUỐI CÙNG chống race condition — `translateUniqueConstraintError`
+   * bắt lại nếu 2 request đăng ký cùng CCCD/SĐT lọt qua pre-check vì chạy
+   * gần như đồng thời.
+   */
   async register(dto: RegisterDto): Promise<AuthTokens & { user: SafeUser }> {
-    const existing = await this.usersService.findByEmail(dto.email);
-    if (existing) {
+    const existingEmail = await this.usersService.findByEmail(dto.email);
+    if (existingEmail) {
       throw new ConflictException('Email đã được sử dụng');
     }
 
+    const cccdHash = hashCccd(dto.cccd);
+    const existingCccd = await this.usersService.findByCccdHash(cccdHash);
+    if (existingCccd) {
+      throw new ConflictException(DUPLICATE_CCCD_MESSAGE);
+    }
+
     const passwordHash = await bcrypt.hash(dto.password, PASSWORD_SALT_ROUNDS);
-    const user = await this.usersService.create({
-      name: dto.name,
-      email: dto.email,
-      passwordHash,
-      phone: dto.phone,
-      role: Role.customer,
-    });
+    const encryptionKey = this.getCccdEncryptionKey();
+
+    let user: User;
+    try {
+      user = await this.usersService.create({
+        name: dto.name,
+        email: dto.email,
+        passwordHash,
+        phone: dto.phone,
+        cccdHash,
+        cccdEncrypted: encryptCccd(dto.cccd, encryptionKey),
+        cccdMasked: maskCccd(dto.cccd),
+        role: Role.customer,
+      });
+    } catch (error) {
+      throw translateUniqueConstraintError(error, {
+        phone: DUPLICATE_PHONE_MESSAGE,
+        cccd: DUPLICATE_CCCD_MESSAGE,
+      });
+    }
 
     await this.sendVerificationEmail(user);
 
     const tokens = await this.issueTokens(user);
     return { ...tokens, user: this.usersService.sanitize(user) };
+  }
+
+  /**
+   * Khách hàng bổ sung CCCD SAU KHI đã đăng ký — dành cho tài khoản cũ tạo
+   * trước khi tính năng KYC này tồn tại (`cccdHash` NULL trong DB). Không cho
+   * SỬA lại CCCD đã có (dữ liệu định danh, không nên đổi tuỳ tiện — đổi thật
+   * sự cần thì phải là luồng riêng có xác minh thêm, ngoài phạm vi hiện tại).
+   */
+  async addCccd(userId: string, dto: AddCccdDto): Promise<SafeUser> {
+    const user = await this.usersService.findByIdOrThrow(userId);
+    if (user.cccdHash) {
+      throw new BadRequestException(
+        'Tài khoản đã có CCCD trong hồ sơ, không thể tự đổi — liên hệ hỗ trợ nếu cần cập nhật',
+      );
+    }
+
+    const cccdHash = hashCccd(dto.cccd);
+    const existingCccd = await this.usersService.findByCccdHash(cccdHash);
+    if (existingCccd) {
+      throw new ConflictException(DUPLICATE_CCCD_MESSAGE);
+    }
+
+    const encryptionKey = this.getCccdEncryptionKey();
+    try {
+      const updated = await this.usersService.update(
+        userId,
+        {
+          cccdHash,
+          cccdEncrypted: encryptCccd(dto.cccd, encryptionKey),
+          cccdMasked: maskCccd(dto.cccd),
+        },
+        userId,
+      );
+      return this.usersService.sanitize(updated);
+    } catch (error) {
+      throw translateUniqueConstraintError(error, { cccd: DUPLICATE_CCCD_MESSAGE });
+    }
   }
 
   async login(dto: LoginDto): Promise<AuthTokens & { user: SafeUser }> {
@@ -183,6 +262,10 @@ export class AuthService {
     if (!user.emailVerifiedAt) {
       await this.usersService.markEmailVerified(user.id);
     }
+  }
+
+  private getCccdEncryptionKey(): string {
+    return this.configService.get<string>('CCCD_ENCRYPTION_KEY')!;
   }
 
   private async sendVerificationEmail(user: User): Promise<void> {

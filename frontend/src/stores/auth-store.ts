@@ -9,6 +9,8 @@ export interface AuthUser {
   email: string;
   role: UserRole;
   phone?: string | null;
+  /** Bản che bớt (VD "********1234"), `null`/`undefined` nếu chưa bổ sung CCCD — KHÔNG BAO GIỜ có CCCD đầy đủ ở đây. */
+  cccdMasked?: string | null;
   emailVerifiedAt?: string | null;
   createdAt?: string;
 }

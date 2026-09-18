@@ -38,7 +38,7 @@ export default function RegisterPage() {
     formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { name: "", email: "", password: "", phone: "" },
+    defaultValues: { name: "", email: "", password: "", phone: "", cccd: "" },
   });
 
   const mutation = useMutation({
@@ -65,7 +65,8 @@ export default function RegisterPage() {
       name: values.name,
       email: values.email,
       password: values.password,
-      phone: values.phone || undefined,
+      phone: values.phone,
+      cccd: values.cccd,
     });
   };
 
@@ -116,7 +117,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="phone">Số điện thoại (không bắt buộc)</Label>
+              <Label htmlFor="phone">Số điện thoại</Label>
               <Input
                 id="phone"
                 type="tel"
@@ -127,6 +128,25 @@ export default function RegisterPage() {
               />
               {errors.phone && (
                 <p className="text-xs text-destructive">{errors.phone.message}</p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="cccd">Số CCCD</Label>
+              <Input
+                id="cccd"
+                inputMode="numeric"
+                autoComplete="off"
+                placeholder="079203012345"
+                aria-invalid={!!errors.cccd}
+                {...register("cccd")}
+              />
+              {errors.cccd ? (
+                <p className="text-xs text-destructive">{errors.cccd.message}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Dùng để xác minh danh tính khi thuê thiết bị (mã hoá khi lưu, không hiển thị đầy đủ ở bất kỳ đâu).
+                </p>
               )}
             </div>
 

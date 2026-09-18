@@ -11,6 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { Queue } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaymentsService } from '../payments/payments.service';
+import { UsersService } from '../users/users.service';
 import {
   Booking,
   BookingStatus,
@@ -69,6 +70,7 @@ export class BookingsService {
     private readonly configService: ConfigService,
     @InjectQueue(BOOKING_TTL_QUEUE) private readonly ttlQueue: Queue,
     private readonly paymentsService: PaymentsService,
+    private readonly usersService: UsersService,
   ) {}
 
   /**
@@ -79,6 +81,19 @@ export class BookingsService {
    * cùng ở tầng DB — được bắt lỗi riêng bên dưới nếu vì lý do nào đó lọt qua.
    */
   async create(userId: string, dto: CreateBookingDto): Promise<Booking> {
+    // Lớp chặn quan trọng nhất của KYC (mục 7 Roadmap): KHÔNG cho đặt thuê nếu
+    // hồ sơ chưa có CCCD xác thực — chặn cả user MỚI (lẽ ra không lọt qua vì
+    // RegisterDto giờ bắt buộc CCCD) LẪN user CŨ đã tồn tại trong DB trước khi
+    // tính năng này ra đời (cccdHash vẫn NULL). Kiểm tra ở đây, KHÔNG chỉ lúc
+    // đăng ký, vì đăng ký không phải cổng duy nhất tạo được tài khoản (admin
+    // cũng tạo được qua POST /users mà không bắt buộc CCCD).
+    const user = await this.usersService.findByIdOrThrow(userId);
+    if (!user.cccdHash) {
+      throw new BadRequestException(
+        'Vui lòng bổ sung số CCCD trong trang Tài khoản của tôi trước khi đặt thuê',
+      );
+    }
+
     const startTime = new Date(dto.startTime);
     const endTime = new Date(dto.endTime);
 

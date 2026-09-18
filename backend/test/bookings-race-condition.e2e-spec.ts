@@ -61,13 +61,24 @@ describe('Bookings race condition (e2e)', () => {
     deviceId = device.id;
 
     const server = app.getHttpServer();
+    // CCCD/phone giờ bắt buộc + unique khi đăng ký (mục 7 Roadmap, KYC) — mỗi
+    // user test phải có giá trị KHÁC NHAU, dùng chỉ số vòng lặp làm hậu tố để
+    // tránh trùng dù Date.now() có thể giống nhau giữa 2 lần gọi liên tiếp.
+    let userIndex = 0;
     for (const [email, password] of [
       [userAEmail, 'Str0ngP@ssword'],
       [userBEmail, 'Str0ngP@ssword'],
     ]) {
+      userIndex += 1;
       await request(server)
         .post('/auth/register')
-        .send({ name: 'Race Tester', email, password })
+        .send({
+          name: 'Race Tester',
+          email,
+          password,
+          phone: `090${Date.now().toString().slice(-6)}${userIndex}`,
+          cccd: `${Date.now().toString().slice(-11)}${userIndex}`,
+        })
         .expect(201);
     }
 

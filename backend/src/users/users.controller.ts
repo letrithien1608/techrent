@@ -12,11 +12,13 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import * as bcrypt from 'bcrypt';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RequestUser } from '../auth/interfaces/jwt-payload.interface';
+import { translateUniqueConstraintError } from '../common/prisma-error.util';
 import { Role } from '../generated/prisma/client';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ListUsersQueryDto } from './dto/list-users-query.dto';
@@ -24,13 +26,18 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
 
 const PASSWORD_SALT_ROUNDS = 10;
+const DUPLICATE_PHONE_MESSAGE =
+  'Số điện thoại này đã được đăng ký bởi một tài khoản khác';
 
 @ApiTags('users')
 @ApiBearerAuth()
 @Roles(Role.admin)
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Post()
   async create(@Body() dto: CreateUserDto) {
@@ -40,14 +47,20 @@ export class UsersController {
     }
 
     const passwordHash = await bcrypt.hash(dto.password, PASSWORD_SALT_ROUNDS);
-    const user = await this.usersService.create({
-      name: dto.name,
-      email: dto.email,
-      passwordHash,
-      phone: dto.phone,
-      role: dto.role ?? Role.customer,
-    });
-    return this.usersService.sanitize(user);
+    try {
+      const user = await this.usersService.create({
+        name: dto.name,
+        email: dto.email,
+        passwordHash,
+        phone: dto.phone,
+        role: dto.role ?? Role.customer,
+      });
+      return this.usersService.sanitize(user);
+    } catch (error) {
+      throw translateUniqueConstraintError(error, {
+        phone: DUPLICATE_PHONE_MESSAGE,
+      });
+    }
   }
 
   @Get()
@@ -103,17 +116,23 @@ export class UsersController {
       ? await bcrypt.hash(dto.password, PASSWORD_SALT_ROUNDS)
       : undefined;
 
-    const user = await this.usersService.update(
-      id,
-      {
-        name: dto.name,
-        phone: dto.phone,
-        role: dto.role,
-        passwordHash,
-      },
-      currentUser.userId,
-    );
-    return this.usersService.sanitize(user);
+    try {
+      const user = await this.usersService.update(
+        id,
+        {
+          name: dto.name,
+          phone: dto.phone,
+          role: dto.role,
+          passwordHash,
+        },
+        currentUser.userId,
+      );
+      return this.usersService.sanitize(user);
+    } catch (error) {
+      throw translateUniqueConstraintError(error, {
+        phone: DUPLICATE_PHONE_MESSAGE,
+      });
+    }
   }
 
   @Delete(':id')
@@ -123,5 +142,21 @@ export class UsersController {
     @CurrentUser() currentUser: RequestUser,
   ) {
     await this.usersService.remove(id, currentUser.userId);
+  }
+
+  /**
+   * Giải mã CCCD đầy đủ để admin xác minh tranh chấp thật — endpoint DUY NHẤT
+   * trong toàn hệ thống trả CCCD không che. Kế thừa `@Roles(Role.admin)` ở cấp
+   * class (KHÔNG có method-level `@Roles` riêng ở đây, khác hẳn `update()` phía
+   * trên) — staff/customer không gọi được, kể cả tự xem CCCD của chính mình
+   * (đã có bản mask trong `GET /auth/profile`/`GET /users/:id` rồi).
+   */
+  @Get(':id/cccd')
+  async revealCccd(@Param('id') id: string) {
+    const encryptionKey = this.configService.get<string>(
+      'CCCD_ENCRYPTION_KEY',
+    );
+    const cccd = await this.usersService.revealCccd(id, encryptionKey!);
+    return { cccd };
   }
 }

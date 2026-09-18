@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Patch,
   Post,
   Query,
   Req,
@@ -13,6 +14,7 @@ import { Request } from 'express';
 import { AuthService } from './auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
+import { AddCccdDto } from './dto/add-cccd.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
@@ -69,6 +71,18 @@ export class AuthController {
     const accessToken = req.headers.authorization?.replace('Bearer ', '') ?? '';
     await this.authService.changePassword(user.userId, dto, accessToken);
     return { message: 'Đổi mật khẩu thành công' };
+  }
+
+  /**
+   * Khách hàng tự bổ sung CCCD (cho tài khoản cũ tạo trước khi có KYC, hoặc
+   * ai chưa có sẵn). Trả về `SafeUser` đã sanitize (chỉ `cccdMasked`, không
+   * bao giờ trả CCCD đầy đủ) — frontend dùng thẳng để cập nhật lại Zustand
+   * store, không cần gọi lại `/auth/profile`.
+   */
+  @ApiBearerAuth()
+  @Patch('cccd')
+  addCccd(@CurrentUser() user: RequestUser, @Body() dto: AddCccdDto) {
+    return this.authService.addCccd(user.userId, dto);
   }
 
   @Public()

@@ -25,7 +25,9 @@ describe('UsersService', () => {
     refreshTokenHash: null,
     role: Role.customer,
     phone: null,
+    cccdHash: null,
     cccdEncrypted: null,
+    cccdMasked: null,
     emailVerifiedAt: null,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
   };
@@ -228,9 +230,69 @@ describe('UsersService', () => {
         email: baseUser.email,
         role: baseUser.role,
         phone: baseUser.phone,
+        cccdMasked: baseUser.cccdMasked,
         emailVerifiedAt: baseUser.emailVerifiedAt,
         createdAt: baseUser.createdAt,
       });
+    });
+
+    it('KHÔNG BAO GIỜ trả cccdHash/cccdEncrypted đầy đủ, chỉ trả cccdMasked', () => {
+      const result = service.sanitize({
+        ...baseUser,
+        cccdHash: 'a'.repeat(64),
+        cccdEncrypted: 'iv:tag:ciphertext',
+        cccdMasked: '********1234',
+      });
+
+      expect(result).not.toHaveProperty('cccdHash');
+      expect(result).not.toHaveProperty('cccdEncrypted');
+      expect(result.cccdMasked).toBe('********1234');
+    });
+  });
+
+  describe('findByCccdHash', () => {
+    it('tìm user theo cccdHash', async () => {
+      prisma.user.findUnique.mockResolvedValue(baseUser);
+
+      const result = await service.findByCccdHash('a'.repeat(64));
+
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { cccdHash: 'a'.repeat(64) },
+      });
+      expect(result).toEqual(baseUser);
+    });
+  });
+
+  describe('revealCccd', () => {
+    const encryptionKey =
+      '5087b9960945283af522f534d221642dd7aac08c5f53f57bded1453b90a1f480';
+
+    it('ném NotFoundException nếu user không tồn tại', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.revealCccd('missing-id', encryptionKey),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('ném NotFoundException nếu user tồn tại nhưng chưa có CCCD', async () => {
+      prisma.user.findUnique.mockResolvedValue(baseUser);
+
+      await expect(
+        service.revealCccd(baseUser.id, encryptionKey),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('giải mã đúng CCCD gốc từ cccdEncrypted', async () => {
+      const { encryptCccd } = await import(
+        '../common/crypto/cccd-crypto.util'
+      );
+      const cccdEncrypted = encryptCccd('079203012345', encryptionKey);
+      prisma.user.findUnique.mockResolvedValue({ ...baseUser, cccdEncrypted });
+
+      await expect(
+        service.revealCccd(baseUser.id, encryptionKey),
+      ).resolves.toBe('079203012345');
     });
   });
 });

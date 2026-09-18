@@ -30,6 +30,7 @@ describe('BookingsService', () => {
   let configService: { get: jest.Mock };
   let ttlQueue: { add: jest.Mock; getJob: jest.Mock };
   let paymentsService: { refundForBooking: jest.Mock };
+  let usersService: { findByIdOrThrow: jest.Mock };
 
   const deviceId = 'device-1';
   const customer: RequestUser = {
@@ -97,12 +98,21 @@ describe('BookingsService', () => {
     paymentsService = {
       refundForBooking: jest.fn().mockResolvedValue(undefined),
     };
+    // Mặc định user ĐÃ có CCCD (cccdHash khác null) để các test `create` có sẵn
+    // từ trước không bị ảnh hưởng — test riêng cho lớp chặn CCCD tự override lại.
+    usersService = {
+      findByIdOrThrow: jest.fn().mockResolvedValue({
+        id: customer.userId,
+        cccdHash: 'a'.repeat(64),
+      }),
+    };
 
     service = new BookingsService(
       prisma as unknown as PrismaService,
       configService as any,
       ttlQueue as any,
       paymentsService as any,
+      usersService as any,
     );
   });
 
@@ -112,6 +122,36 @@ describe('BookingsService', () => {
       startTime: new Date(Date.now() + 48 * 3600 * 1000).toISOString(),
       endTime: new Date(Date.now() + 50 * 3600 * 1000).toISOString(),
     };
+
+    // Lớp chặn quan trọng nhất của KYC (mục 7 Roadmap) — kiểm tra CCCD TRƯỚC
+    // cả validate thời gian, nên đặt lên đầu describe cho dễ đối chiếu.
+    it('ném BadRequestException nếu user CHƯA có CCCD trong hồ sơ (cccdHash null)', async () => {
+      usersService.findByIdOrThrow.mockResolvedValue({
+        id: customer.userId,
+        cccdHash: null,
+      });
+
+      await expect(
+        service.create(customer.userId, validDto),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      // Phải chặn NGAY, không được chạm tới transaction/DB thiết bị.
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('cho phép tạo booking bình thường nếu user ĐÃ có CCCD (cccdHash khác null)', async () => {
+      tx.device.findUnique.mockResolvedValue(baseDevice);
+      tx.booking.findFirst.mockResolvedValue(null);
+      tx.booking.create.mockImplementation((args: any) =>
+        Promise.resolve({ id: 'b1', ...args.data }),
+      );
+
+      await expect(
+        service.create(customer.userId, validDto),
+      ).resolves.toEqual(expect.objectContaining({ id: 'b1' }));
+      expect(usersService.findByIdOrThrow).toHaveBeenCalledWith(
+        customer.userId,
+      );
+    });
 
     it('ném BadRequestException nếu endTime <= startTime', async () => {
       await expect(

@@ -56,8 +56,22 @@ model User {
   passwordHash      String   @map("password_hash")
   refreshTokenHash  String?  @map("refresh_token_hash")
   role              Role     @default(customer)
-  phone             String?
+  // Cả phone lẫn cccdHash đều unique CẤP DATABASE (không chỉ validate ở tầng
+  // ứng dụng) — chống 1 người tạo nhiều tài khoản để thuê rồi chiếm đoạt (mục
+  // 7 Roadmap), và là lớp bảo vệ cuối cùng chống race condition khi 2 request
+  // đăng ký cùng lúc dùng chung 1 SĐT/CCCD. Nullable để KHÔNG phá dữ liệu user
+  // cũ đã tồn tại trước khi tính năng này được thêm (Postgres cho phép nhiều
+  // NULL cùng lúc trong 1 unique index — NULL không coi là trùng NULL khác).
+  phone             String?  @unique(map: "idx_users_phone")
+  // Hash 1 chiều (SHA-256) của CCCD — dùng để kiểm tra trùng lặp qua unique
+  // index mà KHÔNG cần giải mã lại. KHÔNG thể đảo ngược về số CCCD gốc.
+  cccdHash          String?  @unique(map: "idx_users_cccd_hash") @map("cccd_hash")
+  // Mã hoá 2 chiều (AES-256-GCM) — LƯU giá trị CCCD gốc, chỉ giải mã được ở
+  // đúng 1 endpoint admin xem để xác minh tranh chấp thật (xem UsersService).
   cccdEncrypted     String?  @map("cccd_encrypted")
+  // Bản che bớt tính sẵn lúc ghi (VD "********1234") — dùng để HIỂN THỊ, tránh
+  // phải giải mã cccdEncrypted mỗi lần đọc thông thường (giảm bề mặt lộ dữ liệu).
+  cccdMasked        String?  @map("cccd_masked")
   emailVerifiedAt   DateTime? @map("email_verified_at")
   createdAt         DateTime @default(now()) @map("created_at")
 

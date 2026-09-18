@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { decryptCccd } from '../common/crypto/cccd-crypto.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma, Role, User } from '../generated/prisma/client';
 
@@ -12,6 +13,8 @@ export interface SafeUser {
   email: string;
   role: Role;
   phone: string | null;
+  /** Bản che bớt (VD "********1234"), `null` nếu chưa bổ sung CCCD — KHÔNG BAO GIỜ trả CCCD đầy đủ ở đây. */
+  cccdMasked: string | null;
   emailVerifiedAt: Date | null;
   createdAt: Date;
 }
@@ -38,6 +41,11 @@ export class UsersService {
     return this.prisma.user.findUnique({ where: { id } });
   }
 
+  /** Kiểm tra trùng CCCD qua hash — KHÔNG cần giải mã, dùng cho pre-check trước khi tạo/bổ sung CCCD. */
+  findByCccdHash(cccdHash: string) {
+    return this.prisma.user.findUnique({ where: { cccdHash } });
+  }
+
   async findByIdOrThrow(id: string): Promise<User> {
     const user = await this.findById(id);
     if (!user) {
@@ -51,6 +59,9 @@ export class UsersService {
     email: string;
     passwordHash: string;
     phone?: string;
+    cccdHash?: string;
+    cccdEncrypted?: string;
+    cccdMasked?: string;
     role?: Role;
   }) {
     return this.prisma.user.create({ data });
@@ -104,7 +115,15 @@ export class UsersService {
    */
   async update(
     id: string,
-    data: { name?: string; phone?: string; role?: Role; passwordHash?: string },
+    data: {
+      name?: string;
+      phone?: string;
+      role?: Role;
+      passwordHash?: string;
+      cccdHash?: string;
+      cccdEncrypted?: string;
+      cccdMasked?: string;
+    },
     currentUserId: string,
   ): Promise<User> {
     const existing = await this.findByIdOrThrow(id);
@@ -141,6 +160,20 @@ export class UsersService {
     });
   }
 
+  /**
+   * Giải mã CCCD đầy đủ — CHỈ gọi từ `GET /users/:id/cccd` (admin xem để xác
+   * minh tranh chấp thật). `encryptionKey` truyền vào từ `ConfigService` ở
+   * controller, KHÔNG đọc `process.env` trực tiếp trong service (nhất quán
+   * pattern dùng ConfigService xuyên suốt dự án).
+   */
+  async revealCccd(id: string, encryptionKey: string): Promise<string> {
+    const user = await this.findByIdOrThrow(id);
+    if (!user.cccdEncrypted) {
+      throw new NotFoundException('Người dùng này chưa có CCCD trong hồ sơ');
+    }
+    return decryptCccd(user.cccdEncrypted, encryptionKey);
+  }
+
   sanitize(user: User): SafeUser {
     return {
       id: user.id,
@@ -148,6 +181,7 @@ export class UsersService {
       email: user.email,
       role: user.role,
       phone: user.phone,
+      cccdMasked: user.cccdMasked,
       emailVerifiedAt: user.emailVerifiedAt,
       createdAt: user.createdAt,
     };

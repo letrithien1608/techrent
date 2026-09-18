@@ -11,7 +11,9 @@ export interface RegisterPayload {
   name: string;
   email: string;
   password: string;
-  phone?: string;
+  // Bắt buộc từ khi triển khai KYC (mục 7 Roadmap) — xem CLAUDE.md mục 2.
+  phone: string;
+  cccd: string;
 }
 
 export interface LoginPayload {
@@ -71,5 +73,15 @@ export async function changePasswordRequest(
     "/auth/change-password",
     payload,
   );
+  return data;
+}
+
+/**
+ * Bổ sung CCCD SAU KHI đã đăng ký (tài khoản cũ tạo trước khi có KYC, hoặc ai
+ * bỏ sót lúc đăng ký). Route riêng `PATCH /auth/cccd` — backend chặn đổi lại
+ * nếu đã có CCCD trong hồ sơ (400), và chặn trùng CCCD với tài khoản khác (409).
+ */
+export async function addCccdRequest(cccd: string): Promise<AuthUser> {
+  const { data } = await api.patch<AuthUser>("/auth/cccd", { cccd });
   return data;
 }

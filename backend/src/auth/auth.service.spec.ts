@@ -15,6 +15,7 @@ describe('AuthService', () => {
     findByEmail: jest.Mock;
     findById: jest.Mock;
     findByIdOrThrow: jest.Mock;
+    findByCccdHash: jest.Mock;
     create: jest.Mock;
     update: jest.Mock;
     updateRefreshTokenHash: jest.Mock;
@@ -41,10 +42,16 @@ describe('AuthService', () => {
     refreshTokenHash: null,
     role: Role.customer,
     phone: null,
+    cccdHash: null,
     cccdEncrypted: null,
+    cccdMasked: null,
     emailVerifiedAt: null,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
   };
+
+  // 32 byte (64 ký tự hex) — đúng chuẩn AES-256 đọc từ CCCD_ENCRYPTION_KEY.
+  const cccdEncryptionKey =
+    '5087b9960945283af522f534d221642dd7aac08c5f53f57bded1453b90a1f480';
 
   const configValues: Record<string, string> = {
     JWT_ACCESS_SECRET: 'access-secret',
@@ -54,6 +61,16 @@ describe('AuthService', () => {
     EMAIL_VERIFICATION_SECRET: 'email-verification-secret',
     EMAIL_VERIFICATION_EXPIRES_IN: '24h',
     PORT: '3001',
+    CCCD_ENCRYPTION_KEY: cccdEncryptionKey,
+  };
+
+  // Payload đăng ký hợp lệ dùng lại ở nhiều test — phone/cccd giờ BẮT BUỘC.
+  const validRegisterDto = {
+    name: 'Nguyễn Văn A',
+    email: 'new@example.com',
+    password: 'Str0ngP@ssword',
+    phone: '0901234567',
+    cccd: '079203012345',
   };
 
   beforeEach(() => {
@@ -61,6 +78,7 @@ describe('AuthService', () => {
       findByEmail: jest.fn(),
       findById: jest.fn(),
       findByIdOrThrow: jest.fn(),
+      findByCccdHash: jest.fn().mockResolvedValue(null),
       create: jest.fn(),
       update: jest.fn(),
       updateRefreshTokenHash: jest.fn(),
@@ -71,6 +89,7 @@ describe('AuthService', () => {
         email: user.email,
         role: user.role,
         phone: user.phone,
+        cccdMasked: user.cccdMasked,
         emailVerifiedAt: user.emailVerifiedAt,
         createdAt: user.createdAt,
       })),
@@ -110,32 +129,48 @@ describe('AuthService', () => {
       usersService.findByEmail.mockResolvedValue(baseUser);
 
       await expect(
-        service.register({
-          name: 'A',
-          email: baseUser.email,
-          password: 'Str0ngP@ssword',
-        }),
+        service.register({ ...validRegisterDto, email: baseUser.email }),
       ).rejects.toBeInstanceOf(ConflictException);
 
       expect(usersService.create).not.toHaveBeenCalled();
+      // Không cần tốn công kiểm tra CCCD nếu email đã trùng — thất bại sớm.
+      expect(usersService.findByCccdHash).not.toHaveBeenCalled();
     });
 
-    it('tạo user mới với password đã bcrypt-hash và role mặc định customer', async () => {
+    it('ném ConflictException nếu CCCD đã được đăng ký bởi tài khoản khác — KHÔNG tiết lộ thông tin tài khoản kia', async () => {
+      usersService.findByEmail.mockResolvedValue(null);
+      usersService.findByCccdHash.mockResolvedValue({
+        ...baseUser,
+        id: 'someone-else',
+        email: 'other-person@example.com',
+      });
+
+      const error: unknown = await service
+        .register(validRegisterDto)
+        .catch((e) => e);
+
+      expect(error).toBeInstanceOf(ConflictException);
+      expect((error as ConflictException).message).not.toContain(
+        'other-person@example.com',
+      );
+      expect(usersService.create).not.toHaveBeenCalled();
+    });
+
+    it('tạo user mới với password đã bcrypt-hash, role mặc định customer, và CCCD được hash+mã hoá+mask', async () => {
       usersService.findByEmail.mockResolvedValue(null);
       usersService.create.mockImplementation((data: any) =>
         Promise.resolve({ ...baseUser, ...data, refreshTokenHash: null }),
       );
 
-      const result = await service.register({
-        name: 'Nguyễn Văn A',
-        email: 'new@example.com',
-        password: 'Str0ngP@ssword',
-      });
+      const result = await service.register(validRegisterDto);
 
       expect(usersService.create).toHaveBeenCalledWith(
         expect.objectContaining({
           email: 'new@example.com',
           role: Role.customer,
+          cccdHash: expect.any(String),
+          cccdEncrypted: expect.any(String),
+          cccdMasked: '********2345',
         }),
       );
       const createdArg = usersService.create.mock.calls[0][0];
@@ -143,16 +178,37 @@ describe('AuthService', () => {
       expect(
         await bcrypt.compare('Str0ngP@ssword', createdArg.passwordHash),
       ).toBe(true);
+      // cccdHash/cccdEncrypted KHÔNG được chứa CCCD gốc dạng thô.
+      expect(createdArg.cccdHash).not.toBe(validRegisterDto.cccd);
+      expect(createdArg.cccdEncrypted).not.toContain(validRegisterDto.cccd);
 
       expect(result.accessToken).toBe('access-token');
       expect(result.refreshToken).toBe('refresh-token');
       expect(result.user).not.toHaveProperty('passwordHash');
       expect(result.user).not.toHaveProperty('refreshTokenHash');
+      expect(result.user).not.toHaveProperty('cccdHash');
+      expect(result.user).not.toHaveProperty('cccdEncrypted');
 
       // refresh token phải được hash (SHA-256, không phải plaintext) trước khi lưu DB
       expect(usersService.updateRefreshTokenHash).toHaveBeenCalledWith(
         baseUser.id,
         expect.not.stringMatching('refresh-token'),
+      );
+    });
+
+    it('dịch lỗi P2002 (trùng phone, lọt qua race condition) thành ConflictException thân thiện', async () => {
+      usersService.findByEmail.mockResolvedValue(null);
+      const { Prisma } = await import('../generated/prisma/client');
+      usersService.create.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+          code: 'P2002',
+          clientVersion: 'test',
+          meta: { target: ['phone'] },
+        }),
+      );
+
+      await expect(service.register(validRegisterDto)).rejects.toBeInstanceOf(
+        ConflictException,
       );
     });
 
@@ -163,17 +219,65 @@ describe('AuthService', () => {
         email: 'new@example.com',
       });
 
-      await service.register({
-        name: 'Nguyễn Văn A',
-        email: 'new@example.com',
-        password: 'Str0ngP@ssword',
-      });
+      await service.register(validRegisterDto);
 
       expect(mailService.sendVerificationEmail).toHaveBeenCalledWith(
         'new@example.com',
         baseUser.name,
         expect.stringContaining('email-verification-token'),
       );
+    });
+  });
+
+  describe('addCccd', () => {
+    const dto = { cccd: '079203012345' };
+
+    it('ném BadRequestException nếu tài khoản đã có CCCD (không cho tự đổi)', async () => {
+      usersService.findByIdOrThrow.mockResolvedValue({
+        ...baseUser,
+        cccdHash: 'a'.repeat(64),
+      });
+
+      await expect(
+        service.addCccd(baseUser.id, dto),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(usersService.update).not.toHaveBeenCalled();
+    });
+
+    it('ném ConflictException nếu CCCD đã được đăng ký bởi tài khoản khác', async () => {
+      usersService.findByIdOrThrow.mockResolvedValue(baseUser);
+      usersService.findByCccdHash.mockResolvedValue({
+        ...baseUser,
+        id: 'someone-else',
+      });
+
+      await expect(
+        service.addCccd(baseUser.id, dto),
+      ).rejects.toBeInstanceOf(ConflictException);
+      expect(usersService.update).not.toHaveBeenCalled();
+    });
+
+    it('bổ sung CCCD hợp lệ thành công — lưu hash+mã hoá+mask, trả về user đã sanitize', async () => {
+      usersService.findByIdOrThrow.mockResolvedValue(baseUser);
+      usersService.findByCccdHash.mockResolvedValue(null);
+      usersService.update.mockImplementation((_id, data: any) =>
+        Promise.resolve({ ...baseUser, ...data }),
+      );
+
+      const result = await service.addCccd(baseUser.id, dto);
+
+      expect(usersService.update).toHaveBeenCalledWith(
+        baseUser.id,
+        expect.objectContaining({
+          cccdHash: expect.any(String),
+          cccdEncrypted: expect.any(String),
+          cccdMasked: '********2345',
+        }),
+        baseUser.id,
+      );
+      expect(result.cccdMasked).toBe('********2345');
+      expect(result).not.toHaveProperty('cccdHash');
+      expect(result).not.toHaveProperty('cccdEncrypted');
     });
   });
 
