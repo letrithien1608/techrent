@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma, Role, User } from '../generated/prisma/client';
 
@@ -91,15 +95,34 @@ export class UsersService {
     };
   }
 
+  /**
+   * `currentUserId` là id của người GỌI request (từ `@CurrentUser()`, luôn có
+   * giá trị vì route này bắt buộc đăng nhập) — dùng để chặn tự đổi role của
+   * chính mình. Áp dụng cho MỌI role gọi (kể cả admin), không có ngoại lệ —
+   * đây là quy tắc chung "không ai được tự thao túng quyền của chính tài
+   * khoản mình", KHÔNG phải chặn riêng cho 1 role cụ thể.
+   */
   async update(
     id: string,
     data: { name?: string; phone?: string; role?: Role; passwordHash?: string },
+    currentUserId: string,
   ): Promise<User> {
-    await this.findByIdOrThrow(id);
+    const existing = await this.findByIdOrThrow(id);
+    if (
+      id === currentUserId &&
+      data.role !== undefined &&
+      data.role !== existing.role
+    ) {
+      throw new ForbiddenException('Không thể tự đổi vai trò của chính mình');
+    }
     return this.prisma.user.update({ where: { id }, data });
   }
 
-  async remove(id: string): Promise<void> {
+  /** Chặn tự xoá chính tài khoản đang gọi request — xem ghi chú ở `update()`. */
+  async remove(id: string, currentUserId: string): Promise<void> {
+    if (id === currentUserId) {
+      throw new ForbiddenException('Không thể tự xoá tài khoản của chính mình');
+    }
     await this.findByIdOrThrow(id);
     await this.prisma.user.delete({ where: { id } });
   }

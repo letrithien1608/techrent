@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Role, User } from '../generated/prisma/client';
 import { UsersService } from './users.service';
@@ -117,20 +117,28 @@ describe('UsersService', () => {
   });
 
   describe('update', () => {
+    // Người gọi không trùng với user đang sửa (VD admin sửa user khác) —
+    // dùng id khác `baseUser.id` để không vô tình trigger chặn tự-sửa-mình.
+    const otherCallerId = 'caller-other-1';
+
     it('ném NotFoundException nếu user không tồn tại', async () => {
       prisma.user.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.update('missing-id', { name: 'B' }),
+        service.update('missing-id', { name: 'B' }, otherCallerId),
       ).rejects.toBeInstanceOf(NotFoundException);
       expect(prisma.user.update).not.toHaveBeenCalled();
     });
 
-    it('cập nhật user khi tồn tại', async () => {
+    it('cập nhật user khi tồn tại (người gọi khác user đang sửa)', async () => {
       prisma.user.findUnique.mockResolvedValue(baseUser);
       prisma.user.update.mockResolvedValue({ ...baseUser, role: Role.staff });
 
-      const result = await service.update(baseUser.id, { role: Role.staff });
+      const result = await service.update(
+        baseUser.id,
+        { role: Role.staff },
+        otherCallerId,
+      );
 
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: baseUser.id },
@@ -138,26 +146,69 @@ describe('UsersService', () => {
       });
       expect(result.role).toBe(Role.staff);
     });
+
+    it('chặn tự đổi role của chính mình (id trùng currentUserId, role khác role hiện tại)', async () => {
+      prisma.user.findUnique.mockResolvedValue(baseUser);
+
+      await expect(
+        service.update(baseUser.id, { role: Role.admin }, baseUser.id),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('KHÔNG chặn nếu tự sửa chính mình nhưng không đổi role (chỉ đổi tên/phone)', async () => {
+      prisma.user.findUnique.mockResolvedValue(baseUser);
+      prisma.user.update.mockResolvedValue({ ...baseUser, name: 'B' });
+
+      await expect(
+        service.update(baseUser.id, { name: 'B' }, baseUser.id),
+      ).resolves.toEqual({ ...baseUser, name: 'B' });
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: baseUser.id },
+        data: { name: 'B' },
+      });
+    });
+
+    it('KHÔNG chặn nếu role gửi lên trùng với role hiện tại (không thực sự đổi gì)', async () => {
+      prisma.user.findUnique.mockResolvedValue(baseUser);
+      prisma.user.update.mockResolvedValue(baseUser);
+
+      await expect(
+        service.update(baseUser.id, { role: baseUser.role }, baseUser.id),
+      ).resolves.toEqual(baseUser);
+      expect(prisma.user.update).toHaveBeenCalled();
+    });
   });
 
   describe('remove', () => {
+    const otherCallerId = 'caller-other-1';
+
     it('ném NotFoundException nếu user không tồn tại', async () => {
       prisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.remove('missing-id')).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      await expect(
+        service.remove('missing-id', otherCallerId),
+      ).rejects.toBeInstanceOf(NotFoundException);
       expect(prisma.user.delete).not.toHaveBeenCalled();
     });
 
-    it('xoá user khi tồn tại', async () => {
+    it('xoá user khi tồn tại (người gọi khác user bị xoá)', async () => {
       prisma.user.findUnique.mockResolvedValue(baseUser);
 
-      await service.remove(baseUser.id);
+      await service.remove(baseUser.id, otherCallerId);
 
       expect(prisma.user.delete).toHaveBeenCalledWith({
         where: { id: baseUser.id },
       });
+    });
+
+    it('chặn tự xoá chính tài khoản đang gọi request', async () => {
+      await expect(
+        service.remove(baseUser.id, baseUser.id),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.user.delete).not.toHaveBeenCalled();
+      // Chặn ngay từ đầu, không cần tốn 1 lần query kiểm tra tồn tại nữa.
+      expect(prisma.user.findUnique).not.toHaveBeenCalled();
     });
   });
 

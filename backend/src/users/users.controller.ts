@@ -13,7 +13,9 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import * as bcrypt from 'bcrypt';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { RequestUser } from '../auth/interfaces/jwt-payload.interface';
 import { Role } from '../generated/prisma/client';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ListUsersQueryDto } from './dto/list-users-query.dto';
@@ -64,23 +66,34 @@ export class UsersController {
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateUserDto,
+    @CurrentUser() currentUser: RequestUser,
+  ) {
     const passwordHash = dto.password
       ? await bcrypt.hash(dto.password, PASSWORD_SALT_ROUNDS)
       : undefined;
 
-    const user = await this.usersService.update(id, {
-      name: dto.name,
-      phone: dto.phone,
-      role: dto.role,
-      passwordHash,
-    });
+    const user = await this.usersService.update(
+      id,
+      {
+        name: dto.name,
+        phone: dto.phone,
+        role: dto.role,
+        passwordHash,
+      },
+      currentUser.userId,
+    );
     return this.usersService.sanitize(user);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id') id: string) {
-    await this.usersService.remove(id);
+  async remove(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: RequestUser,
+  ) {
+    await this.usersService.remove(id, currentUser.userId);
   }
 }

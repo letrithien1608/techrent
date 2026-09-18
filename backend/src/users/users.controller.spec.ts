@@ -1,8 +1,15 @@
 import { ConflictException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { RequestUser } from '../auth/interfaces/jwt-payload.interface';
 import { Role } from '../generated/prisma/client';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
+
+const currentAdmin: RequestUser = {
+  userId: 'admin-1',
+  email: 'admin@example.com',
+  role: Role.admin,
+};
 
 describe('UsersController', () => {
   let controller: UsersController;
@@ -123,7 +130,7 @@ describe('UsersController', () => {
         Promise.resolve({ id: 'u1', ...data }),
       );
 
-      await controller.update('u1', { password: 'NewStr0ngP@ss' });
+      await controller.update('u1', { password: 'NewStr0ngP@ss' }, currentAdmin);
 
       const updateArg = usersService.update.mock.calls[0][1];
       expect(updateArg.passwordHash).toBeDefined();
@@ -137,18 +144,32 @@ describe('UsersController', () => {
         Promise.resolve({ id: 'u1', ...data }),
       );
 
-      await controller.update('u1', { name: 'Tên mới' });
+      await controller.update('u1', { name: 'Tên mới' }, currentAdmin);
 
       const updateArg = usersService.update.mock.calls[0][1];
       expect(updateArg.passwordHash).toBeUndefined();
     });
+
+    it('truyền id của người đang gọi (currentUser.userId) xuống UsersService.update để service tự chặn tự-đổi-role', async () => {
+      usersService.update.mockImplementation((_id, data) =>
+        Promise.resolve({ id: 'u1', ...data }),
+      );
+
+      await controller.update('u1', { role: Role.staff }, currentAdmin);
+
+      expect(usersService.update).toHaveBeenCalledWith(
+        'u1',
+        expect.objectContaining({ role: Role.staff }),
+        currentAdmin.userId,
+      );
+    });
   });
 
   describe('remove', () => {
-    it('gọi UsersService.remove với đúng id', async () => {
-      await controller.remove('u1');
+    it('gọi UsersService.remove với đúng id VÀ id của người đang gọi', async () => {
+      await controller.remove('u1', currentAdmin);
 
-      expect(usersService.remove).toHaveBeenCalledWith('u1');
+      expect(usersService.remove).toHaveBeenCalledWith('u1', currentAdmin.userId);
     });
   });
 });
