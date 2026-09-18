@@ -1,5 +1,6 @@
 import { api } from "./api-client";
 import type { Category, Device, DeviceStatus } from "./devices-api";
+import type { UserRole } from "@/stores/auth-store";
 
 // ---- Thiết bị (CRUD, admin only) ----
 
@@ -102,4 +103,60 @@ export async function updateMaintenanceStatus(
     status,
   });
   return data;
+}
+
+// ---- Người dùng (admin only) ----
+
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  phone: string | null;
+  emailVerifiedAt: string | null;
+  createdAt: string;
+}
+
+export interface PaginatedUsers {
+  data: AdminUser[];
+  meta: { page: number; limit: number; total: number; totalPages: number };
+}
+
+export async function fetchUsers(
+  params: { page?: number; limit?: number; role?: UserRole; search?: string } = {},
+): Promise<PaginatedUsers> {
+  const { data } = await api.get<PaginatedUsers>("/users", { params });
+  return data;
+}
+
+export interface CreateUserPayload {
+  name: string;
+  email: string;
+  password: string;
+  phone?: string;
+  role?: UserRole;
+}
+
+export interface UpdateUserPayload {
+  name?: string;
+  phone?: string;
+  role?: UserRole;
+  password?: string;
+}
+
+export async function createUser(payload: CreateUserPayload): Promise<AdminUser> {
+  const { data } = await api.post<AdminUser>("/users", payload);
+  return data;
+}
+
+export async function updateUser(
+  id: string,
+  payload: UpdateUserPayload,
+): Promise<AdminUser> {
+  const { data } = await api.patch<AdminUser>(`/users/${id}`, payload);
+  return data;
+}
+
+export async function deleteUser(id: string): Promise<void> {
+  await api.delete(`/users/${id}`);
 }

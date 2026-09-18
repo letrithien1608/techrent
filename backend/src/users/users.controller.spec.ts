@@ -90,7 +90,30 @@ describe('UsersController', () => {
 
       await controller.findAll({ page: 2, limit: 10 });
 
-      expect(usersService.findAll).toHaveBeenCalledWith(2, 10);
+      expect(usersService.findAll).toHaveBeenCalledWith(
+        2,
+        10,
+        undefined,
+        undefined,
+      );
+    });
+
+    it('truyền tiếp role/search từ query xuống UsersService.findAll', async () => {
+      usersService.findAll.mockResolvedValue({ data: [], meta: {} });
+
+      await controller.findAll({
+        page: 1,
+        limit: 20,
+        role: Role.staff,
+        search: 'an',
+      });
+
+      expect(usersService.findAll).toHaveBeenCalledWith(
+        1,
+        20,
+        Role.staff,
+        'an',
+      );
     });
   });
 

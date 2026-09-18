@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Role, User } from '../generated/prisma/client';
+import { Prisma, Role, User } from '../generated/prisma/client';
 
 export interface SafeUser {
   id: string;
@@ -55,15 +55,29 @@ export class UsersService {
   async findAll(
     page: number,
     limit: number,
+    role?: Role,
+    search?: string,
   ): Promise<PaginatedResult<SafeUser>> {
+    const where: Prisma.UserWhereInput = {
+      ...(role ? { role } : {}),
+      ...(search
+        ? {
+            OR: [
+              { name: { contains: search, mode: 'insensitive' } },
+              { email: { contains: search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
     const skip = (page - 1) * limit;
     const [users, total] = await this.prisma.$transaction([
       this.prisma.user.findMany({
+        where,
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.user.count(),
+      this.prisma.user.count({ where }),
     ]);
 
     return {

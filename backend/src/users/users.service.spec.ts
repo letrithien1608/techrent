@@ -71,7 +71,7 @@ describe('UsersService', () => {
       const result = await service.findAll(2, 20);
 
       expect(prisma.user.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ skip: 20, take: 20 }),
+        expect.objectContaining({ skip: 20, take: 20, where: {} }),
       );
       expect(result.data).toEqual([service.sanitize(baseUser)]);
       expect(result.data[0]).not.toHaveProperty('passwordHash');
@@ -81,6 +81,38 @@ describe('UsersService', () => {
         total: 45,
         totalPages: 3,
       });
+    });
+
+    it('lọc theo role khi có truyền vào', async () => {
+      prisma.user.findMany.mockResolvedValue([baseUser]);
+      prisma.user.count.mockResolvedValue(1);
+
+      await service.findAll(1, 20, Role.admin);
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { role: Role.admin } }),
+      );
+      expect(prisma.user.count).toHaveBeenCalledWith({
+        where: { role: Role.admin },
+      });
+    });
+
+    it('tìm theo tên hoặc email khi có search', async () => {
+      prisma.user.findMany.mockResolvedValue([baseUser]);
+      prisma.user.count.mockResolvedValue(1);
+
+      await service.findAll(1, 20, undefined, 'nguyen');
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            OR: [
+              { name: { contains: 'nguyen', mode: 'insensitive' } },
+              { email: { contains: 'nguyen', mode: 'insensitive' } },
+            ],
+          },
+        }),
+      );
     });
   });
 

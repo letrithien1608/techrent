@@ -49,7 +49,12 @@ export class UsersController {
 
   @Get()
   findAll(@Query() query: ListUsersQueryDto) {
-    return this.usersService.findAll(query.page ?? 1, query.limit ?? 20);
+    return this.usersService.findAll(
+      query.page ?? 1,
+      query.limit ?? 20,
+      query.role,
+      query.search,
+    );
   }
 
   @Get(':id')
