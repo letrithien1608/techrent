@@ -18,6 +18,7 @@ import {
 } from '../generated/prisma/client';
 import { RequestUser } from '../auth/interfaces/jwt-payload.interface';
 import { BOOKING_TTL_QUEUE } from '../bookings/bookings.constants';
+import { NotificationsService } from '../notifications/notifications.service';
 import {
   formatVnpayDate,
   signVnpayParams,
@@ -40,6 +41,7 @@ export class PaymentsService {
     // BookingsModule <-> PaymentsModule) — inject thẳng cùng queue TTL để tự huỷ
     // job khi thanh toán thành công, chỉ lặp lại vài dòng thay vì import chéo module.
     @InjectQueue(BOOKING_TTL_QUEUE) private readonly ttlQueue: Queue,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   /** Tạo URL thanh toán VNPay Sandbox cho tiền cọc của 1 booking đang `pending`. */
@@ -224,9 +226,31 @@ export class PaymentsService {
     if (job) {
       await job.remove();
     }
-    await this.prisma.booking.updateMany({
+    // updateMany (không phải update) để có điều kiện `status: pending` ngay
+    // trong câu lệnh — tránh 1 race hiếm (IPN gọi lại/trùng) vô tình confirm
+    // lại 1 booking đã confirmed từ trước. `count === 0` nghĩa là không có
+    // gì thật sự đổi (đã confirmed rồi) — không cần thông báo thêm lần nữa.
+    const { count } = await this.prisma.booking.updateMany({
       where: { id: bookingId, status: BookingStatus.pending },
       data: { status: BookingStatus.confirmed },
     });
+    if (count === 0) return;
+
+    try {
+      const booking = await this.prisma.booking.findUnique({
+        where: { id: bookingId },
+      });
+      if (booking) {
+        await this.notificationsService.create(
+          booking.userId,
+          'booking_confirmed',
+          'Đơn thuê của bạn đã được xác nhận sau khi thanh toán tiền cọc thành công.',
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Không tạo được thông báo xác nhận cho booking ${bookingId}: ${(error as Error).message}`,
+      );
+    }
   }
 }

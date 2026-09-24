@@ -185,5 +185,9 @@ model Notification {
 
   user User @relation(fields: [userId], references: [id])
 
+  // Truy vấn chính của module: "danh sách thông báo của user X, mới nhất
+  // trước" (GET /notifications) — index (userId, createdAt) phục vụ đúng cả
+  // filter lẫn order, cùng pattern idx_payments_booking_id/idx_maintenance_device_status.
+  @@index([userId, createdAt], map: "idx_notifications_user_id_created_at")
   @@map("notifications")
 }

@@ -19,6 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { logoutRequest } from "@/lib/auth-api";
 import { useAuthStore } from "@/stores/auth-store";
 
@@ -92,43 +93,46 @@ export function Header() {
 
         <div className="flex items-center gap-2">
           {!hasHydrated ? null : user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger className="rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
-                <Avatar>
-                  <AvatarFallback>{initialsOf(user.name)}</AvatarFallback>
-                </Avatar>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" sideOffset={8}>
-                <DropdownMenuGroup>
-                  <DropdownMenuLabel className="flex flex-col gap-0.5 px-2 py-1.5">
-                    <span className="text-sm font-medium text-foreground">
-                      {user.name}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {ROLE_LABEL[user.role] ?? user.role}
-                    </span>
-                  </DropdownMenuLabel>
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem render={<Link href="/profile" />}>
-                  <Settings />
-                  Tài khoản của tôi
-                </DropdownMenuItem>
-                <DropdownMenuItem render={<Link href="/bookings" />}>
-                  <Ticket />
-                  Đơn của tôi
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  variant="destructive"
-                  disabled={logoutMutation.isPending}
-                  onClick={() => logoutMutation.mutate()}
-                >
-                  <LogOut />
-                  Đăng xuất
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <>
+              <NotificationBell />
+              <DropdownMenu>
+                <DropdownMenuTrigger className="rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+                  <Avatar>
+                    <AvatarFallback>{initialsOf(user.name)}</AvatarFallback>
+                  </Avatar>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" sideOffset={8}>
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel className="flex flex-col gap-0.5 px-2 py-1.5">
+                      <span className="text-sm font-medium text-foreground">
+                        {user.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {ROLE_LABEL[user.role] ?? user.role}
+                      </span>
+                    </DropdownMenuLabel>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem render={<Link href="/profile" />}>
+                    <Settings />
+                    Tài khoản của tôi
+                  </DropdownMenuItem>
+                  <DropdownMenuItem render={<Link href="/bookings" />}>
+                    <Ticket />
+                    Đơn của tôi
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    disabled={logoutMutation.isPending}
+                    onClick={() => logoutMutation.mutate()}
+                  >
+                    <LogOut />
+                    Đăng xuất
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
           ) : (
             <>
               <Button

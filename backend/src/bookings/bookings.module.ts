@@ -1,5 +1,6 @@
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { PaymentsModule } from '../payments/payments.module';
 import { UsersModule } from '../users/users.module';
 import { BookingTtlProcessor } from './bookings.processor';
@@ -11,6 +12,7 @@ import { BookingsService, BOOKING_TTL_QUEUE } from './bookings.service';
     BullModule.registerQueue({ name: BOOKING_TTL_QUEUE }),
     PaymentsModule,
     UsersModule,
+    NotificationsModule,
   ],
   controllers: [BookingsController],
   providers: [BookingsService, BookingTtlProcessor],

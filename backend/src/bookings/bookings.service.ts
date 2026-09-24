@@ -10,6 +10,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Queue } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PaymentsService } from '../payments/payments.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { UsersService } from '../users/users.service';
@@ -73,6 +74,7 @@ export class BookingsService {
     private readonly paymentsService: PaymentsService,
     private readonly usersService: UsersService,
     private readonly realtimeGateway: RealtimeGateway,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   /**
@@ -129,6 +131,21 @@ export class BookingsService {
     } catch (error) {
       this.logger.warn(
         `Không lên lịch được job TTL cho booking ${booking.id}: ${(error as Error).message}`,
+      );
+    }
+
+    // Báo cho staff/admin có đơn mới CẦN XÁC NHẬN — KHÔNG loại trừ ai (khác
+    // với MaintenanceService.create(), người tạo booking luôn là customer,
+    // không thể trùng với người nhận thông báo staff/admin).
+    try {
+      await this.notificationsService.createForRoles(
+        [Role.staff, Role.admin],
+        'booking_pending',
+        'Có đơn thuê mới đang chờ xác nhận.',
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Không tạo được thông báo đơn mới cho staff/admin (booking ${booking.id}): ${(error as Error).message}`,
       );
     }
 
@@ -287,10 +304,24 @@ export class BookingsService {
       );
     }
     await this.cancelTtlExpiry(id);
-    return this.prisma.booking.update({
+    const updated = await this.prisma.booking.update({
       where: { id },
       data: { status: BookingStatus.confirmed },
     });
+
+    try {
+      await this.notificationsService.create(
+        booking.userId,
+        'booking_confirmed',
+        'Đơn thuê của bạn đã được xác nhận.',
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Không tạo được thông báo xác nhận cho booking ${id}: ${(error as Error).message}`,
+      );
+    }
+
+    return updated;
   }
 
   /** Staff/admin giao thiết bị: confirmed → ongoing. */
@@ -315,6 +346,19 @@ export class BookingsService {
       deviceId: booking.deviceId,
       status: DeviceStatus.rented,
     });
+
+    try {
+      await this.notificationsService.create(
+        booking.userId,
+        'booking_ongoing',
+        'Thiết bị đã được giao — đơn thuê của bạn hiện đang trong thời gian sử dụng.',
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Không tạo được thông báo giao hàng cho booking ${id}: ${(error as Error).message}`,
+      );
+    }
+
     return updated;
   }
 
@@ -403,6 +447,21 @@ export class BookingsService {
       );
     }
 
+    // Thông báo cho customer BẤT KỂ ai chủ động huỷ (chính họ hay staff/admin)
+    // — nếu staff huỷ thay, khách hàng vẫn cần biết ngay, không chỉ khi họ tự
+    // bấm huỷ mới biết.
+    try {
+      await this.notificationsService.create(
+        booking.userId,
+        'booking_cancelled',
+        `Đơn thuê của bạn đã bị huỷ${refundPercentage > 0 ? ` (hoàn ${refundPercentage}% tiền cọc)` : ''}.`,
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Không tạo được thông báo huỷ đơn cho booking ${id}: ${(error as Error).message}`,
+      );
+    }
+
     return {
       booking: updated,
       refundPercentage,
@@ -478,6 +537,18 @@ export class BookingsService {
       data: { status: BookingStatus.cancelled },
     });
     this.logger.log(`Booking ${bookingId} tự huỷ do quá hạn thanh toán (TTL)`);
+
+    try {
+      await this.notificationsService.create(
+        booking.userId,
+        'booking_cancelled',
+        'Đơn thuê của bạn đã tự động bị huỷ do quá hạn thanh toán.',
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Không tạo được thông báo tự huỷ (TTL) cho booking ${bookingId}: ${(error as Error).message}`,
+      );
+    }
   }
 
   private translateOverlapError(error: unknown): unknown {

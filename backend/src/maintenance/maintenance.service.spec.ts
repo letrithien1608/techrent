@@ -1,6 +1,6 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { DeviceStatus, MaintenanceStatus } from '../generated/prisma/client';
+import { DeviceStatus, MaintenanceStatus, Role } from '../generated/prisma/client';
 import { MaintenanceService } from './maintenance.service';
 
 describe('MaintenanceService', () => {
@@ -17,6 +17,7 @@ describe('MaintenanceService', () => {
     };
   };
   let realtimeGateway: { emitDeviceStatusChanged: jest.Mock };
+  let notificationsService: { createForRoles: jest.Mock };
 
   const deviceId = 'device-1';
   const reporterId = 'staff-1';
@@ -42,9 +43,11 @@ describe('MaintenanceService', () => {
       },
     };
     realtimeGateway = { emitDeviceStatusChanged: jest.fn() };
+    notificationsService = { createForRoles: jest.fn().mockResolvedValue(undefined) };
     service = new MaintenanceService(
       prisma as unknown as PrismaService,
       realtimeGateway as any,
+      notificationsService as any,
     );
   });
 
@@ -59,6 +62,7 @@ describe('MaintenanceService', () => {
     it('tạo bản ghi sự cố VÀ đổi Device.status sang maintenance', async () => {
       prisma.device.findUnique.mockResolvedValue({
         id: deviceId,
+        name: 'MacBook Pro 14"',
         status: DeviceStatus.available,
       });
       prisma.maintenance.create.mockResolvedValue(baseRecord);
@@ -84,6 +88,30 @@ describe('MaintenanceService', () => {
         deviceId,
         status: DeviceStatus.maintenance,
       });
+      expect(notificationsService.createForRoles).toHaveBeenCalledWith(
+        [Role.staff, Role.admin],
+        'maintenance_reported',
+        expect.stringContaining('MacBook Pro'),
+        { excludeUserId: reporterId },
+      );
+    });
+
+    it('vẫn tạo bản ghi thành công dù tạo thông báo cho staff/admin thất bại (chỉ log warning)', async () => {
+      prisma.device.findUnique.mockResolvedValue({
+        id: deviceId,
+        name: 'MacBook Pro 14"',
+        status: DeviceStatus.available,
+      });
+      prisma.maintenance.create.mockResolvedValue(baseRecord);
+      prisma.device.update.mockResolvedValue({
+        id: deviceId,
+        status: DeviceStatus.maintenance,
+      });
+      notificationsService.createForRoles.mockRejectedValue(new Error('DB down'));
+
+      await expect(
+        service.create(reporterId, { deviceId, issue: 'Màn hình bị vỡ' }),
+      ).resolves.toEqual(baseRecord);
     });
   });
 

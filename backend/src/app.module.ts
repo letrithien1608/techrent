@@ -9,6 +9,7 @@ import { BookingsModule } from './bookings/bookings.module';
 import { CategoriesModule } from './categories/categories.module';
 import { DevicesModule } from './devices/devices.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { PaymentsModule } from './payments/payments.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RealtimeModule } from './realtime/realtime.module';
@@ -40,6 +41,7 @@ import { UsersModule } from './users/users.module';
     PrismaModule,
     RedisModule,
     RealtimeModule,
+    NotificationsModule,
     UsersModule,
     AuthModule,
     UploadModule,

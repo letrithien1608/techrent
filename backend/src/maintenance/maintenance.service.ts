@@ -1,15 +1,18 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import {
   DeviceStatus,
   Maintenance,
   MaintenanceStatus,
   Prisma,
+  Role,
 } from '../generated/prisma/client';
 import { CreateMaintenanceDto } from './dto/create-maintenance.dto';
 
@@ -27,9 +30,12 @@ export interface ListMaintenanceFilter {
 
 @Injectable()
 export class MaintenanceService {
+  private readonly logger = new Logger(MaintenanceService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly realtimeGateway: RealtimeGateway,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   /** Staff/admin ghi nhận sự cố thiết bị — đổi Device.status sang `maintenance` ngay. */
@@ -58,6 +64,21 @@ export class MaintenanceService {
       deviceId: dto.deviceId,
       status: DeviceStatus.maintenance,
     });
+
+    // Thông báo cho TOÀN BỘ staff/admin (trừ chính người vừa báo hỏng — họ
+    // đã biết, không cần tự thông báo cho mình) có sự cố mới cần xử lý.
+    try {
+      await this.notificationsService.createForRoles(
+        [Role.staff, Role.admin],
+        'maintenance_reported',
+        `Thiết bị "${device.name}" vừa được báo hỏng: ${dto.issue}`,
+        { excludeUserId: reportedBy },
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Không tạo được thông báo báo hỏng cho staff/admin (maintenance ${record.id}): ${(error as Error).message}`,
+      );
+    }
 
     return record;
   }

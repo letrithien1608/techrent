@@ -32,6 +32,7 @@ describe('BookingsService', () => {
   let paymentsService: { refundForBooking: jest.Mock };
   let usersService: { findByIdOrThrow: jest.Mock };
   let realtimeGateway: { emitDeviceStatusChanged: jest.Mock };
+  let notificationsService: { create: jest.Mock; createForRoles: jest.Mock };
 
   const deviceId = 'device-1';
   const customer: RequestUser = {
@@ -108,6 +109,10 @@ describe('BookingsService', () => {
       }),
     };
     realtimeGateway = { emitDeviceStatusChanged: jest.fn() };
+    notificationsService = {
+      create: jest.fn().mockResolvedValue(undefined),
+      createForRoles: jest.fn().mockResolvedValue(undefined),
+    };
 
     service = new BookingsService(
       prisma as unknown as PrismaService,
@@ -116,6 +121,7 @@ describe('BookingsService', () => {
       paymentsService as any,
       usersService as any,
       realtimeGateway as any,
+      notificationsService as any,
     );
   });
 
@@ -280,6 +286,31 @@ describe('BookingsService', () => {
 
       expect(realtimeGateway.emitDeviceStatusChanged).not.toHaveBeenCalled();
     });
+
+    it('tạo thông báo "có đơn mới" cho staff/admin (KHÔNG loại trừ ai)', async () => {
+      tx.device.findUnique.mockResolvedValue(baseDevice);
+      tx.booking.findFirst.mockResolvedValue(null);
+      tx.booking.create.mockResolvedValue(baseBooking);
+
+      await service.create(customer.userId, validDto);
+
+      expect(notificationsService.createForRoles).toHaveBeenCalledWith(
+        [Role.staff, Role.admin],
+        'booking_pending',
+        expect.any(String),
+      );
+    });
+
+    it('vẫn trả về booking thành công dù tạo thông báo cho staff/admin thất bại (chỉ log warning)', async () => {
+      tx.device.findUnique.mockResolvedValue(baseDevice);
+      tx.booking.findFirst.mockResolvedValue(null);
+      tx.booking.create.mockResolvedValue(baseBooking);
+      notificationsService.createForRoles.mockRejectedValue(new Error('DB down'));
+
+      await expect(service.create(customer.userId, validDto)).resolves.toEqual(
+        baseBooking,
+      );
+    });
   });
 
   describe('checkAvailability', () => {
@@ -377,6 +408,11 @@ describe('BookingsService', () => {
 
       expect(result.status).toBe(BookingStatus.confirmed);
       expect(removeMock).toHaveBeenCalled();
+      expect(notificationsService.create).toHaveBeenCalledWith(
+        baseBooking.userId,
+        'booking_confirmed',
+        expect.any(String),
+      );
     });
 
     it('confirm() ném BadRequestException nếu booking không ở trạng thái pending', async () => {
@@ -414,6 +450,11 @@ describe('BookingsService', () => {
         deviceId: baseBooking.deviceId,
         status: DeviceStatus.rented,
       });
+      expect(notificationsService.create).toHaveBeenCalledWith(
+        baseBooking.userId,
+        'booking_ongoing',
+        expect.any(String),
+      );
     });
 
     it('start() ném BadRequestException nếu booking không ở trạng thái confirmed', async () => {
@@ -489,6 +530,11 @@ describe('BookingsService', () => {
 
       expect(result.refundPercentage).toBe(100);
       expect(realtimeGateway.emitDeviceStatusChanged).not.toHaveBeenCalled();
+      expect(notificationsService.create).toHaveBeenCalledWith(
+        booking.userId,
+        'booking_cancelled',
+        expect.stringContaining('100%'),
+      );
     });
 
     it('hoàn 50% nếu huỷ trước giờ thuê 6-24 tiếng', async () => {
@@ -590,6 +636,11 @@ describe('BookingsService', () => {
         where: { id: baseBooking.id },
         data: { status: BookingStatus.cancelled },
       });
+      expect(notificationsService.create).toHaveBeenCalledWith(
+        baseBooking.userId,
+        'booking_cancelled',
+        expect.any(String),
+      );
     });
 
     it('KHÔNG đụng vào booking đã confirmed (job TTL lẽ ra đã bị huỷ nhưng phòng hờ)', async () => {
@@ -601,6 +652,7 @@ describe('BookingsService', () => {
       await service.expireIfStillPending(baseBooking.id);
 
       expect(prisma.booking.update).not.toHaveBeenCalled();
+      expect(notificationsService.create).not.toHaveBeenCalled();
     });
   });
 });

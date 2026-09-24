@@ -26,6 +26,7 @@ describe('PaymentsService', () => {
   };
   let configService: { get: jest.Mock };
   let ttlQueue: { getJob: jest.Mock };
+  let notificationsService: { create: jest.Mock };
 
   const hashSecret = 'test-hash-secret';
   const envValues: Record<string, string> = {
@@ -56,11 +57,13 @@ describe('PaymentsService', () => {
     };
     configService = { get: jest.fn((key: string) => envValues[key]) };
     ttlQueue = { getJob: jest.fn().mockResolvedValue(null) };
+    notificationsService = { create: jest.fn().mockResolvedValue(undefined) };
 
     service = new PaymentsService(
       prisma as unknown as PrismaService,
       configService as any,
       ttlQueue as any,
+      notificationsService as any,
     );
   });
 
@@ -165,7 +168,7 @@ describe('PaymentsService', () => {
       expect(result.RspCode).toBe('02');
     });
 
-    it('thanh toán thành công: cập nhật payment success + booking confirmed + huỷ job TTL', async () => {
+    it('thanh toán thành công: cập nhật payment success + booking confirmed + huỷ job TTL + tạo thông báo', async () => {
       prisma.payment.findFirst.mockResolvedValue({
         id: 'payment-1',
         bookingId,
@@ -174,6 +177,8 @@ describe('PaymentsService', () => {
       });
       const removeMock = jest.fn();
       ttlQueue.getJob.mockResolvedValue({ remove: removeMock });
+      prisma.booking.updateMany.mockResolvedValue({ count: 1 });
+      prisma.booking.findUnique.mockResolvedValue(baseBooking);
 
       const result = await service.handleIpn(buildQuery());
 
@@ -188,6 +193,26 @@ describe('PaymentsService', () => {
         where: { id: bookingId, status: BookingStatus.pending },
         data: { status: BookingStatus.confirmed },
       });
+      expect(notificationsService.create).toHaveBeenCalledWith(
+        userId,
+        'booking_confirmed',
+        expect.any(String),
+      );
+    });
+
+    it('KHÔNG tạo thông báo trùng nếu updateMany không đổi gì (đã confirmed từ trước, race hiếm)', async () => {
+      prisma.payment.findFirst.mockResolvedValue({
+        id: 'payment-1',
+        bookingId,
+        amount: '90000',
+        status: PaymentStatus.pending,
+      });
+      ttlQueue.getJob.mockResolvedValue(null);
+      prisma.booking.updateMany.mockResolvedValue({ count: 0 });
+
+      await service.handleIpn(buildQuery());
+
+      expect(notificationsService.create).not.toHaveBeenCalled();
     });
 
     it('thanh toán thất bại: chỉ set payment failed, KHÔNG đổi trạng thái booking', async () => {
