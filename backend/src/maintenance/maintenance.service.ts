@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 import {
   DeviceStatus,
   Maintenance,
@@ -26,7 +27,10 @@ export interface ListMaintenanceFilter {
 
 @Injectable()
 export class MaintenanceService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly realtimeGateway: RealtimeGateway,
+  ) {}
 
   /** Staff/admin ghi nhận sự cố thiết bị — đổi Device.status sang `maintenance` ngay. */
   async create(
@@ -49,6 +53,11 @@ export class MaintenanceService {
         data: { status: DeviceStatus.maintenance },
       }),
     ]);
+
+    this.realtimeGateway.emitDeviceStatusChanged({
+      deviceId: dto.deviceId,
+      status: DeviceStatus.maintenance,
+    });
 
     return record;
   }
@@ -119,6 +128,10 @@ export class MaintenanceService {
         data: { status: DeviceStatus.available },
       }),
     ]);
+    this.realtimeGateway.emitDeviceStatusChanged({
+      deviceId: record.deviceId,
+      status: DeviceStatus.available,
+    });
     return updated;
   }
 }

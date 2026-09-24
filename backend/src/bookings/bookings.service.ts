@@ -11,6 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { Queue } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaymentsService } from '../payments/payments.service';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { UsersService } from '../users/users.service';
 import {
   Booking,
@@ -71,6 +72,7 @@ export class BookingsService {
     @InjectQueue(BOOKING_TTL_QUEUE) private readonly ttlQueue: Queue,
     private readonly paymentsService: PaymentsService,
     private readonly usersService: UsersService,
+    private readonly realtimeGateway: RealtimeGateway,
   ) {}
 
   /**
@@ -114,6 +116,11 @@ export class BookingsService {
       startTime,
       endTime,
     );
+
+    // KHÔNG emit realtime ở đây: tạo booking (kể cả pending) không đổi
+    // Device.status — thiết bị vẫn "available" cho tới khi staff/admin giao
+    // hàng thật (start(), bên dưới). Trùng lịch được chặn bằng transaction +
+    // exclusion constraint (mục 5 Roadmap), không phải bằng field status.
 
     // Lỗi lên lịch job TTL không nên làm hỏng response tạo booking (booking đã
     // ghi thành công vào DB) — chỉ log cảnh báo, staff vẫn có thể huỷ tay nếu cần.
@@ -304,6 +311,10 @@ export class BookingsService {
         data: { status: DeviceStatus.rented },
       }),
     ]);
+    this.realtimeGateway.emitDeviceStatusChanged({
+      deviceId: booking.deviceId,
+      status: DeviceStatus.rented,
+    });
     return updated;
   }
 
@@ -325,6 +336,10 @@ export class BookingsService {
         data: { status: DeviceStatus.available },
       }),
     ]);
+    this.realtimeGateway.emitDeviceStatusChanged({
+      deviceId: booking.deviceId,
+      status: DeviceStatus.available,
+    });
     return updated;
   }
 
@@ -364,6 +379,15 @@ export class BookingsService {
       where: { id },
       data: { status: BookingStatus.cancelled },
     });
+
+    // KHÔNG emit realtime ở đây: huỷ booking `pending`/`confirmed` không đổi
+    // Device.status (thiết bị chưa từng bị đổi khỏi "available" ở các trạng
+    // thái này — chỉ start() mới đổi thành "rented", xem phía trên). Lưu ý
+    // NGOÀI PHẠM VI task này: cancel() cũng cho phép huỷ booking `ongoing`
+    // (thiết bị đang thật sự "rented") mà không đưa Device.status về lại
+    // "available" — đây là khoảng trống nghiệp vụ có sẵn TỪ TRƯỚC (Tuần 6),
+    // không phải lỗi phát sinh do thêm realtime, và không thuộc phạm vi Tuần
+    // 8 (chỉ thêm WebSocket, không sửa lại state machine booking) nên CHƯA sửa.
 
     // Hoàn cọc tự động (module payments) — lỗi ở đây không nên làm hỏng response
     // huỷ booking (booking đã huỷ thành công), chỉ log để staff xử lý tay nếu cần.

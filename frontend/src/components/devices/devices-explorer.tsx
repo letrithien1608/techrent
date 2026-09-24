@@ -1,8 +1,12 @@
 "use client";
 
 import { cn } from "cn";
-import { useEffect, useRef, useState } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useInfiniteQuery,
+  useQueryClient,
+  type InfiniteData,
+} from "@tanstack/react-query";
 import {
   AnimatePresence,
   motion,
@@ -23,7 +27,14 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { DeviceCard } from "@/components/devices/device-card";
 import { DeviceCardSkeleton } from "@/components/devices/device-card-skeleton";
-import { fetchDevices, type Category, type DeviceSort } from "@/lib/devices-api";
+import { useDeviceStatusRealtime } from "@/hooks/use-device-status-realtime";
+import {
+  fetchDevices,
+  type Category,
+  type DeviceSort,
+  type FetchDevicesResult,
+} from "@/lib/devices-api";
+import type { DeviceStatusChangedPayload } from "@/lib/realtime-socket";
 
 const PAGE_SIZE = 12;
 const SKELETON_COUNT = 8;
@@ -163,6 +174,45 @@ export function DevicesExplorer({ categories }: { categories: Category[] }) {
       return nextPage <= meta.totalPages ? nextPage : undefined;
     },
   });
+
+  const queryClient = useQueryClient();
+
+  // Cập nhật thẳng cache React Query khi nhận sự kiện realtime — KHÔNG gọi
+  // lại API. `setQueriesData` (không phải `setQueryData`) để khớp MỌI
+  // queryKey bắt đầu bằng "devices" cùng lúc (mỗi tổ hợp filter/search/sort
+  // là 1 queryKey riêng, xem `queryKey` bên dưới) — nếu người dùng đổi filter
+  // qua lại, cache của tổ hợp filter TRƯỚC ĐÓ vẫn được sửa đúng, không bị lộ
+  // trạng thái cũ khi họ quay lại.
+  const handleDeviceStatusChanged = useCallback(
+    (payload: DeviceStatusChangedPayload) => {
+      queryClient.setQueriesData<InfiniteData<FetchDevicesResult>>(
+        { queryKey: ["devices"] },
+        (data) => {
+          if (!data) return data;
+          return {
+            ...data,
+            pages: data.pages.map((page) =>
+              page.result
+                ? {
+                    ...page,
+                    result: {
+                      ...page.result,
+                      data: page.result.data.map((device) =>
+                        device.id === payload.deviceId
+                          ? { ...device, status: payload.status }
+                          : device,
+                      ),
+                    },
+                  }
+                : page,
+            ),
+          };
+        },
+      );
+    },
+    [queryClient],
+  );
+  useDeviceStatusRealtime(handleDeviceStatusChanged);
 
   const devices = query.data?.pages.flatMap((page) => page.result?.data ?? []) ?? [];
   const hasFetchError =

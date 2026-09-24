@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { Device, DeviceStatus } from '../generated/prisma/client';
 import { DeviceSort } from './dto/list-devices-query.dto';
 
@@ -33,7 +34,10 @@ export type DeviceWithCategory = Prisma.DeviceGetPayload<
 
 @Injectable()
 export class DevicesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly realtimeGateway: RealtimeGateway,
+  ) {}
 
   async findAll(
     filter: ListDevicesFilter,
@@ -123,13 +127,25 @@ export class DevicesService {
       await this.assertCategoryExists(data.categoryId);
     }
 
-    return this.prisma.device.update({
+    const updated = await this.prisma.device.update({
       where: { id },
       data: {
         ...data,
         specs: data.specs as Prisma.InputJsonValue | undefined,
       },
     });
+
+    // Chỉ emit khi admin THỰC SỰ đổi status qua form này (VD sửa tên/giá thì
+    // không cần bắn realtime, tránh spam sự kiện không ảnh hưởng gì tới UI
+    // đang lắng nghe badge trạng thái).
+    if (data.status !== undefined) {
+      this.realtimeGateway.emitDeviceStatusChanged({
+        deviceId: id,
+        status: updated.status,
+      });
+    }
+
+    return updated;
   }
 
   async remove(id: string): Promise<void> {

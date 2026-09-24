@@ -11,6 +11,7 @@ import { DevicesModule } from './devices/devices.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
 import { PaymentsModule } from './payments/payments.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { RealtimeModule } from './realtime/realtime.module';
 import { RedisModule } from './redis/redis.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { UploadModule } from './upload/upload.module';
@@ -38,6 +39,7 @@ import { UsersModule } from './users/users.module';
     }),
     PrismaModule,
     RedisModule,
+    RealtimeModule,
     UsersModule,
     AuthModule,
     UploadModule,

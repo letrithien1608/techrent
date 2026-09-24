@@ -3,7 +3,7 @@
 import { cn } from "cn";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { AnimatePresence, motion } from "framer-motion";
@@ -15,11 +15,13 @@ import {
   BookingSchedulePicker,
   type BookingSchedule,
 } from "@/components/devices/booking-schedule-picker";
+import { useDeviceStatusRealtime } from "@/hooks/use-device-status-realtime";
 import { checkAvailability, createBooking } from "@/lib/bookings-api";
 import { DEVICE_STATUS_LABEL, formatVnd } from "@/lib/device-format";
 import { getErrorMessage } from "@/lib/get-error-message";
+import type { DeviceStatusChangedPayload } from "@/lib/realtime-socket";
 import { useAuthStore } from "@/stores/auth-store";
-import type { Device } from "@/lib/devices-api";
+import type { Device, DeviceStatus } from "@/lib/devices-api";
 
 interface Props {
   device: Device;
@@ -46,10 +48,24 @@ export function DeviceBookingPanel({ device, avgRating, reviewCount }: Props) {
   const { user, hasHydrated } = useAuthStore();
   const [priceMode, setPriceMode] = useState<"day" | "hour">("day");
   const [schedule, setSchedule] = useState<BookingSchedule | null>(null);
-  const isAvailable = device.status === "available";
-  const status = DEVICE_STATUS_LABEL[device.status];
+  // Seed từ prop (fetch server-side lúc SSR) rồi tự cập nhật qua WebSocket —
+  // trang chi tiết là async Server Component nên `device.status` gốc chỉ
+  // đúng tại thời điểm render, không tự đổi theo hành động của người khác.
+  const [deviceStatus, setDeviceStatus] = useState<DeviceStatus>(device.status);
+  const isAvailable = deviceStatus === "available";
+  const status = DEVICE_STATUS_LABEL[deviceStatus];
   const activePrice = priceMode === "day" ? device.pricePerDay : device.pricePerHour;
   const activeUnit = priceMode === "day" ? "/ngày" : "/giờ";
+
+  const handleDeviceStatusChanged = useCallback(
+    (payload: DeviceStatusChangedPayload) => {
+      if (payload.deviceId !== device.id) return;
+      setDeviceStatus(payload.status);
+      toast.info("Trạng thái thiết bị vừa được cập nhật");
+    },
+    [device.id],
+  );
+  useDeviceStatusRealtime(handleDeviceStatusChanged);
 
   const bookMutation = useMutation({
     mutationFn: async (value: BookingSchedule) => {

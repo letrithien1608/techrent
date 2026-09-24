@@ -31,6 +31,7 @@ describe('BookingsService', () => {
   let ttlQueue: { add: jest.Mock; getJob: jest.Mock };
   let paymentsService: { refundForBooking: jest.Mock };
   let usersService: { findByIdOrThrow: jest.Mock };
+  let realtimeGateway: { emitDeviceStatusChanged: jest.Mock };
 
   const deviceId = 'device-1';
   const customer: RequestUser = {
@@ -106,6 +107,7 @@ describe('BookingsService', () => {
         cccdHash: 'a'.repeat(64),
       }),
     };
+    realtimeGateway = { emitDeviceStatusChanged: jest.fn() };
 
     service = new BookingsService(
       prisma as unknown as PrismaService,
@@ -113,6 +115,7 @@ describe('BookingsService', () => {
       ttlQueue as any,
       paymentsService as any,
       usersService as any,
+      realtimeGateway as any,
     );
   });
 
@@ -267,6 +270,16 @@ describe('BookingsService', () => {
         baseBooking,
       );
     });
+
+    it('KHÔNG emit realtime khi tạo booking (Device.status không đổi ở bước này)', async () => {
+      tx.device.findUnique.mockResolvedValue(baseDevice);
+      tx.booking.findFirst.mockResolvedValue(null);
+      tx.booking.create.mockResolvedValue(baseBooking);
+
+      await service.create(customer.userId, validDto);
+
+      expect(realtimeGateway.emitDeviceStatusChanged).not.toHaveBeenCalled();
+    });
   });
 
   describe('checkAvailability', () => {
@@ -397,6 +410,10 @@ describe('BookingsService', () => {
         where: { id: baseBooking.deviceId },
         data: { status: DeviceStatus.rented },
       });
+      expect(realtimeGateway.emitDeviceStatusChanged).toHaveBeenCalledWith({
+        deviceId: baseBooking.deviceId,
+        status: DeviceStatus.rented,
+      });
     });
 
     it('start() ném BadRequestException nếu booking không ở trạng thái confirmed', async () => {
@@ -429,6 +446,10 @@ describe('BookingsService', () => {
       expect(prisma.device.update).toHaveBeenCalledWith({
         where: { id: baseBooking.deviceId },
         data: { status: DeviceStatus.available },
+      });
+      expect(realtimeGateway.emitDeviceStatusChanged).toHaveBeenCalledWith({
+        deviceId: baseBooking.deviceId,
+        status: DeviceStatus.available,
       });
     });
   });
@@ -467,6 +488,7 @@ describe('BookingsService', () => {
       const result = await service.cancel(booking.id, customer, {});
 
       expect(result.refundPercentage).toBe(100);
+      expect(realtimeGateway.emitDeviceStatusChanged).not.toHaveBeenCalled();
     });
 
     it('hoàn 50% nếu huỷ trước giờ thuê 6-24 tiếng', async () => {

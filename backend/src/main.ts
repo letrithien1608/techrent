@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { RealtimeIoAdapter } from './realtime/realtime-io.adapter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -12,6 +13,9 @@ async function bootstrap() {
     origin: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
     credentials: true,
   });
+  // CORS riêng cho WebSocket (socket.io) — xem lý do đặt ở đây thay vì trong
+  // decorator @WebSocketGateway() ở realtime-io.adapter.ts
+  app.useWebSocketAdapter(new RealtimeIoAdapter(app));
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

@@ -17,6 +17,7 @@ describe('DevicesService', () => {
     category: { findUnique: jest.Mock };
     $transaction: jest.Mock;
   };
+  let realtimeGateway: { emitDeviceStatusChanged: jest.Mock };
 
   const baseDevice: Device = {
     id: 'device-1',
@@ -43,7 +44,11 @@ describe('DevicesService', () => {
       category: { findUnique: jest.fn() },
       $transaction: jest.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
     };
-    service = new DevicesService(prisma as unknown as PrismaService);
+    realtimeGateway = { emitDeviceStatusChanged: jest.fn() };
+    service = new DevicesService(
+      prisma as unknown as PrismaService,
+      realtimeGateway as any,
+    );
   });
 
   describe('findAll', () => {
@@ -197,7 +202,7 @@ describe('DevicesService', () => {
       expect(prisma.device.update).not.toHaveBeenCalled();
     });
 
-    it('cập nhật status thiết bị (VD chuyển sang maintenance)', async () => {
+    it('cập nhật status thiết bị (VD chuyển sang maintenance) và emit realtime', async () => {
       prisma.device.findUnique.mockResolvedValue(baseDevice);
       prisma.device.update.mockResolvedValue({
         ...baseDevice,
@@ -209,6 +214,22 @@ describe('DevicesService', () => {
       });
 
       expect(result.status).toBe(DeviceStatus.maintenance);
+      expect(realtimeGateway.emitDeviceStatusChanged).toHaveBeenCalledWith({
+        deviceId: baseDevice.id,
+        status: DeviceStatus.maintenance,
+      });
+    });
+
+    it('KHÔNG emit realtime nếu chỉ sửa tên/giá, không đụng tới status', async () => {
+      prisma.device.findUnique.mockResolvedValue(baseDevice);
+      prisma.device.update.mockResolvedValue({
+        ...baseDevice,
+        name: 'Tên mới',
+      });
+
+      await service.update(baseDevice.id, { name: 'Tên mới' });
+
+      expect(realtimeGateway.emitDeviceStatusChanged).not.toHaveBeenCalled();
     });
   });
 

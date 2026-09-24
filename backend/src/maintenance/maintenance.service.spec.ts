@@ -16,6 +16,7 @@ describe('MaintenanceService', () => {
       update: jest.Mock;
     };
   };
+  let realtimeGateway: { emitDeviceStatusChanged: jest.Mock };
 
   const deviceId = 'device-1';
   const reporterId = 'staff-1';
@@ -40,7 +41,11 @@ describe('MaintenanceService', () => {
         update: jest.fn(),
       },
     };
-    service = new MaintenanceService(prisma as unknown as PrismaService);
+    realtimeGateway = { emitDeviceStatusChanged: jest.fn() };
+    service = new MaintenanceService(
+      prisma as unknown as PrismaService,
+      realtimeGateway as any,
+    );
   });
 
   describe('create', () => {
@@ -74,6 +79,10 @@ describe('MaintenanceService', () => {
       expect(prisma.device.update).toHaveBeenCalledWith({
         where: { id: deviceId },
         data: { status: DeviceStatus.maintenance },
+      });
+      expect(realtimeGateway.emitDeviceStatusChanged).toHaveBeenCalledWith({
+        deviceId,
+        status: DeviceStatus.maintenance,
       });
     });
   });
@@ -110,6 +119,7 @@ describe('MaintenanceService', () => {
 
       expect(result.status).toBe(MaintenanceStatus.in_progress);
       expect(prisma.device.update).not.toHaveBeenCalled();
+      expect(realtimeGateway.emitDeviceStatusChanged).not.toHaveBeenCalled();
     });
 
     it('-> resolved: set resolvedAt VÀ đưa Device.status về available', async () => {
@@ -136,6 +146,10 @@ describe('MaintenanceService', () => {
       expect(prisma.device.update).toHaveBeenCalledWith({
         where: { id: deviceId },
         data: { status: DeviceStatus.available },
+      });
+      expect(realtimeGateway.emitDeviceStatusChanged).toHaveBeenCalledWith({
+        deviceId,
+        status: DeviceStatus.available,
       });
     });
   });
