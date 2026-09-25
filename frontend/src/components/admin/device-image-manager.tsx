@@ -3,10 +3,10 @@
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ImagePlus, Loader2, Package, X } from "lucide-react";
+import { Check, ImagePlus, Loader2, Package, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { uploadDeviceImages } from "@/lib/admin-api";
+import { updateDevice, uploadDeviceImages } from "@/lib/admin-api";
 import { getErrorMessage } from "@/lib/get-error-message";
 import type { Device } from "@/lib/devices-api";
 
@@ -14,6 +14,11 @@ export function DeviceImageManager({ device }: { device: Device }) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  // Ảnh ĐÃ CÓ đang chờ xác nhận xoá (index trong device.images) — hover hiện
+  // nút thùng rác, bấm 1 lần chuyển ảnh đó thành overlay "Xoá ảnh này?", bấm
+  // lần 2 mới thật sự xoá. Đủ chắc chắn cho 1-trong-nhiều-ảnh mà không cần
+  // Dialog nặng như ConfirmDeleteDialog (dùng cho xoá cả thiết bị/user).
+  const [confirmingIndex, setConfirmingIndex] = useState<number | null>(null);
   const previews = useMemo(
     () => pendingFiles.map((file) => URL.createObjectURL(file)),
     [pendingFiles],
@@ -39,6 +44,21 @@ export function DeviceImageManager({ device }: { device: Device }) {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (index: number) =>
+      updateDevice(device.id, {
+        images: device.images.filter((_, i) => i !== index),
+      }),
+    onSuccess: () => {
+      toast.success("Đã xoá ảnh");
+      queryClient.invalidateQueries({ queryKey: ["admin", "device", device.id] });
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Không thể xoá ảnh, vui lòng thử lại"));
+    },
+    onSettled: () => setConfirmingIndex(null),
+  });
+
   function handleFilesSelected(files: FileList | null) {
     if (!files) return;
     setPendingFiles((prev) => [...prev, ...Array.from(files)]);
@@ -56,14 +76,61 @@ export function DeviceImageManager({ device }: { device: Device }) {
           <p className="mt-2 text-sm text-muted-foreground">Chưa có ảnh nào.</p>
         ) : (
           <div className="mt-2 flex flex-wrap gap-3">
-            {device.images.map((src, index) => (
-              <div
-                key={src}
-                className="relative size-20 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-muted"
-              >
-                <Image src={src} alt={`Ảnh ${index + 1}`} fill sizes="80px" className="object-cover" />
-              </div>
-            ))}
+            {device.images.map((src, index) => {
+              const isConfirming = confirmingIndex === index;
+              return (
+                <div
+                  key={src}
+                  className="group relative size-20 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-muted"
+                >
+                  <Image
+                    src={src}
+                    alt={`Ảnh ${index + 1}`}
+                    fill
+                    sizes="80px"
+                    className="object-cover"
+                  />
+
+                  {isConfirming ? (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/70 p-1 text-center">
+                      <p className="text-[10px] leading-tight text-white">Xoá ảnh này?</p>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          onClick={() => deleteMutation.mutate(index)}
+                          disabled={deleteMutation.isPending}
+                          aria-label="Xác nhận xoá"
+                          className="rounded-full bg-destructive p-1 text-destructive-foreground disabled:opacity-60"
+                        >
+                          {deleteMutation.isPending && deleteMutation.variables === index ? (
+                            <Loader2 className="size-3 animate-spin" />
+                          ) : (
+                            <Check className="size-3" />
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmingIndex(null)}
+                          aria-label="Huỷ xoá"
+                          className="rounded-full bg-white/20 p-1 text-white"
+                        >
+                          <X className="size-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmingIndex(index)}
+                      aria-label="Xoá ảnh này"
+                      className="absolute right-0.5 top-0.5 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                    >
+                      <Trash2 className="size-3" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -104,7 +171,12 @@ export function DeviceImageManager({ device }: { device: Device }) {
                   key={src}
                   className="relative size-20 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-muted"
                 >
-                  <Image src={src} alt={`Xem trước ${index + 1}`} fill sizes="80px" className="object-cover" />
+                  {/* eslint-disable-next-line @next/next/no-img-element -- blob: URL xem trước cục bộ, next/image chỉ nhận domain đã whitelist (res.cloudinary.com) */}
+                  <img
+                    src={src}
+                    alt={`Xem trước ${index + 1}`}
+                    className="size-full object-cover"
+                  />
                   <button
                     type="button"
                     onClick={() => removePendingFile(index)}

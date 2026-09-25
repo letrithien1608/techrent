@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Loader2, Plus, X } from "lucide-react";
+import { ImagePlus, Loader2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,10 +16,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FormErrorBanner } from "@/components/form-error-banner";
-import { createDevice, updateDevice, type DevicePayload } from "@/lib/admin-api";
+import {
+  createDevice,
+  updateDevice,
+  uploadDeviceImages,
+  type DevicePayload,
+} from "@/lib/admin-api";
 import { fetchCategories, type Device } from "@/lib/devices-api";
 import { DEVICE_STATUS_LABEL } from "@/lib/device-format";
 import { getErrorMessage } from "@/lib/get-error-message";
+
+interface DeviceFormMutationResult {
+  device: Device;
+  imageUploadFailed: boolean;
+}
 
 interface SpecRow {
   id: string;
@@ -58,23 +68,71 @@ export function DeviceForm({ device }: { device?: Device }) {
   const [specRows, setSpecRows] = useState<SpecRow[]>(() => specsToRows(device?.specs ?? null));
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Chỉ dùng khi TẠO MỚI — gộp bước chọn ảnh ngay vào form tạo thiết bị thay vì
+  // bắt admin phải tự nhận ra còn 1 bước ẩn ở trang sửa sau khi tạo xong.
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const previews = useMemo(
+    () => pendingFiles.map((file) => URL.createObjectURL(file)),
+    [pendingFiles],
+  );
+  useEffect(() => {
+    return () => {
+      previews.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [previews]);
+
   const categoriesQuery = useQuery({ queryKey: ["categories"], queryFn: fetchCategories });
 
   const mutation = useMutation({
-    mutationFn: async (payload: DevicePayload) =>
-      isEdit ? updateDevice(device!.id, payload) : createDevice(payload),
-    onSuccess: (result) => {
-      toast.success(isEdit ? "Đã lưu thay đổi" : "Đã tạo thiết bị mới");
+    mutationFn: async (payload: DevicePayload): Promise<DeviceFormMutationResult> => {
       if (isEdit) {
-        router.push("/admin/devices");
-      } else {
-        router.push(`/admin/devices/${result.id}/edit`);
+        return { device: await updateDevice(device!.id, payload), imageUploadFailed: false };
       }
+      const created = await createDevice(payload);
+      if (pendingFiles.length === 0) {
+        return { device: created, imageUploadFailed: false };
+      }
+      try {
+        const withImages = await uploadDeviceImages(created.id, pendingFiles);
+        return { device: withImages, imageUploadFailed: false };
+      } catch {
+        // Thiết bị ĐÃ tạo thành công lúc này — không throw ở đây để tránh
+        // mutation rơi vào onError khiến admin tưởng nhầm tạo thiết bị thất
+        // bại rồi bấm submit lại, tạo trùng thiết bị. Chỉ báo riêng lỗi ảnh.
+        return { device: created, imageUploadFailed: true };
+      }
+    },
+    onSuccess: ({ device: result, imageUploadFailed }) => {
+      if (isEdit) {
+        toast.success("Đã lưu thay đổi");
+        router.push("/admin/devices");
+        return;
+      }
+      if (imageUploadFailed) {
+        toast.error(
+          "Đã tạo thiết bị nhưng tải ảnh lên thất bại — vui lòng thử tải lại ở trang sửa vừa mở.",
+        );
+      } else if (pendingFiles.length > 0) {
+        toast.success("Đã tạo thiết bị và tải ảnh thành công");
+      } else {
+        toast.success("Đã tạo thiết bị — bạn có thể thêm ảnh ngay bên dưới");
+      }
+      router.push(`/admin/devices/${result.id}/edit`);
     },
     onError: (error) => {
       setErrorMessage(getErrorMessage(error, "Không thể lưu thiết bị, vui lòng thử lại"));
     },
   });
+
+  function handleFilesSelected(files: FileList | null) {
+    if (!files) return;
+    setPendingFiles((prev) => [...prev, ...Array.from(files)]);
+  }
+
+  function removePendingFile(index: number) {
+    setPendingFiles((prev) => prev.filter((_, i) => i !== index));
+  }
 
   function addSpecRow() {
     setSpecRows((rows) => [...rows, { id: crypto.randomUUID(), key: "", value: "" }]);
@@ -234,6 +292,63 @@ export function DeviceForm({ device }: { device?: Device }) {
           </div>
         )}
       </div>
+
+      {!isEdit && (
+        <div>
+          <div className="flex items-center justify-between">
+            <Label>Ảnh thiết bị (không bắt buộc)</Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <ImagePlus /> Chọn ảnh
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              hidden
+              onChange={(e) => {
+                handleFilesSelected(e.target.files);
+                e.target.value = "";
+              }}
+            />
+          </div>
+          {previews.length === 0 ? (
+            <p className="mt-2 text-sm text-muted-foreground">
+              Có thể thêm ảnh ngay bây giờ, hoặc bỏ qua và thêm sau ở trang sửa —
+              tối đa 8 ảnh, mỗi ảnh không quá 5MB.
+            </p>
+          ) : (
+            <div className="mt-2 flex flex-wrap gap-3">
+              {previews.map((src, index) => (
+                <div
+                  key={src}
+                  className="relative size-20 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-muted"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- blob: URL xem trước cục bộ, next/image chỉ nhận domain đã whitelist */}
+                  <img
+                    src={src}
+                    alt={`Xem trước ${index + 1}`}
+                    className="size-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removePendingFile(index)}
+                    aria-label="Bỏ ảnh này"
+                    className="absolute right-0.5 top-0.5 rounded-full bg-black/60 p-0.5 text-white"
+                  >
+                    <X className="size-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex gap-2">
         <Button type="submit" disabled={mutation.isPending}>

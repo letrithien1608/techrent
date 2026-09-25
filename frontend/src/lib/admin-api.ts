@@ -11,6 +11,7 @@ export interface DevicePayload {
   pricePerHour: number;
   pricePerDay: number;
   status?: DeviceStatus;
+  images?: string[];
 }
 
 export async function createDevice(payload: DevicePayload): Promise<Device> {
@@ -36,9 +37,10 @@ export async function uploadDeviceImages(
 ): Promise<Device> {
   const formData = new FormData();
   files.forEach((file) => formData.append("images", file));
-  const { data } = await api.post<Device>(`/devices/${id}/images`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  // KHÔNG tự set Content-Type — axios/trình duyệt cần tự tính "boundary=..."
+  // theo đúng nội dung FormData thật, set tay ở đây (thiếu boundary) làm
+  // Multer/busboy phía backend không parse được multipart, request coi như rỗng.
+  const { data } = await api.post<Device>(`/devices/${id}/images`, formData);
   return data;
 }
 
