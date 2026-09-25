@@ -102,6 +102,13 @@ model Device {
   pricePerDay   Decimal      @map("price_per_day") @db.Decimal(10, 2)
   images        String[]
   createdAt     DateTime     @default(now()) @map("created_at")
+  // Denormalize từ Review (qua Booking.deviceId) — tính lại mỗi khi có review
+  // mới trong ReviewsService.create() (cùng transaction với tạo review), KHÔNG
+  // tự aggregate mỗi lần GET /devices (tốn kém với danh sách phân trang). Xem
+  // quyết định "KHÔNG làm" ban đầu rồi đổi ý ở CLAUDE.md — lý do trước đó là
+  // thiếu dữ liệu thật, giờ triển khai đúng hướng denormalize đã ghi nhận.
+  avgRating     Float?       @map("avg_rating")
+  reviewCount   Int          @default(0) @map("review_count")
 
   category      Category      @relation(fields: [categoryId], references: [id])
   bookings      Booking[]

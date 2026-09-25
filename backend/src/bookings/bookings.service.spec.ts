@@ -33,6 +33,7 @@ describe('BookingsService', () => {
   let usersService: { findByIdOrThrow: jest.Mock };
   let realtimeGateway: { emitDeviceStatusChanged: jest.Mock };
   let notificationsService: { create: jest.Mock; createForRoles: jest.Mock };
+  let devicesCacheService: { invalidateAll: jest.Mock };
 
   const deviceId = 'device-1';
   const customer: RequestUser = {
@@ -113,6 +114,7 @@ describe('BookingsService', () => {
       create: jest.fn().mockResolvedValue(undefined),
       createForRoles: jest.fn().mockResolvedValue(undefined),
     };
+    devicesCacheService = { invalidateAll: jest.fn().mockResolvedValue(undefined) };
 
     service = new BookingsService(
       prisma as unknown as PrismaService,
@@ -122,6 +124,7 @@ describe('BookingsService', () => {
       usersService as any,
       realtimeGateway as any,
       notificationsService as any,
+      devicesCacheService as any,
     );
   });
 
@@ -450,6 +453,7 @@ describe('BookingsService', () => {
         deviceId: baseBooking.deviceId,
         status: DeviceStatus.rented,
       });
+      expect(devicesCacheService.invalidateAll).toHaveBeenCalled();
       expect(notificationsService.create).toHaveBeenCalledWith(
         baseBooking.userId,
         'booking_ongoing',
@@ -492,6 +496,7 @@ describe('BookingsService', () => {
         deviceId: baseBooking.deviceId,
         status: DeviceStatus.available,
       });
+      expect(devicesCacheService.invalidateAll).toHaveBeenCalled();
     });
   });
 

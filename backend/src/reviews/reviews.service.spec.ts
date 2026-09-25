@@ -18,29 +18,51 @@ describe('ReviewsService', () => {
       create: jest.Mock;
       findMany: jest.Mock;
       count: jest.Mock;
+      aggregate: jest.Mock;
     };
+    device: { update: jest.Mock };
   };
+  let devicesCacheService: { invalidateAll: jest.Mock };
 
   const userId = 'user-1';
   const bookingId = 'booking-1';
+  const deviceId = 'device-1';
   const baseBooking = {
     id: bookingId,
     userId,
+    deviceId,
     status: BookingStatus.completed,
   };
 
   beforeEach(() => {
     prisma = {
-      $transaction: jest.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
+      // `create()` dùng $transaction dạng CALLBACK (như BookingsService) —
+      // truyền thẳng `prisma` làm "tx" vì test không cần phân biệt client
+      // trong/ngoài transaction, chỉ cần đúng mock nào được gọi với đúng dữ liệu.
+      $transaction: jest.fn((arg: unknown) => {
+        if (typeof arg === 'function') {
+          return (arg as (tx: unknown) => Promise<unknown>)(prisma);
+        }
+        return Promise.all(arg as Promise<unknown>[]);
+      }),
       booking: { findUnique: jest.fn() },
       review: {
         findUnique: jest.fn(),
         create: jest.fn(),
         findMany: jest.fn(),
         count: jest.fn(),
+        aggregate: jest.fn().mockResolvedValue({
+          _avg: { rating: null },
+          _count: { rating: 0 },
+        }),
       },
+      device: { update: jest.fn() },
     };
-    service = new ReviewsService(prisma as unknown as PrismaService);
+    devicesCacheService = { invalidateAll: jest.fn().mockResolvedValue(undefined) };
+    service = new ReviewsService(
+      prisma as unknown as PrismaService,
+      devicesCacheService as any,
+    );
   });
 
   describe('create', () => {
@@ -96,6 +118,73 @@ describe('ReviewsService', () => {
       expect(prisma.review.create).toHaveBeenCalledWith({
         data: { bookingId, rating: 5, comment: 'Tốt' },
       });
+    });
+
+    it('review ĐẦU TIÊN của thiết bị: cập nhật avgRating/reviewCount đúng bằng chính review đó', async () => {
+      prisma.booking.findUnique.mockResolvedValue(baseBooking);
+      prisma.review.findUnique.mockResolvedValue(null);
+      prisma.review.create.mockResolvedValue({
+        id: 'review-1',
+        bookingId,
+        rating: 5,
+        comment: null,
+      });
+      prisma.review.aggregate.mockResolvedValue({
+        _avg: { rating: 5 },
+        _count: { rating: 1 },
+      });
+
+      await service.create(userId, { bookingId, rating: 5 });
+
+      expect(prisma.review.aggregate).toHaveBeenCalledWith({
+        where: { booking: { deviceId } },
+        _avg: { rating: true },
+        _count: { rating: true },
+      });
+      expect(prisma.device.update).toHaveBeenCalledWith({
+        where: { id: deviceId },
+        data: { avgRating: 5, reviewCount: 1 },
+      });
+    });
+
+    it('nhiều review cùng thiết bị: avgRating lấy ĐÚNG kết quả trung bình đã tính (aggregate)', async () => {
+      prisma.booking.findUnique.mockResolvedValue(baseBooking);
+      prisma.review.findUnique.mockResolvedValue(null);
+      prisma.review.create.mockResolvedValue({
+        id: 'review-2',
+        bookingId,
+        rating: 4,
+        comment: null,
+      });
+      // Giả lập: thiết bị đã có 1 review 5 sao từ trước, vừa thêm review 4 sao
+      // -> trung bình 2 review là 4.5, reviewCount = 2 (Postgres AVG() tự tính
+      // đúng, service chỉ cần TRUYỀN ĐÚNG kết quả xuống Device.update).
+      prisma.review.aggregate.mockResolvedValue({
+        _avg: { rating: 4.5 },
+        _count: { rating: 2 },
+      });
+
+      await service.create(userId, { bookingId, rating: 4 });
+
+      expect(prisma.device.update).toHaveBeenCalledWith({
+        where: { id: deviceId },
+        data: { avgRating: 4.5, reviewCount: 2 },
+      });
+    });
+
+    it('xoá cache danh sách thiết bị sau khi cập nhật avgRating', async () => {
+      prisma.booking.findUnique.mockResolvedValue(baseBooking);
+      prisma.review.findUnique.mockResolvedValue(null);
+      prisma.review.create.mockResolvedValue({
+        id: 'review-1',
+        bookingId,
+        rating: 5,
+        comment: null,
+      });
+
+      await service.create(userId, { bookingId, rating: 5 });
+
+      expect(devicesCacheService.invalidateAll).toHaveBeenCalledTimes(1);
     });
   });
 

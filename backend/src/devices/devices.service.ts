@@ -3,6 +3,7 @@ import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { Device, DeviceStatus } from '../generated/prisma/client';
+import { DevicesCacheService } from './devices-cache.service';
 import { DeviceSort } from './dto/list-devices-query.dto';
 
 export interface PaginatedResult<T> {
@@ -37,11 +38,21 @@ export class DevicesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly realtimeGateway: RealtimeGateway,
+    private readonly devicesCacheService: DevicesCacheService,
   ) {}
 
   async findAll(
     filter: ListDevicesFilter,
   ): Promise<PaginatedResult<DeviceWithCategory>> {
+    const cacheKey = this.devicesCacheService.buildKey(filter);
+    const cached =
+      await this.devicesCacheService.get<PaginatedResult<DeviceWithCategory>>(
+        cacheKey,
+      );
+    if (cached) {
+      return cached;
+    }
+
     const { page, limit, categoryId, status, sort, search } = filter;
     const where: Prisma.DeviceWhereInput = {
       ...(categoryId ? { categoryId } : {}),
@@ -66,7 +77,7 @@ export class DevicesService {
       this.prisma.device.count({ where }),
     ]);
 
-    return {
+    const result: PaginatedResult<DeviceWithCategory> = {
       data: devices,
       meta: {
         page,
@@ -75,6 +86,10 @@ export class DevicesService {
         totalPages: Math.max(1, Math.ceil(total / limit)),
       },
     };
+
+    await this.devicesCacheService.set(cacheKey, result);
+
+    return result;
   }
 
   async findByIdOrThrow(id: string): Promise<DeviceWithCategory> {
@@ -98,7 +113,7 @@ export class DevicesService {
   }): Promise<Device> {
     await this.assertCategoryExists(data.categoryId);
 
-    return this.prisma.device.create({
+    const created = await this.prisma.device.create({
       data: {
         name: data.name,
         categoryId: data.categoryId,
@@ -108,6 +123,8 @@ export class DevicesService {
         images: data.images ?? [],
       },
     });
+    await this.devicesCacheService.invalidateAll();
+    return created;
   }
 
   async update(
@@ -135,9 +152,15 @@ export class DevicesService {
       },
     });
 
-    // Chỉ emit khi admin THỰC SỰ đổi status qua form này (VD sửa tên/giá thì
-    // không cần bắn realtime, tránh spam sự kiện không ảnh hưởng gì tới UI
-    // đang lắng nghe badge trạng thái).
+    // Bất kỳ field nào sửa ở đây đều có thể hiện trên danh sách (tên/giá/
+    // status/ảnh đại diện) — invalidate cache toàn bộ danh sách, đơn giản
+    // và an toàn hơn cố tính xem field nào THỰC SỰ ảnh hưởng hiển thị.
+    await this.devicesCacheService.invalidateAll();
+
+    // Emit realtime CHỈ khi admin THỰC SỰ đổi status qua form này (VD sửa
+    // tên/giá thì không cần bắn realtime, tránh spam sự kiện không ảnh hưởng
+    // gì tới UI đang lắng nghe badge trạng thái) — khác với cache (invalidate
+    // ở TRÊN cho mọi field), vì WebSocket chỉ có 1 việc: báo đổi STATUS.
     if (data.status !== undefined) {
       this.realtimeGateway.emitDeviceStatusChanged({
         deviceId: id,
@@ -151,15 +174,18 @@ export class DevicesService {
   async remove(id: string): Promise<void> {
     await this.findByIdOrThrow(id);
     await this.prisma.device.delete({ where: { id } });
+    await this.devicesCacheService.invalidateAll();
   }
 
   /** Gắn thêm ảnh mới (từ Cloudinary) vào danh sách ảnh hiện có của thiết bị. */
   async addImages(id: string, imageUrls: string[]): Promise<Device> {
     const device = await this.findByIdOrThrow(id);
-    return this.prisma.device.update({
+    const updated = await this.prisma.device.update({
       where: { id },
       data: { images: [...device.images, ...imageUrls] },
     });
+    await this.devicesCacheService.invalidateAll();
+    return updated;
   }
 
   private async assertCategoryExists(categoryId: string): Promise<void> {

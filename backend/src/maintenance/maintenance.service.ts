@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { DevicesCacheService } from '../devices/devices-cache.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import {
@@ -36,6 +37,7 @@ export class MaintenanceService {
     private readonly prisma: PrismaService,
     private readonly realtimeGateway: RealtimeGateway,
     private readonly notificationsService: NotificationsService,
+    private readonly devicesCacheService: DevicesCacheService,
   ) {}
 
   /** Staff/admin ghi nhận sự cố thiết bị — đổi Device.status sang `maintenance` ngay. */
@@ -64,6 +66,7 @@ export class MaintenanceService {
       deviceId: dto.deviceId,
       status: DeviceStatus.maintenance,
     });
+    await this.devicesCacheService.invalidateAll();
 
     // Thông báo cho TOÀN BỘ staff/admin (trừ chính người vừa báo hỏng — họ
     // đã biết, không cần tự thông báo cho mình) có sự cố mới cần xử lý.
@@ -153,6 +156,7 @@ export class MaintenanceService {
       deviceId: record.deviceId,
       status: DeviceStatus.available,
     });
+    await this.devicesCacheService.invalidateAll();
     return updated;
   }
 }

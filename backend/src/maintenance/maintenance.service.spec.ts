@@ -18,6 +18,7 @@ describe('MaintenanceService', () => {
   };
   let realtimeGateway: { emitDeviceStatusChanged: jest.Mock };
   let notificationsService: { createForRoles: jest.Mock };
+  let devicesCacheService: { invalidateAll: jest.Mock };
 
   const deviceId = 'device-1';
   const reporterId = 'staff-1';
@@ -44,10 +45,12 @@ describe('MaintenanceService', () => {
     };
     realtimeGateway = { emitDeviceStatusChanged: jest.fn() };
     notificationsService = { createForRoles: jest.fn().mockResolvedValue(undefined) };
+    devicesCacheService = { invalidateAll: jest.fn().mockResolvedValue(undefined) };
     service = new MaintenanceService(
       prisma as unknown as PrismaService,
       realtimeGateway as any,
       notificationsService as any,
+      devicesCacheService as any,
     );
   });
 
@@ -88,6 +91,7 @@ describe('MaintenanceService', () => {
         deviceId,
         status: DeviceStatus.maintenance,
       });
+      expect(devicesCacheService.invalidateAll).toHaveBeenCalled();
       expect(notificationsService.createForRoles).toHaveBeenCalledWith(
         [Role.staff, Role.admin],
         'maintenance_reported',
@@ -179,6 +183,7 @@ describe('MaintenanceService', () => {
         deviceId,
         status: DeviceStatus.available,
       });
+      expect(devicesCacheService.invalidateAll).toHaveBeenCalled();
     });
   });
 });

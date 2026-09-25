@@ -10,6 +10,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Queue } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
+import { DevicesCacheService } from '../devices/devices-cache.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PaymentsService } from '../payments/payments.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
@@ -75,6 +76,7 @@ export class BookingsService {
     private readonly usersService: UsersService,
     private readonly realtimeGateway: RealtimeGateway,
     private readonly notificationsService: NotificationsService,
+    private readonly devicesCacheService: DevicesCacheService,
   ) {}
 
   /**
@@ -346,6 +348,9 @@ export class BookingsService {
       deviceId: booking.deviceId,
       status: DeviceStatus.rented,
     });
+    // Cùng điểm emit realtime ở trên — Device.status vừa đổi nên cache danh
+    // sách thiết bị (GET /devices) cũng phải xoá ngay, không đợi hết TTL.
+    await this.devicesCacheService.invalidateAll();
 
     try {
       await this.notificationsService.create(
@@ -384,6 +389,7 @@ export class BookingsService {
       deviceId: booking.deviceId,
       status: DeviceStatus.available,
     });
+    await this.devicesCacheService.invalidateAll();
     return updated;
   }
 

@@ -5,6 +5,7 @@ import { Package } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRef, type MouseEvent } from "react";
+import { StarRating } from "@/components/devices/star-rating";
 import { DEVICE_STATUS_LABEL, formatVnd } from "@/lib/device-format";
 import type { Device } from "@/lib/devices-api";
 
@@ -71,9 +72,21 @@ export function DeviceCard({ device }: { device: Device }) {
 
       <div className="relative p-4">
         <h3 className="truncate font-heading text-base font-bold">{device.name}</h3>
-        <p className="mt-0.5 truncate text-xs text-muted-foreground">
-          {device.category.name}
-        </p>
+        <div className="mt-0.5 flex items-center justify-between gap-2">
+          <p className="truncate text-xs text-muted-foreground">
+            {device.category.name}
+          </p>
+          {/* Chỉ hiện khi ĐÃ có ít nhất 1 đánh giá — ẩn hẳn thay vì hiện "0
+              sao" (dễ gây hiểu lầm là thiết bị bị đánh giá thấp). */}
+          {device.reviewCount > 0 && device.avgRating !== null && (
+            <div className="flex shrink-0 items-center gap-1">
+              <StarRating rating={device.avgRating} size={12} />
+              <span className="text-xs text-muted-foreground">
+                {device.avgRating.toFixed(1)} ({device.reviewCount})
+              </span>
+            </div>
+          )}
+        </div>
 
         <div className="mt-3 flex items-baseline gap-2">
           <span className="bg-gradient-to-r from-primary to-cyan-300 bg-clip-text font-heading text-xl font-extrabold text-transparent">

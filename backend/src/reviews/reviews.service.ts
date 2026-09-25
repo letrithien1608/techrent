@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { DevicesCacheService } from '../devices/devices-cache.service';
 import { BookingStatus, Prisma, Review } from '../generated/prisma/client';
 import { CreateReviewDto } from './dto/create-review.dto';
 
@@ -36,7 +37,10 @@ export type ReviewWithReviewer = Prisma.ReviewGetPayload<
 
 @Injectable()
 export class ReviewsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly devicesCacheService: DevicesCacheService,
+  ) {}
 
   /** Khách hàng đánh giá booking của chính mình, chỉ khi đã `completed` (mục Tuần 7 Roadmap). */
   async create(userId: string, dto: CreateReviewDto): Promise<Review> {
@@ -64,13 +68,43 @@ export class ReviewsService {
       throw new ConflictException('Booking này đã được đánh giá rồi');
     }
 
-    return this.prisma.review.create({
-      data: {
-        bookingId: dto.bookingId,
-        rating: dto.rating,
-        comment: dto.comment,
-      },
+    // Tạo review VÀ tính lại avgRating/reviewCount của đúng thiết bị liên
+    // quan (qua booking.deviceId) trong CÙNG 1 transaction — đảm bảo 2 bảng
+    // (reviews, devices) không bao giờ lệch nhau dù request bị lỗi giữa
+    // chừng (mục Roadmap: denormalize rating lên Device để GET /devices
+    // không cần aggregate JOIN mỗi lần liệt kê).
+    const review = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.review.create({
+        data: {
+          bookingId: dto.bookingId,
+          rating: dto.rating,
+          comment: dto.comment,
+        },
+      });
+
+      const stats = await tx.review.aggregate({
+        where: { booking: { deviceId: booking.deviceId } },
+        _avg: { rating: true },
+        _count: { rating: true },
+      });
+
+      await tx.device.update({
+        where: { id: booking.deviceId },
+        data: {
+          avgRating: stats._avg.rating,
+          reviewCount: stats._count.rating,
+        },
+      });
+
+      return created;
     });
+
+    // avgRating của thiết bị vừa đổi — cache GET /devices (nếu đang chứa
+    // thiết bị này) giờ đã cũ, xoá ngay thay vì đợi hết TTL. invalidateAll()
+    // tự nuốt lỗi Redis bên trong (chỉ log warning), không cần try/catch ở đây.
+    await this.devicesCacheService.invalidateAll();
+
+    return review;
   }
 
   async findAll(

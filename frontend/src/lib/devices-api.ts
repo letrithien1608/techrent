@@ -14,6 +14,9 @@ export interface Device {
   images: string[];
   createdAt: string;
   category: { id: string; name: string };
+  /** Denormalize từ Review (backend tính lại mỗi khi có review mới) — `null` nếu chưa có đánh giá nào. */
+  avgRating: number | null;
+  reviewCount: number;
 }
 
 export interface PaginatedDevices {

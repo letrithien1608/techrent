@@ -18,6 +18,12 @@ describe('DevicesService', () => {
     $transaction: jest.Mock;
   };
   let realtimeGateway: { emitDeviceStatusChanged: jest.Mock };
+  let devicesCacheService: {
+    buildKey: jest.Mock;
+    get: jest.Mock;
+    set: jest.Mock;
+    invalidateAll: jest.Mock;
+  };
 
   const baseDevice: Device = {
     id: 'device-1',
@@ -28,6 +34,8 @@ describe('DevicesService', () => {
     pricePerHour: '50000' as unknown as Device['pricePerHour'],
     pricePerDay: '350000' as unknown as Device['pricePerDay'],
     images: [],
+    avgRating: null,
+    reviewCount: 0,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
   };
 
@@ -45,9 +53,19 @@ describe('DevicesService', () => {
       $transaction: jest.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
     };
     realtimeGateway = { emitDeviceStatusChanged: jest.fn() };
+    // Mặc định get() -> null (cache miss) để các test hiện có vẫn đi đúng
+    // đường truy vấn DB thật như trước khi có cache — test riêng cho hành vi
+    // cache hit/invalidate nằm trong describe('cache') bên dưới.
+    devicesCacheService = {
+      buildKey: jest.fn((filter: any) => `devices:list:${JSON.stringify(filter)}`),
+      get: jest.fn().mockResolvedValue(null),
+      set: jest.fn().mockResolvedValue(undefined),
+      invalidateAll: jest.fn().mockResolvedValue(undefined),
+    };
     service = new DevicesService(
       prisma as unknown as PrismaService,
       realtimeGateway as any,
+      devicesCacheService as any,
     );
   });
 
@@ -273,6 +291,86 @@ describe('DevicesService', () => {
         'https://res.cloudinary.com/x/new1.jpg',
         'https://res.cloudinary.com/x/new2.jpg',
       ]);
+      expect(devicesCacheService.invalidateAll).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('cache Redis cho GET /devices (mục 9 Roadmap)', () => {
+    it('cache HIT: trả thẳng dữ liệu cache, KHÔNG gọi DB', async () => {
+      const cached = {
+        data: [baseDevice],
+        meta: { page: 1, limit: 20, total: 1, totalPages: 1 },
+      };
+      devicesCacheService.get.mockResolvedValue(cached);
+
+      const result = await service.findAll({ page: 1, limit: 20 });
+
+      expect(result).toBe(cached);
+      expect(prisma.device.findMany).not.toHaveBeenCalled();
+      expect(prisma.device.count).not.toHaveBeenCalled();
+      expect(devicesCacheService.set).not.toHaveBeenCalled();
+    });
+
+    it('cache MISS: gọi DB như bình thường rồi lưu lại kết quả vào cache', async () => {
+      devicesCacheService.get.mockResolvedValue(null);
+      prisma.device.findMany.mockResolvedValue([baseDevice]);
+      prisma.device.count.mockResolvedValue(1);
+
+      const result = await service.findAll({ page: 1, limit: 20 });
+
+      expect(prisma.device.findMany).toHaveBeenCalled();
+      expect(devicesCacheService.set).toHaveBeenCalledWith(
+        expect.any(String),
+        result,
+      );
+    });
+
+    it('cache key được build từ ĐÚNG filter truyền vào (page/limit/categoryId/status/search/sort)', async () => {
+      prisma.device.findMany.mockResolvedValue([]);
+      prisma.device.count.mockResolvedValue(0);
+      const filter = {
+        page: 2,
+        limit: 10,
+        categoryId: 'cat-1',
+        status: DeviceStatus.available,
+        search: 'macbook',
+        sort: 'price_asc' as const,
+      };
+
+      await service.findAll(filter);
+
+      expect(devicesCacheService.buildKey).toHaveBeenCalledWith(filter);
+    });
+
+    it('create() xoá cache danh sách sau khi tạo thiết bị mới', async () => {
+      prisma.category.findUnique.mockResolvedValue({ id: 'cat-1', name: 'Laptop' });
+      prisma.device.create.mockResolvedValue(baseDevice);
+
+      await service.create({
+        name: 'X',
+        categoryId: 'cat-1',
+        pricePerHour: 1000,
+        pricePerDay: 5000,
+      });
+
+      expect(devicesCacheService.invalidateAll).toHaveBeenCalledTimes(1);
+    });
+
+    it('update() xoá cache danh sách dù CHỈ sửa tên (không đụng status)', async () => {
+      prisma.device.findUnique.mockResolvedValue(baseDevice);
+      prisma.device.update.mockResolvedValue({ ...baseDevice, name: 'Tên mới' });
+
+      await service.update(baseDevice.id, { name: 'Tên mới' });
+
+      expect(devicesCacheService.invalidateAll).toHaveBeenCalledTimes(1);
+    });
+
+    it('remove() xoá cache danh sách sau khi xoá thiết bị', async () => {
+      prisma.device.findUnique.mockResolvedValue(baseDevice);
+
+      await service.remove(baseDevice.id);
+
+      expect(devicesCacheService.invalidateAll).toHaveBeenCalledTimes(1);
     });
   });
 });
