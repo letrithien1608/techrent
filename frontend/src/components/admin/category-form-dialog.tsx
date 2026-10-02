@@ -26,7 +26,8 @@ export function CategoryFormDialog({ category }: { category?: Category }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(category?.name ?? "");
   const [description, setDescription] = useState(category?.description ?? "");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -39,17 +40,18 @@ export function CategoryFormDialog({ category }: { category?: Category }) {
       setOpen(false);
     },
     onError: (error) => {
-      setErrorMessage(getErrorMessage(error, "Không thể lưu danh mục, vui lòng thử lại"));
+      setServerError(getErrorMessage(error, "Không thể lưu danh mục, vui lòng thử lại"));
     },
   });
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    setErrorMessage(null);
+    setServerError(null);
     if (!name.trim() || name.trim().length < 2) {
-      setErrorMessage("Tên danh mục phải có ít nhất 2 ký tự");
+      setNameError("Tên danh mục phải có ít nhất 2 ký tự");
       return;
     }
+    setNameError(null);
     mutation.mutate();
   }
 
@@ -58,12 +60,19 @@ export function CategoryFormDialog({ category }: { category?: Category }) {
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        if (next) setErrorMessage(null);
+        if (next) {
+          setServerError(null);
+          setNameError(null);
+        }
       }}
     >
       <DialogTrigger
         render={
-          <Button variant={isEdit ? "ghost" : "default"} size={isEdit ? "icon-sm" : "default"} />
+          <Button
+            variant={isEdit ? "ghost" : "default"}
+            size={isEdit ? "icon-sm" : "default"}
+            aria-label={isEdit ? "Sửa danh mục" : undefined}
+          />
         }
       >
         {isEdit ? <Pencil className="size-4" /> : <><Plus /> Thêm danh mục</>}
@@ -73,7 +82,7 @@ export function CategoryFormDialog({ category }: { category?: Category }) {
           <DialogTitle>{isEdit ? "Sửa danh mục" : "Thêm danh mục mới"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {errorMessage && <FormErrorBanner message={errorMessage} />}
+          {serverError && <FormErrorBanner message={serverError} />}
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="category-name">Tên danh mục</Label>
             <Input
@@ -81,7 +90,9 @@ export function CategoryFormDialog({ category }: { category?: Category }) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="VD: Laptop"
+              aria-invalid={!!nameError}
             />
+            {nameError && <p className="text-xs text-destructive">{nameError}</p>}
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="category-description">Mô tả (không bắt buộc)</Label>

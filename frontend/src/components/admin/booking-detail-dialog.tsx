@@ -28,7 +28,7 @@ export function BookingDetailDialog({ booking }: { booking: Booking }) {
 
   return (
     <Dialog>
-      <DialogTrigger render={<Button variant="ghost" size="icon-sm" />}>
+      <DialogTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Xem chi tiết" />}>
         <Eye className="size-4" />
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">

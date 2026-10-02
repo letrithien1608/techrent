@@ -22,6 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import {
   fetchMaintenance,
@@ -94,40 +95,42 @@ export default function AdminMaintenancePage() {
 
   return (
     <div className="space-y-4">
-      <Select
-        value={status}
-        onValueChange={(value) => {
-          setStatus(value as MaintenanceStatus | "all");
-          setPage(1);
-        }}
-      >
-        <SelectTrigger className="w-48">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {FILTERS.map((item) => (
-            <SelectItem key={item.value} value={item.value}>
-              {item.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/50">
+        <div className="border-b border-border/60 p-4">
+          <Select
+            value={status}
+            onValueChange={(value) => {
+              setStatus(value as MaintenanceStatus | "all");
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {FILTERS.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-      <div className="rounded-2xl border border-border/60 bg-card/50 p-4">
         {maintenanceQuery.isPending ? (
-          <div className="space-y-2">
+          <div className="space-y-2 p-4">
             {Array.from({ length: 5 }).map((_, i) => (
               <Skeleton key={i} className="h-12 w-full rounded-lg" />
             ))}
           </div>
         ) : maintenanceQuery.isError ? (
-          <div className="flex flex-col items-center gap-3 py-16 text-center">
+          <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
             <WifiOff className="size-10 text-muted-foreground/50" />
             <p className="text-muted-foreground">Không thể tải danh sách báo hỏng.</p>
             <Button onClick={() => maintenanceQuery.refetch()}>Thử lại</Button>
           </div>
         ) : records.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 py-16 text-center">
+          <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
             <Wrench className="size-10 text-muted-foreground/40" />
             <p className="text-muted-foreground">Không có báo cáo sự cố nào.</p>
           </div>
@@ -170,38 +173,52 @@ export default function AdminMaintenancePage() {
                         {record.resolvedAt ? formatDateTimeVi(record.resolvedAt) : "—"}
                       </TableCell>
                       <TableCell className="text-right">
-                        {record.status === "open" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={isMutatingThis}
-                            onClick={() =>
-                              mutation.mutate({ id: record.id, next: "in_progress" })
-                            }
-                          >
-                            {isMutatingThis ? (
-                              <Loader2 className="animate-spin" />
-                            ) : (
-                              <PlayCircle />
-                            )}
-                            Bắt đầu xử lý
-                          </Button>
-                        )}
-                        {record.status === "in_progress" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={isMutatingThis}
-                            onClick={() => mutation.mutate({ id: record.id, next: "resolved" })}
-                          >
-                            {isMutatingThis ? (
-                              <Loader2 className="animate-spin" />
-                            ) : (
-                              <CheckCircle2 />
-                            )}
-                            Đã xử lý xong
-                          </Button>
-                        )}
+                        <div className="flex justify-end gap-1">
+                          {record.status === "open" && (
+                            <Tooltip>
+                              <TooltipTrigger render={<span className="inline-flex" />}>
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  disabled={isMutatingThis}
+                                  aria-label="Bắt đầu xử lý"
+                                  onClick={() =>
+                                    mutation.mutate({ id: record.id, next: "in_progress" })
+                                  }
+                                >
+                                  {isMutatingThis ? (
+                                    <Loader2 className="size-4 animate-spin" />
+                                  ) : (
+                                    <PlayCircle className="size-4" />
+                                  )}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Bắt đầu xử lý</TooltipContent>
+                            </Tooltip>
+                          )}
+                          {record.status === "in_progress" && (
+                            <Tooltip>
+                              <TooltipTrigger render={<span className="inline-flex" />}>
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  disabled={isMutatingThis}
+                                  aria-label="Đã xử lý xong"
+                                  onClick={() =>
+                                    mutation.mutate({ id: record.id, next: "resolved" })
+                                  }
+                                >
+                                  {isMutatingThis ? (
+                                    <Loader2 className="size-4 animate-spin" />
+                                  ) : (
+                                    <CheckCircle2 className="size-4" />
+                                  )}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Đã xử lý xong</TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -209,13 +226,11 @@ export default function AdminMaintenancePage() {
               </TableBody>
             </Table>
 
-            <div className="mt-3">
-              <AdminPagination
-                page={page}
-                totalPages={meta?.totalPages ?? 1}
-                onPageChange={setPage}
-              />
-            </div>
+            <AdminPagination
+              page={page}
+              totalPages={meta?.totalPages ?? 1}
+              onPageChange={setPage}
+            />
           </>
         )}
       </div>

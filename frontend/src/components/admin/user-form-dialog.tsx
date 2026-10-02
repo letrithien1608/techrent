@@ -34,6 +34,8 @@ interface Props {
   isSelf?: boolean;
 }
 
+type FieldErrors = Partial<Record<"name" | "email" | "password", string>>;
+
 export function UserFormDialog({ user, isSelf = false }: Props) {
   const isEdit = !!user;
   const queryClient = useQueryClient();
@@ -43,7 +45,8 @@ export function UserFormDialog({ user, isSelf = false }: Props) {
   const [phone, setPhone] = useState(user?.phone ?? "");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<UserRole>(user?.role ?? "customer");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -63,32 +66,36 @@ export function UserFormDialog({ user, isSelf = false }: Props) {
       setOpen(false);
     },
     onError: (error) => {
-      setErrorMessage(
+      setServerError(
         getErrorMessage(error, "Không thể lưu người dùng, vui lòng thử lại"),
       );
     },
   });
 
-  function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    setErrorMessage(null);
-
+  function validate(): FieldErrors {
+    const errors: FieldErrors = {};
     if (!name.trim() || name.trim().length < 2) {
-      setErrorMessage("Tên phải có ít nhất 2 ký tự");
-      return;
+      errors.name = "Tên phải có ít nhất 2 ký tự";
     }
     if (!isEdit && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setErrorMessage("Email không hợp lệ");
-      return;
+      errors.email = "Email không hợp lệ";
     }
     if (!isEdit && password.length < 8) {
-      setErrorMessage("Mật khẩu phải có ít nhất 8 ký tự");
-      return;
+      errors.password = "Mật khẩu phải có ít nhất 8 ký tự";
     }
     if (isEdit && password && password.length < 8) {
-      setErrorMessage("Mật khẩu mới phải có ít nhất 8 ký tự");
-      return;
+      errors.password = "Mật khẩu mới phải có ít nhất 8 ký tự";
     }
+    return errors;
+  }
+
+  function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    setServerError(null);
+
+    const errors = validate();
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
 
     mutation.mutate();
   }
@@ -98,7 +105,10 @@ export function UserFormDialog({ user, isSelf = false }: Props) {
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        if (next) setErrorMessage(null);
+        if (next) {
+          setServerError(null);
+          setFieldErrors({});
+        }
       }}
     >
       <DialogTrigger
@@ -106,6 +116,7 @@ export function UserFormDialog({ user, isSelf = false }: Props) {
           <Button
             variant={isEdit ? "ghost" : "default"}
             size={isEdit ? "icon-sm" : "default"}
+            aria-label={isEdit ? "Sửa người dùng" : undefined}
           />
         }
       >
@@ -122,7 +133,7 @@ export function UserFormDialog({ user, isSelf = false }: Props) {
           <DialogTitle>{isEdit ? "Sửa người dùng" : "Thêm người dùng mới"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {errorMessage && <FormErrorBanner message={errorMessage} />}
+          {serverError && <FormErrorBanner message={serverError} />}
 
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="user-name">Họ và tên</Label>
@@ -131,7 +142,11 @@ export function UserFormDialog({ user, isSelf = false }: Props) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Nguyễn Văn A"
+              aria-invalid={!!fieldErrors.name}
             />
+            {fieldErrors.name && (
+              <p className="text-xs text-destructive">{fieldErrors.name}</p>
+            )}
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -143,11 +158,16 @@ export function UserFormDialog({ user, isSelf = false }: Props) {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="ban@example.com"
               disabled={isEdit}
+              aria-invalid={!!fieldErrors.email}
             />
-            {isEdit && (
+            {isEdit ? (
               <p className="text-xs text-muted-foreground">
                 Không thể đổi email sau khi tạo
               </p>
+            ) : (
+              fieldErrors.email && (
+                <p className="text-xs text-destructive">{fieldErrors.email}</p>
+              )
             )}
           </div>
 
@@ -171,7 +191,11 @@ export function UserFormDialog({ user, isSelf = false }: Props) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Tối thiểu 8 ký tự"
+              aria-invalid={!!fieldErrors.password}
             />
+            {fieldErrors.password && (
+              <p className="text-xs text-destructive">{fieldErrors.password}</p>
+            )}
           </div>
 
           <div className="flex flex-col gap-1.5">

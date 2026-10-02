@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -12,7 +13,15 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Boxes, DollarSign, Package, WifiOff, Wrench } from "lucide-react";
+import {
+  Boxes,
+  DollarSign,
+  Package,
+  TrendingDown,
+  TrendingUp,
+  WifiOff,
+  Wrench,
+} from "lucide-react";
 import { cn } from "cn";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -43,23 +52,46 @@ function StatCard({
   label,
   value,
   tone,
+  trendPercent,
 }: {
   icon: typeof DollarSign;
   label: string;
   value: string;
   tone: string;
+  /** % thay đổi thật so với kỳ trước — chỉ truyền khi có dữ liệu kỳ trước để so sánh, KHÔNG bịa. */
+  trendPercent?: number;
 }) {
   return (
-    <div className="rounded-2xl border border-border/60 bg-card/50 p-5">
-      <div
-        className={cn(
-          "inline-flex size-9 items-center justify-center rounded-lg",
-          tone,
+    <div className="rounded-2xl border border-border/60 bg-card/50 p-5 transition-colors hover:border-border">
+      <div className="flex items-start justify-between">
+        <div
+          className={cn(
+            "inline-flex size-10 items-center justify-center rounded-xl",
+            tone,
+          )}
+        >
+          <Icon className="size-5" />
+        </div>
+        {trendPercent !== undefined && (
+          <span
+            title="So với 7 ngày trước đó"
+            className={cn(
+              "inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-medium",
+              trendPercent >= 0
+                ? "bg-emerald-500/15 text-emerald-400"
+                : "bg-destructive/15 text-destructive",
+            )}
+          >
+            {trendPercent >= 0 ? (
+              <TrendingUp className="size-3" />
+            ) : (
+              <TrendingDown className="size-3" />
+            )}
+            {Math.abs(trendPercent).toFixed(0)}%
+          </span>
         )}
-      >
-        <Icon className="size-4.5" />
       </div>
-      <p className="mt-3 font-heading text-2xl font-bold tracking-tight">
+      <p className="mt-3 font-heading text-3xl font-extrabold tracking-tight">
         {value}
       </p>
       <p className="text-sm text-muted-foreground">{label}</p>
@@ -101,14 +133,18 @@ function buildRevenueChart(bookings: Booking[]) {
 }
 
 function buildTopDevices(bookings: Booking[]) {
-  const counts = new Map<string, { name: string; count: number }>();
+  const counts = new Map<string, { name: string; image?: string; count: number }>();
   for (const booking of bookings) {
     if (!booking.device) continue;
     const current = counts.get(booking.deviceId);
     if (current) {
       current.count += 1;
     } else {
-      counts.set(booking.deviceId, { name: booking.device.name, count: 1 });
+      counts.set(booking.deviceId, {
+        name: booking.device.name,
+        image: booking.device.images?.[0],
+        count: 1,
+      });
     }
   }
   return Array.from(counts.values())
@@ -147,7 +183,24 @@ export default function AdminDashboardPage() {
     ).length;
     const rented = devices.filter((d) => d.status === "rented").length;
     const maintenance = devices.filter((d) => d.status === "maintenance").length;
-    return { revenue, processing, rented, maintenance };
+
+    // Chỉ báo xu hướng doanh thu — tính THẬT từ dữ liệu booking đã fetch (7
+    // ngày gần nhất so với 7 ngày trước đó), KHÔNG bịa số liệu. `undefined`
+    // khi kỳ trước = 0 (không có mẫu số hợp lệ để tính %).
+    const now = new Date().getTime();
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    let last7 = 0;
+    let prev7 = 0;
+    for (const b of bookings) {
+      if (!REVENUE_STATUSES.has(b.status)) continue;
+      const ageDays = (now - new Date(b.createdAt).getTime()) / DAY_MS;
+      if (ageDays < 0) continue;
+      if (ageDays <= 7) last7 += Number(b.depositAmount);
+      else if (ageDays <= 14) prev7 += Number(b.depositAmount);
+    }
+    const revenueTrend = prev7 > 0 ? ((last7 - prev7) / prev7) * 100 : undefined;
+
+    return { revenue, processing, rented, maintenance, revenueTrend };
   }, [bookings, devices]);
 
   const chartData = useMemo(() => buildRevenueChart(bookings), [bookings]);
@@ -168,7 +221,7 @@ export default function AdminDashboardPage() {
       <div className="space-y-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-28 rounded-2xl" />
+            <Skeleton key={i} className="h-32 rounded-2xl" />
           ))}
         </div>
         <Skeleton className="h-72 rounded-2xl" />
@@ -203,6 +256,7 @@ export default function AdminDashboardPage() {
           label="Tổng doanh thu (ước tính)"
           value={formatVnd(stats.revenue)}
           tone="bg-emerald-500/15 text-emerald-400"
+          trendPercent={stats.revenueTrend}
         />
         <StatCard
           icon={Boxes}
@@ -251,15 +305,25 @@ export default function AdminDashboardPage() {
               />
               <Tooltip
                 formatter={(value) => formatVnd(Number(value))}
+                cursor={{ fill: "var(--primary)", opacity: 0.08 }}
                 contentStyle={{
                   background: "var(--popover)",
                   border: "1px solid var(--border)",
-                  borderRadius: 8,
+                  borderRadius: 10,
+                  boxShadow: "0 4px 16px -4px rgb(0 0 0 / 0.2)",
                   color: "var(--popover-foreground)",
                   fontSize: 12,
+                  padding: "8px 12px",
                 }}
+                labelStyle={{ color: "var(--muted-foreground)", marginBottom: 2 }}
               />
-              <Bar dataKey="revenue" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+              <Bar
+                dataKey="revenue"
+                fill="var(--primary)"
+                radius={[4, 4, 0, 0]}
+                maxBarSize={28}
+                activeBar={{ fill: "var(--primary)", fillOpacity: 0.85 }}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -336,10 +400,31 @@ export default function AdminDashboardPage() {
               Chưa có dữ liệu.
             </p>
           ) : (
-            <ul className="mt-3 space-y-2.5">
+            <ul className="mt-3 space-y-1">
               {topDevices.map((device, index) => (
-                <li key={index} className="flex items-center justify-between gap-3 text-sm">
-                  <span className="truncate">{device.name}</span>
+                <li
+                  key={index}
+                  className="flex items-center gap-3 rounded-lg px-1.5 py-1.5 text-sm transition-colors hover:bg-muted/40"
+                >
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
+                    {index + 1}
+                  </span>
+                  <div className="relative size-8 shrink-0 overflow-hidden rounded-lg bg-muted">
+                    {device.image ? (
+                      <Image
+                        src={device.image}
+                        alt={device.name}
+                        fill
+                        sizes="32px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                        <Package className="size-3.5" />
+                      </div>
+                    )}
+                  </div>
+                  <span className="min-w-0 flex-1 truncate">{device.name}</span>
                   <span className="shrink-0 font-medium text-muted-foreground">
                     {device.count} lượt thuê
                   </span>

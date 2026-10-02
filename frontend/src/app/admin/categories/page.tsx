@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { CategoryFormDialog } from "@/components/admin/category-form-dialog";
 import { ConfirmDeleteDialog } from "@/components/admin/confirm-delete-dialog";
 import { deleteCategory } from "@/lib/admin-api";
@@ -29,25 +30,25 @@ export default function AdminCategoriesPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <CategoryFormDialog />
-      </div>
+      <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/50">
+        <div className="flex justify-end border-b border-border/60 p-4">
+          <CategoryFormDialog />
+        </div>
 
-      <div className="rounded-2xl border border-border/60 bg-card/50 p-4">
         {categoriesQuery.isPending ? (
-          <div className="space-y-2">
+          <div className="space-y-2 p-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <Skeleton key={i} className="h-10 w-full rounded-lg" />
             ))}
           </div>
         ) : categoriesQuery.isError ? (
-          <div className="flex flex-col items-center gap-3 py-16 text-center">
+          <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
             <WifiOff className="size-10 text-muted-foreground/50" />
             <p className="text-muted-foreground">Không thể tải danh sách danh mục.</p>
             <Button onClick={() => categoriesQuery.refetch()}>Thử lại</Button>
           </div>
         ) : categories.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 py-16 text-center">
+          <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
             <Tags className="size-10 text-muted-foreground/40" />
             <p className="text-muted-foreground">Chưa có danh mục nào.</p>
           </div>
@@ -69,16 +70,26 @@ export default function AdminCategoriesPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
-                      <CategoryFormDialog category={category} />
-                      <ConfirmDeleteDialog
-                        title="Xoá danh mục này?"
-                        description={`Danh mục "${category.name}" sẽ bị xoá. Nếu còn thiết bị thuộc danh mục này, hệ thống sẽ báo lỗi và không cho xoá.`}
-                        onConfirm={() => deleteCategory(category.id)}
-                        onDeleted={handleChanged}
-                        successMessage="Đã xoá danh mục"
-                      >
-                        <Trash2 className="size-4" />
-                      </ConfirmDeleteDialog>
+                      <Tooltip>
+                        <TooltipTrigger render={<span className="inline-flex" />}>
+                          <CategoryFormDialog category={category} />
+                        </TooltipTrigger>
+                        <TooltipContent>Sửa danh mục</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger render={<span className="inline-flex" />}>
+                          <ConfirmDeleteDialog
+                            title="Xoá danh mục này?"
+                            description={`Danh mục "${category.name}" sẽ bị xoá. Nếu còn thiết bị thuộc danh mục này, hệ thống sẽ báo lỗi và không cho xoá.`}
+                            onConfirm={() => deleteCategory(category.id)}
+                            onDeleted={handleChanged}
+                            successMessage="Đã xoá danh mục"
+                          >
+                            <Trash2 className="size-4" />
+                          </ConfirmDeleteDialog>
+                        </TooltipTrigger>
+                        <TooltipContent>Xoá danh mục</TooltipContent>
+                      </Tooltip>
                     </div>
                   </TableCell>
                 </TableRow>

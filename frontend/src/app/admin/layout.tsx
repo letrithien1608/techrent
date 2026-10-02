@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminTopbar } from "@/components/admin/admin-topbar";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuthStore } from "@/stores/auth-store";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
@@ -23,14 +24,16 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-1">
-      <AdminSidebar user={user} />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <AdminTopbar />
-        <main className="flex-1 overflow-y-auto bg-background px-6 py-6">
-          {children}
-        </main>
+    <TooltipProvider delay={200}>
+      <div className="flex min-h-screen w-full flex-1">
+        <AdminSidebar user={user} />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <AdminTopbar />
+          <main className="flex-1 overflow-y-auto bg-background px-4 py-6 sm:px-6">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }

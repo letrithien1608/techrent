@@ -1,18 +1,18 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Check, ImagePlus, Loader2, Package, Trash2, X } from "lucide-react";
+import { Check, Loader2, Package, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ImageDropzone } from "@/components/admin/image-dropzone";
 import { updateDevice, uploadDeviceImages } from "@/lib/admin-api";
 import { getErrorMessage } from "@/lib/get-error-message";
 import type { Device } from "@/lib/devices-api";
 
 export function DeviceImageManager({ device }: { device: Device }) {
   const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   // Ảnh ĐÃ CÓ đang chờ xác nhận xoá (index trong device.images) — hover hiện
   // nút thùng rác, bấm 1 lần chuyển ảnh đó thành overlay "Xoá ảnh này?", bấm
@@ -69,26 +69,26 @@ export function DeviceImageManager({ device }: { device: Device }) {
   }
 
   return (
-    <div className="max-w-2xl space-y-4">
+    <div className="max-w-2xl space-y-5">
       <div>
         <p className="text-sm font-medium text-foreground">Ảnh hiện có</p>
         {device.images.length === 0 ? (
           <p className="mt-2 text-sm text-muted-foreground">Chưa có ảnh nào.</p>
         ) : (
-          <div className="mt-2 flex flex-wrap gap-3">
+          <div className="mt-2 grid grid-cols-4 gap-3 sm:grid-cols-5">
             {device.images.map((src, index) => {
               const isConfirming = confirmingIndex === index;
               return (
                 <div
                   key={src}
-                  className="group relative size-20 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-muted"
+                  className="group relative aspect-square overflow-hidden rounded-xl border border-border/60 bg-muted transition-shadow hover:shadow-md"
                 >
                   <Image
                     src={src}
                     alt={`Ảnh ${index + 1}`}
                     fill
-                    sizes="80px"
-                    className="object-cover"
+                    sizes="120px"
+                    className="object-cover transition-transform duration-200 group-hover:scale-105"
                   />
 
                   {isConfirming ? (
@@ -136,40 +136,20 @@ export function DeviceImageManager({ device }: { device: Device }) {
       </div>
 
       <div>
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-medium text-foreground">Thêm ảnh mới</p>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <ImagePlus /> Chọn ảnh
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            hidden
-            onChange={(e) => {
-              handleFilesSelected(e.target.files);
-              e.target.value = "";
-            }}
-          />
-        </div>
+        <p className="text-sm font-medium text-foreground">Thêm ảnh mới</p>
+        <ImageDropzone
+          onFilesSelected={handleFilesSelected}
+          hint="Tối đa 8 ảnh, mỗi ảnh không quá 5MB"
+          className="mt-2"
+        />
 
-        {previews.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">
-            Chưa chọn ảnh nào — tối đa 8 ảnh, mỗi ảnh không quá 5MB.
-          </p>
-        ) : (
+        {previews.length > 0 && (
           <>
-            <div className="mt-3 flex flex-wrap gap-3">
+            <div className="mt-3 grid grid-cols-4 gap-3 sm:grid-cols-5">
               {previews.map((src, index) => (
                 <div
                   key={src}
-                  className="relative size-20 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-muted"
+                  className="group relative aspect-square overflow-hidden rounded-xl border border-border/60 bg-muted"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element -- blob: URL xem trước cục bộ, next/image chỉ nhận domain đã whitelist (res.cloudinary.com) */}
                   <img
@@ -181,7 +161,7 @@ export function DeviceImageManager({ device }: { device: Device }) {
                     type="button"
                     onClick={() => removePendingFile(index)}
                     aria-label="Bỏ ảnh này"
-                    className="absolute right-0.5 top-0.5 rounded-full bg-black/60 p-0.5 text-white"
+                    className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
                   >
                     <X className="size-3" />
                   </button>

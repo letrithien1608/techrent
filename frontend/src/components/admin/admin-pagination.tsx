@@ -15,9 +15,10 @@ export function AdminPagination({
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex items-center justify-between border-t border-border/60 pt-3">
+    <div className="flex items-center justify-between border-t border-border/60 px-4 py-3">
       <p className="text-sm text-muted-foreground">
-        Trang {page} / {totalPages}
+        Trang <span className="font-medium text-foreground">{page}</span> /{" "}
+        {totalPages}
       </p>
       <div className="flex gap-2">
         <Button

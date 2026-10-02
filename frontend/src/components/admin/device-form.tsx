@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ImagePlus, Loader2, Plus, X } from "lucide-react";
+import { Loader2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FormErrorBanner } from "@/components/form-error-banner";
+import { ImageDropzone } from "@/components/admin/image-dropzone";
 import {
   createDevice,
   updateDevice,
@@ -35,6 +36,13 @@ interface SpecRow {
   id: string;
   key: string;
   value: string;
+}
+
+type FieldErrors = Partial<Record<"name" | "categoryId" | "pricePerHour" | "pricePerDay", string>>;
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return <p className="text-xs text-destructive">{message}</p>;
 }
 
 function specsToRows(specs: Record<string, unknown> | null): SpecRow[] {
@@ -66,12 +74,12 @@ export function DeviceForm({ device }: { device?: Device }) {
   const [pricePerDay, setPricePerDay] = useState(device?.pricePerDay ?? "");
   const [status, setStatus] = useState(device?.status ?? "available");
   const [specRows, setSpecRows] = useState<SpecRow[]>(() => specsToRows(device?.specs ?? null));
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [serverError, setServerError] = useState<string | null>(null);
 
   // Chỉ dùng khi TẠO MỚI — gộp bước chọn ảnh ngay vào form tạo thiết bị thay vì
   // bắt admin phải tự nhận ra còn 1 bước ẩn ở trang sửa sau khi tạo xong.
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const previews = useMemo(
     () => pendingFiles.map((file) => URL.createObjectURL(file)),
     [pendingFiles],
@@ -121,7 +129,7 @@ export function DeviceForm({ device }: { device?: Device }) {
       router.push(`/admin/devices/${result.id}/edit`);
     },
     onError: (error) => {
-      setErrorMessage(getErrorMessage(error, "Không thể lưu thiết bị, vui lòng thử lại"));
+      setServerError(getErrorMessage(error, "Không thể lưu thiết bị, vui lòng thử lại"));
     },
   });
 
@@ -146,42 +154,46 @@ export function DeviceForm({ device }: { device?: Device }) {
     setSpecRows((rows) => rows.filter((row) => row.id !== id));
   }
 
-  function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    setErrorMessage(null);
-
+  function validate(): FieldErrors {
+    const errors: FieldErrors = {};
     if (!name.trim() || name.trim().length < 2) {
-      setErrorMessage("Tên thiết bị phải có ít nhất 2 ký tự");
-      return;
+      errors.name = "Tên thiết bị phải có ít nhất 2 ký tự";
     }
     if (!categoryId) {
-      setErrorMessage("Vui lòng chọn danh mục");
-      return;
+      errors.categoryId = "Vui lòng chọn danh mục";
     }
     const hourNumber = Number(pricePerHour);
-    const dayNumber = Number(pricePerDay);
     if (!pricePerHour || Number.isNaN(hourNumber) || hourNumber < 0) {
-      setErrorMessage("Giá theo giờ không hợp lệ");
-      return;
+      errors.pricePerHour = "Giá theo giờ không hợp lệ";
     }
+    const dayNumber = Number(pricePerDay);
     if (!pricePerDay || Number.isNaN(dayNumber) || dayNumber < 0) {
-      setErrorMessage("Giá theo ngày không hợp lệ");
-      return;
+      errors.pricePerDay = "Giá theo ngày không hợp lệ";
     }
+    return errors;
+  }
+
+  function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    setServerError(null);
+
+    const errors = validate();
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
 
     mutation.mutate({
       name: name.trim(),
       categoryId,
-      pricePerHour: hourNumber,
-      pricePerDay: dayNumber,
+      pricePerHour: Number(pricePerHour),
+      pricePerDay: Number(pricePerDay),
       specs: rowsToSpecs(specRows),
       ...(isEdit ? { status: status as Device["status"] } : {}),
     });
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl space-y-5">
-      {errorMessage && <FormErrorBanner message={errorMessage} />}
+    <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
+      {serverError && <FormErrorBanner message={serverError} />}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5 sm:col-span-2">
@@ -191,13 +203,15 @@ export function DeviceForm({ device }: { device?: Device }) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="VD: MacBook Pro 14 M3"
+            aria-invalid={!!fieldErrors.name}
           />
+          <FieldError message={fieldErrors.name} />
         </div>
 
         <div className="flex flex-col gap-1.5">
           <Label>Danh mục</Label>
           <Select value={categoryId} onValueChange={(value) => setCategoryId(value ?? "")}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full" aria-invalid={!!fieldErrors.categoryId}>
               <SelectValue placeholder="Chọn danh mục" />
             </SelectTrigger>
             <SelectContent>
@@ -208,6 +222,7 @@ export function DeviceForm({ device }: { device?: Device }) {
               ))}
             </SelectContent>
           </Select>
+          <FieldError message={fieldErrors.categoryId} />
         </div>
 
         {isEdit && (
@@ -236,7 +251,9 @@ export function DeviceForm({ device }: { device?: Device }) {
             min={0}
             value={pricePerHour}
             onChange={(e) => setPricePerHour(e.target.value)}
+            aria-invalid={!!fieldErrors.pricePerHour}
           />
+          <FieldError message={fieldErrors.pricePerHour} />
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -247,23 +264,30 @@ export function DeviceForm({ device }: { device?: Device }) {
             min={0}
             value={pricePerDay}
             onChange={(e) => setPricePerDay(e.target.value)}
+            aria-invalid={!!fieldErrors.pricePerDay}
           />
+          <FieldError message={fieldErrors.pricePerDay} />
         </div>
       </div>
 
-      <div>
+      <div className="rounded-xl border border-border/60 p-4">
         <div className="flex items-center justify-between">
-          <Label>Thông số kỹ thuật</Label>
+          <div>
+            <Label>Thông số kỹ thuật</Label>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Tuỳ ý theo từng danh mục — VD laptop: cpu, ram, storage
+            </p>
+          </div>
           <Button type="button" variant="outline" size="sm" onClick={addSpecRow}>
             <Plus /> Thêm dòng
           </Button>
         </div>
         {specRows.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">
-            Chưa có thông số nào — bấm &quot;Thêm dòng&quot; để thêm (VD: cpu, ram, storage...).
+          <p className="mt-3 text-sm text-muted-foreground">
+            Chưa có thông số nào — bấm &quot;Thêm dòng&quot; để thêm.
           </p>
         ) : (
-          <div className="mt-2 space-y-2">
+          <div className="mt-3 space-y-2">
             {specRows.map((row) => (
               <div key={row.id} className="flex gap-2">
                 <Input
@@ -295,39 +319,21 @@ export function DeviceForm({ device }: { device?: Device }) {
 
       {!isEdit && (
         <div>
-          <div className="flex items-center justify-between">
-            <Label>Ảnh thiết bị (không bắt buộc)</Label>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <ImagePlus /> Chọn ảnh
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              hidden
-              onChange={(e) => {
-                handleFilesSelected(e.target.files);
-                e.target.value = "";
-              }}
-            />
-          </div>
-          {previews.length === 0 ? (
-            <p className="mt-2 text-sm text-muted-foreground">
-              Có thể thêm ảnh ngay bây giờ, hoặc bỏ qua và thêm sau ở trang sửa —
-              tối đa 8 ảnh, mỗi ảnh không quá 5MB.
-            </p>
-          ) : (
-            <div className="mt-2 flex flex-wrap gap-3">
+          <Label>Ảnh thiết bị (không bắt buộc)</Label>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Có thể thêm ngay bây giờ, hoặc bỏ qua và thêm sau ở trang sửa.
+          </p>
+          <ImageDropzone
+            onFilesSelected={handleFilesSelected}
+            hint="Tối đa 8 ảnh, mỗi ảnh không quá 5MB"
+            className="mt-2"
+          />
+          {previews.length > 0 && (
+            <div className="mt-3 grid grid-cols-4 gap-3 sm:grid-cols-6">
               {previews.map((src, index) => (
                 <div
                   key={src}
-                  className="relative size-20 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-muted"
+                  className="group relative aspect-square overflow-hidden rounded-xl border border-border/60 bg-muted"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element -- blob: URL xem trước cục bộ, next/image chỉ nhận domain đã whitelist */}
                   <img
@@ -339,7 +345,7 @@ export function DeviceForm({ device }: { device?: Device }) {
                     type="button"
                     onClick={() => removePendingFile(index)}
                     aria-label="Bỏ ảnh này"
-                    className="absolute right-0.5 top-0.5 rounded-full bg-black/60 p-0.5 text-white"
+                    className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
                   >
                     <X className="size-3" />
                   </button>

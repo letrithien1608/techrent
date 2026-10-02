@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { Ban, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cancelBooking, type Booking, type CancelBookingResult } from "@/lib/bookings-api";
 import { estimateRefundPercentage } from "@/lib/booking-format";
 import { formatVnd } from "@/lib/device-format";
@@ -25,6 +26,8 @@ interface Props {
   variant?: "outline" | "destructive" | "ghost";
   size?: "sm" | "default" | "lg";
   className?: string;
+  /** Dùng ở bảng admin — chỉ icon thùng rác + tooltip, không có text "Huỷ đơn". */
+  iconOnly?: boolean;
 }
 
 export function CancelBookingDialog({
@@ -33,6 +36,7 @@ export function CancelBookingDialog({
   variant = "outline",
   size = "sm",
   className,
+  iconOnly = false,
 }: Props) {
   const [open, setOpen] = useState(false);
   const refundPercentage = estimateRefundPercentage(booking.startTime);
@@ -52,11 +56,31 @@ export function CancelBookingDialog({
     },
   });
 
+  const trigger = (
+    <DialogTrigger
+      render={
+        <Button
+          variant={variant}
+          size={iconOnly ? "icon-sm" : size}
+          className={className}
+          aria-label={iconOnly ? "Huỷ đơn" : undefined}
+        />
+      }
+    >
+      {iconOnly ? <Ban className="size-4" /> : "Huỷ đơn"}
+    </DialogTrigger>
+  );
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant={variant} size={size} className={className} />}>
-        Huỷ đơn
-      </DialogTrigger>
+      {iconOnly ? (
+        <Tooltip>
+          <TooltipTrigger render={<span className="inline-flex" />}>{trigger}</TooltipTrigger>
+          <TooltipContent>Huỷ đơn</TooltipContent>
+        </Tooltip>
+      ) : (
+        trigger
+      )}
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>Huỷ đơn thuê này?</DialogTitle>

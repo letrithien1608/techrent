@@ -24,6 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { ConfirmDeleteDialog } from "@/components/admin/confirm-delete-dialog";
 import { deleteDevice } from "@/lib/admin-api";
@@ -80,77 +81,77 @@ export default function AdminDevicesPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Tìm theo tên thiết bị..."
-              className="w-56 pl-8"
-            />
+      <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/50">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 p-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Tìm theo tên thiết bị..."
+                className="w-56 pl-8"
+              />
+            </div>
+            <Select
+              value={categoryId}
+              onValueChange={(value) => {
+                setCategoryId(value ?? "all");
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả danh mục</SelectItem>
+                {(categoriesQuery.data ?? []).map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={status}
+              onValueChange={(value) => {
+                setStatus(value ?? "all");
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Mọi trạng thái</SelectItem>
+                {Object.entries(DEVICE_STATUS_LABEL).map(([value, meta]) => (
+                  <SelectItem key={value} value={value}>
+                    {meta.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <Select
-            value={categoryId}
-            onValueChange={(value) => {
-              setCategoryId(value ?? "all");
-              setPage(1);
-            }}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả danh mục</SelectItem>
-              {(categoriesQuery.data ?? []).map((category) => (
-                <SelectItem key={category.id} value={category.id}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={status}
-            onValueChange={(value) => {
-              setStatus(value ?? "all");
-              setPage(1);
-            }}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Mọi trạng thái</SelectItem>
-              {Object.entries(DEVICE_STATUS_LABEL).map(([value, meta]) => (
-                <SelectItem key={value} value={value}>
-                  {meta.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+
+          <Button nativeButton={false} render={<Link href="/admin/devices/new" />}>
+            <Plus /> Thêm thiết bị
+          </Button>
         </div>
 
-        <Button nativeButton={false} render={<Link href="/admin/devices/new" />}>
-          <Plus /> Thêm thiết bị
-        </Button>
-      </div>
-
-      <div className="rounded-2xl border border-border/60 bg-card/50 p-4">
         {devicesQuery.isPending ? (
-          <div className="space-y-2">
+          <div className="space-y-2 p-4">
             {Array.from({ length: 6 }).map((_, i) => (
               <Skeleton key={i} className="h-12 w-full rounded-lg" />
             ))}
           </div>
         ) : hasError ? (
-          <div className="flex flex-col items-center gap-3 py-16 text-center">
+          <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
             <WifiOff className="size-10 text-muted-foreground/50" />
             <p className="text-muted-foreground">Không thể tải danh sách thiết bị.</p>
             <Button onClick={() => devicesQuery.refetch()}>Thử lại</Button>
           </div>
         ) : devices.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 py-16 text-center">
+          <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
             <Package className="size-10 text-muted-foreground/40" />
             <p className="text-muted-foreground">
               {hasActiveFilters
@@ -208,24 +209,34 @@ export default function AdminDevicesPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            nativeButton={false}
-                            render={<Link href={`/admin/devices/${device.id}/edit`} />}
-                            aria-label="Sửa"
-                          >
-                            <Pencil className="size-4" />
-                          </Button>
-                          <ConfirmDeleteDialog
-                            title="Xoá thiết bị này?"
-                            description={`Thiết bị "${device.name}" sẽ bị xoá khỏi hệ thống. Hành động không thể hoàn tác.`}
-                            onConfirm={() => deleteDevice(device.id)}
-                            onDeleted={handleChanged}
-                            successMessage="Đã xoá thiết bị"
-                          >
-                            <Trash2 className="size-4" />
-                          </ConfirmDeleteDialog>
+                          <Tooltip>
+                            <TooltipTrigger render={<span className="inline-flex" />}>
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                nativeButton={false}
+                                render={<Link href={`/admin/devices/${device.id}/edit`} />}
+                                aria-label="Sửa"
+                              >
+                                <Pencil className="size-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Sửa thiết bị</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger render={<span className="inline-flex" />}>
+                              <ConfirmDeleteDialog
+                                title="Xoá thiết bị này?"
+                                description={`Thiết bị "${device.name}" sẽ bị xoá khỏi hệ thống. Hành động không thể hoàn tác.`}
+                                onConfirm={() => deleteDevice(device.id)}
+                                onDeleted={handleChanged}
+                                successMessage="Đã xoá thiết bị"
+                              >
+                                <Trash2 className="size-4" />
+                              </ConfirmDeleteDialog>
+                            </TooltipTrigger>
+                            <TooltipContent>Xoá thiết bị</TooltipContent>
+                          </Tooltip>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -234,13 +245,11 @@ export default function AdminDevicesPage() {
               </TableBody>
             </Table>
 
-            <div className="mt-3">
-              <AdminPagination
-                page={page}
-                totalPages={result?.meta.totalPages ?? 1}
-                onPageChange={setPage}
-              />
-            </div>
+            <AdminPagination
+              page={page}
+              totalPages={result?.meta.totalPages ?? 1}
+              onPageChange={setPage}
+            />
           </>
         )}
       </div>

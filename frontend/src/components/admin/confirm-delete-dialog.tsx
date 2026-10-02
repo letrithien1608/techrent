@@ -53,7 +53,7 @@ export function ConfirmDeleteDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant={triggerVariant} size={triggerSize} />}>
+      <DialogTrigger render={<Button variant={triggerVariant} size={triggerSize} aria-label={title} />}>
         {children}
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
