@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 /**
  * Lớp nền xuyên suốt trang chủ — mount 1 LẦN DUY NHẤT ở page.tsx, bọc quanh
  * toàn bộ section (position: absolute inset-0 bên trong 1 wrapper `relative`
@@ -93,47 +95,70 @@ function DecorativeLines() {
  * - "comet" (dash dài, gap rất lớn): đúng 1 vệt sáng đơn chạy hết đường
  * - "pulse-stream" (dash ngắn, gap ngắn): nhiều vệt nối tiếp như dòng dữ
  *   liệu chạy liên tục — tạo cảm giác "mạch điện tử" rõ hơn
+ *
+ * SỬA BUG GIẬT (03/10, buổi 2):
+ * 1. KHÔNG còn SVG `<filter>`/`feGaussianBlur` áp lên path đang animate —
+ *    filter blur phải được trình duyệt TÍNH LẠI TOÀN BỘ mỗi frame vì hình
+ *    dạng dash animate liên tục thay đổi (khác hẳn 1 filter TĨNH áp lên
+ *    phần tử chỉ animate transform/opacity — trường hợp đó trình duyệt
+ *    cache được layer đã blur rồi chỉ di chuyển/đổi alpha layer, rẻ hơn
+ *    nhiều). Đây là chi phí lớn nhất gây giật thật (frame drop) khi có 5
+ *    path cùng animate trên 1 SVG trải dài hết trang. Bỏ blur, dùng trực
+ *    tiếp màu sáng + `strokeLinecap="round"` để tạo cảm giác "vệt sáng"
+ *    mà không cần filter.
+ * 2. `--dash-cycle` (CSS custom property, set riêng từng path) = ĐÚNG
+ *    1 chu kỳ `dash+gap` của path đó — đảm bảo `stroke-dashoffset` quay
+ *    lại CHÍNH XÁC pha ban đầu mỗi vòng lặp, không còn "nhảy pha" tại
+ *    điểm nối (trước đây dùng chung 1 giá trị `-1000` cho mọi path dù
+ *    dasharray khác nhau — đây mới là nguyên nhân gây giật RÕ NHẤT, nhìn
+ *    giống "chạy 1 đoạn rồi nhảy cóc" đúng như mô tả).
  */
 function FlowingLines() {
   const lines: Array<{
     d: string;
     color: string;
-    dasharray: string;
+    dash: number;
+    gap: number;
     duration: string;
     delay: string;
   }> = [
     {
       d: "M60 -50 C 220 250, 10 550, 180 850 S 480 1350, 140 1700 S 420 2200, 120 2600 S 350 2900, 200 3050",
       color: "#22d3ee",
-      dasharray: "50 3200",
+      dash: 50,
+      gap: 3200,
       duration: "9s",
       delay: "0s",
     },
     {
       d: "M940 50 C 760 350, 980 650, 720 1000 S 920 1500, 680 1850 S 900 2300, 660 2650 S 850 2950, 700 3080",
       color: "#a78bfa",
-      dasharray: "50 3200",
+      dash: 50,
+      gap: 3200,
       duration: "11s",
       delay: "-3s",
     },
     {
       d: "M500 -30 C 650 300, 350 600, 520 950 S 250 1450, 480 1800 S 700 2250, 460 2600 S 620 2900, 500 3050",
       color: "#22d3ee",
-      dasharray: "30 180",
+      dash: 30,
+      gap: 180,
       duration: "6s",
       delay: "-1s",
     },
     {
       d: "M300 -20 C 150 280, 420 580, 220 920 S 480 1420, 240 1780 S 60 2200, 300 2550 S 480 2880, 300 3030",
       color: "#a78bfa",
-      dasharray: "24 150",
+      dash: 24,
+      gap: 150,
       duration: "7.5s",
       delay: "-2.5s",
     },
     {
       d: "M850 -40 C 680 260, 900 560, 650 900 S 420 1400, 700 1750 S 480 2180, 760 2520 S 550 2850, 800 3010",
       color: "#22d3ee",
-      dasharray: "60 3400",
+      dash: 60,
+      gap: 3400,
       duration: "13s",
       delay: "-5s",
     },
@@ -146,25 +171,22 @@ function FlowingLines() {
       preserveAspectRatio="none"
       fill="none"
     >
-      <defs>
-        <filter id="flow-glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="3" />
-        </filter>
-      </defs>
       {lines.map((line, index) => (
         <path
           key={index}
           d={line.d}
           stroke={line.color}
-          strokeWidth="3"
+          strokeWidth="3.5"
           strokeLinecap="round"
-          filter="url(#flow-glow)"
           className="animate-flow-dash"
-          style={{
-            strokeDasharray: line.dasharray,
-            animationDuration: line.duration,
-            animationDelay: line.delay,
-          }}
+          style={
+            {
+              strokeDasharray: `${line.dash} ${line.gap}`,
+              animationDuration: line.duration,
+              animationDelay: line.delay,
+              "--dash-cycle": `${-(line.dash + line.gap)}`,
+            } as CSSProperties
+          }
         />
       ))}
     </svg>
@@ -249,13 +271,18 @@ function ParticleNetwork() {
 
 /**
  * "Scan line" quét dọc chậm rãi — gợi cảm giác màn hình radar/dashboard
- * công nghệ. 1 phần tử duy nhất nên chi phí không đáng kể dù animate `top`.
+ * công nghệ. SỬA BUG GIẬT (03/10, buổi 2): đổi từ animate `top` (%, buộc
+ * trình duyệt tính lại layout mỗi frame — KHÔNG được GPU composite) sang
+ * `transform: translateY(vh)` — `vh` là 1 length hợp lệ trong `transform`
+ * (khác `%`, vốn trong `transform` chỉ tính theo kích thước CHÍNH phần tử)
+ * nên vẫn đi được 1 khoảng lớn mà không cần biết chiều cao trang thật,
+ * đồng thời 100% GPU-composited như `transform` bình thường.
  */
 function ScanLine() {
   return (
     <div
       className="animate-scan-sweep absolute inset-x-0 h-40 bg-gradient-to-b from-transparent via-cyan-400/10 to-transparent"
-      style={{ top: "-5%" }}
+      style={{ transform: "translateY(-20vh)" }}
     />
   );
 }

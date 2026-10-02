@@ -181,13 +181,19 @@
 
   /* Vệt sáng chạy dọc theo các đường mạch "flowing lines" của SiteBackground —
      kỹ thuật stroke-dashoffset kinh điển (không phải offset-path, để tương
-     thích trình duyệt rộng nhất, kể cả cũ) — mỗi path tự set stroke-dasharray/
-     animation-duration/-delay riêng qua inline style, dùng chung đúng 1
-     keyframe này. Giá trị -1000 không cần là bội số chính xác của từng
-     dasharray — ở opacity thấp mắt thường không nhận ra điểm nối vòng lặp. */
+     thích trình duyệt rộng nhất, kể cả cũ). SỬA BUG GIẬT (03/10, buổi 2):
+     bản đầu dùng 1 giá trị `-1000` CHUNG cho mọi path dù mỗi path có
+     stroke-dasharray (dash+gap) khác nhau — `-1000` KHÔNG phải bội số của
+     dash+gap nên mỗi lần loop lặp lại, dash-pattern bị lệch pha so với lúc
+     bắt đầu, tạo đúng 1 bước nhảy/giật thấy rõ tại điểm nối chu kỳ (ĐÚNG
+     nguyên nhân #1 — keyframe lặp không khớp — không phải chỉ "mắt khó
+     nhận ra" như nhận định sai lúc đầu). Sửa bằng CSS custom property
+     `--dash-cycle` set riêng từng path = ĐÚNG 1 chu kỳ dash+gap của path đó
+     (xem FlowingLines component) — đảm bảo stroke-dashoffset quay lại ĐÚNG
+     pha ban đầu mỗi vòng lặp, loop tuyệt đối liền mạch bất kể dasharray. */
   @keyframes flow-dash {
     to {
-      stroke-dashoffset: -1000;
+      stroke-dashoffset: var(--dash-cycle);
     }
   }
   .animate-flow-dash {
@@ -232,7 +238,15 @@
   /* Dot "constellation" ở khu vực Hero — tự trôi nhẹ + nhấp nháy mờ, KHÔNG
      tính toán lại khoảng cách để nối đường động (quá tốn cho hiệu ứng nền
      phụ) — các đường nối là SVG tĩnh vẽ cố định theo đúng vị trí nghỉ của
-     từng điểm, chỉ điểm là di chuyển (lệch nhẹ, không đáng kể tới mắt). */
+     từng điểm, chỉ điểm là di chuyển (lệch nhẹ, không đáng kể tới mắt).
+     SỬA BUG GIẬT (03/10, buổi 2): đổi timing-function từ `ease-in-out` sang
+     `linear` — với 4 mốc keyframe cách đều (0/25/50/75/100%) có giá trị
+     KHÁC NHAU ở mỗi mốc, `ease-in-out` áp dụng giảm-tốc-về-0 NGAY TẠI MỖI
+     mốc trung gian (không chỉ ở điểm bắt đầu/kết thúc thật), tạo chuyển
+     động kiểu "dừng-chạy-dừng-chạy" 4 lần mỗi chu kỳ — ĐÚNG nguyên nhân #2
+     (easing sai cho animation lặp liên tục), nhìn giống "giật" dù bản thân
+     giá trị không hề nhảy cóc. `linear` cho tốc độ đều giữa các mốc, trôi
+     liên tục thật sự. */
   @keyframes particle-drift {
     0%,
     100% {
@@ -254,17 +268,30 @@
   }
   .animate-particle-drift {
     animation-name: particle-drift;
-    animation-timing-function: ease-in-out;
+    animation-timing-function: linear;
     animation-iteration-count: infinite;
   }
 
-  /* "Scan line" quét dọc trang chậm rãi, gợi cảm giác màn hình radar/sci-fi —
-     di chuyển bằng `top` (%, tương đối với container cao bằng cả trang) vì
-     transform % chỉ tính theo kích thước CHÍNH nó, không đủ để đi hết chiều
-     cao trang. Chỉ 1 phần tử duy nhất nên chi phí không đáng kể. */
+  /* "Scan line" quét dọc chậm rãi, gợi cảm giác màn hình radar/sci-fi.
+     SỬA BUG GIẬT (03/10, buổi 2) — 2 vấn đề cùng lúc, ĐÚNG nguyên nhân #4
+     (property sai, không được GPU tăng tốc) + góc nhỏ của #2:
+     1. Bản đầu animate `top` (%, tương đối container cao bằng cả trang) —
+        `top` buộc trình duyệt tính lại layout mỗi frame (không được GPU
+        composite như `transform`/`opacity`). Đổi sang `transform:
+        translateY(vh)` — ĐƠN VỊ `vh` (chiều cao viewport) vẫn là 1 giá trị
+        length tuyệt đối hợp lệ bên trong `transform` (KHÁC với `%`, vốn
+        trong `transform` chỉ tính theo kích thước CHÍNH phần tử, không
+        tính theo container) — đạt đúng mục đích "đi được 1 khoảng lớn,
+        không cần biết chiều cao trang thật" mà vẫn 100% GPU-composited.
+        Đổi ý nghĩa từ "quét hết 1 trang" sang "quét lặp lại mỗi ~3 lần
+        chiều cao khung nhìn" — thực ra hợp lý hơn cho hiệu ứng radar (vẫn
+        tái diễn đều trong khung nhìn khi cuộn trang, không chỉ hiện đúng 1
+        lần tại đúng vị trí cố định của trang).
+     2. Đổi timing-function từ `ease-in-out` sang `linear` — animation lặp
+        liên tục không nên tăng/giảm tốc giữa chừng (đúng nguyên nhân #2). */
   @keyframes scan-sweep {
     0% {
-      top: -5%;
+      transform: translateY(-20vh);
       opacity: 0;
     }
     8% {
@@ -274,11 +301,11 @@
       opacity: 0.6;
     }
     100% {
-      top: 105%;
+      transform: translateY(320vh);
       opacity: 0;
     }
   }
   .animate-scan-sweep {
-    animation: scan-sweep 16s ease-in-out infinite;
+    animation: scan-sweep 16s linear infinite;
   }
 }
