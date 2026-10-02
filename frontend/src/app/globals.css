@@ -178,4 +178,107 @@
   .animate-spin-slow {
     animation: spin-slow 6s linear infinite;
   }
+
+  /* Vệt sáng chạy dọc theo các đường mạch "flowing lines" của SiteBackground —
+     kỹ thuật stroke-dashoffset kinh điển (không phải offset-path, để tương
+     thích trình duyệt rộng nhất, kể cả cũ) — mỗi path tự set stroke-dasharray/
+     animation-duration/-delay riêng qua inline style, dùng chung đúng 1
+     keyframe này. Giá trị -1000 không cần là bội số chính xác của từng
+     dasharray — ở opacity thấp mắt thường không nhận ra điểm nối vòng lặp. */
+  @keyframes flow-dash {
+    to {
+      stroke-dashoffset: -1000;
+    }
+  }
+  .animate-flow-dash {
+    animation-name: flow-dash;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  /* Blob glow trôi nhẹ nhàng — thay cho "ảnh tĩnh dán lên nền". transform
+     dùng % (tương đối với chính kích thước blob) nên không cần biết kích
+     thước thật, animation-duration/-delay khác nhau mỗi blob (set qua inline
+     style) để tránh cảm giác đồng bộ máy móc. 2 biến thể lệch hướng nhau. */
+  @keyframes blob-drift {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    50% {
+      transform: translate3d(3%, -4%, 0) scale(1.05);
+    }
+  }
+  @keyframes blob-drift-alt {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    50% {
+      transform: translate3d(-4%, 3%, 0) scale(0.96);
+    }
+  }
+  .animate-blob-drift {
+    animation-name: blob-drift;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+  .animate-blob-drift-alt {
+    animation-name: blob-drift-alt;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+
+  /* Dot "constellation" ở khu vực Hero — tự trôi nhẹ + nhấp nháy mờ, KHÔNG
+     tính toán lại khoảng cách để nối đường động (quá tốn cho hiệu ứng nền
+     phụ) — các đường nối là SVG tĩnh vẽ cố định theo đúng vị trí nghỉ của
+     từng điểm, chỉ điểm là di chuyển (lệch nhẹ, không đáng kể tới mắt). */
+  @keyframes particle-drift {
+    0%,
+    100% {
+      transform: translate(0, 0);
+      opacity: 0.5;
+    }
+    25% {
+      transform: translate(4px, -5px);
+      opacity: 0.9;
+    }
+    50% {
+      transform: translate(-3px, 3px);
+      opacity: 0.4;
+    }
+    75% {
+      transform: translate(3px, 4px);
+      opacity: 0.8;
+    }
+  }
+  .animate-particle-drift {
+    animation-name: particle-drift;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+
+  /* "Scan line" quét dọc trang chậm rãi, gợi cảm giác màn hình radar/sci-fi —
+     di chuyển bằng `top` (%, tương đối với container cao bằng cả trang) vì
+     transform % chỉ tính theo kích thước CHÍNH nó, không đủ để đi hết chiều
+     cao trang. Chỉ 1 phần tử duy nhất nên chi phí không đáng kể. */
+  @keyframes scan-sweep {
+    0% {
+      top: -5%;
+      opacity: 0;
+    }
+    8% {
+      opacity: 0.6;
+    }
+    92% {
+      opacity: 0.6;
+    }
+    100% {
+      top: 105%;
+      opacity: 0;
+    }
+  }
+  .animate-scan-sweep {
+    animation: scan-sweep 16s ease-in-out infinite;
+  }
 }
