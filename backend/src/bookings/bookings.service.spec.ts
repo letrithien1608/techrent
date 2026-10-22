@@ -25,12 +25,12 @@ describe('BookingsService', () => {
       count: jest.Mock;
       update: jest.Mock;
     };
-    device: { update: jest.Mock };
+    device: { update: jest.Mock; findUniqueOrThrow: jest.Mock };
   };
   let configService: { get: jest.Mock };
   let ttlQueue: { add: jest.Mock; getJob: jest.Mock };
   let paymentsService: { refundForBooking: jest.Mock };
-  let usersService: { findByIdOrThrow: jest.Mock };
+  let usersService: { findByIdOrThrow: jest.Mock; revealCccd: jest.Mock };
   let realtimeGateway: { emitDeviceStatusChanged: jest.Mock };
   let notificationsService: { create: jest.Mock; createForRoles: jest.Mock };
   let devicesCacheService: { invalidateAll: jest.Mock };
@@ -54,10 +54,12 @@ describe('BookingsService', () => {
 
   const baseDevice = {
     id: deviceId,
+    name: 'MacBook Pro 14"',
     status: DeviceStatus.available,
     pricePerHour: '10000',
     pricePerDay: '80000',
     originalPrice: '20000000',
+    detailedDescription: 'Máy đẹp 95%',
   };
 
   const baseBooking = {
@@ -70,6 +72,8 @@ describe('BookingsService', () => {
     totalPrice: '30000',
     depositAmount: '9000',
     createdAt: new Date(),
+    contractSigned: false,
+    contractSignedAt: null,
   };
 
   beforeEach(() => {
@@ -92,8 +96,9 @@ describe('BookingsService', () => {
         count: jest.fn(),
         update: jest.fn(),
       },
-      device: { update: jest.fn() },
+      device: { update: jest.fn(), findUniqueOrThrow: jest.fn() },
     };
+    prisma.device.findUniqueOrThrow.mockResolvedValue(baseDevice);
     configService = { get: jest.fn().mockReturnValue('5') };
     ttlQueue = {
       add: jest.fn().mockResolvedValue(undefined),
@@ -107,11 +112,15 @@ describe('BookingsService', () => {
     usersService = {
       findByIdOrThrow: jest.fn().mockResolvedValue({
         id: customer.userId,
+        name: 'Nguyễn Văn A',
+        phone: '0900000000',
         cccdHash: 'a'.repeat(64),
+        cccdMasked: '********0000',
         kycCccdFrontPublicId: 'kyc/u1-cccd-front',
         kycCccdBackPublicId: 'kyc/u1-cccd-back',
         kycSelfiePublicId: 'kyc/u1-selfie',
       }),
+      revealCccd: jest.fn().mockResolvedValue('001234000000'),
     };
     realtimeGateway = { emitDeviceStatusChanged: jest.fn() };
     notificationsService = {
@@ -439,6 +448,48 @@ describe('BookingsService', () => {
       );
     });
 
+    it('confirm() sinh và lưu hợp đồng với CCCD dạng MASKED', async () => {
+      prisma.booking.findUnique.mockResolvedValue({
+        ...baseBooking,
+        status: BookingStatus.pending,
+      });
+      prisma.booking.update.mockResolvedValue({
+        ...baseBooking,
+        status: BookingStatus.confirmed,
+      });
+      ttlQueue.getJob.mockResolvedValue(null);
+
+      await service.confirm(baseBooking.id);
+
+      expect(prisma.booking.update).toHaveBeenCalledWith({
+        where: { id: baseBooking.id },
+        data: { contractContent: expect.stringContaining('********0000') },
+      });
+      const contractCall = prisma.booking.update.mock.calls.find(
+        (call) => 'contractContent' in call[0].data,
+      );
+      expect(contractCall![0].data.contractContent).not.toContain(
+        '001234000000',
+      );
+    });
+
+    it('confirm() không hỏng việc xác nhận dù sinh hợp đồng thất bại', async () => {
+      prisma.booking.findUnique.mockResolvedValue({
+        ...baseBooking,
+        status: BookingStatus.pending,
+      });
+      prisma.booking.update.mockResolvedValue({
+        ...baseBooking,
+        status: BookingStatus.confirmed,
+      });
+      ttlQueue.getJob.mockResolvedValue(null);
+      prisma.device.findUniqueOrThrow.mockRejectedValue(new Error('DB down'));
+
+      const result = await service.confirm(baseBooking.id);
+
+      expect(result.status).toBe(BookingStatus.confirmed);
+    });
+
     it('confirm() ném BadRequestException nếu booking không ở trạng thái pending', async () => {
       prisma.booking.findUnique.mockResolvedValue({
         ...baseBooking,
@@ -518,6 +569,65 @@ describe('BookingsService', () => {
         status: DeviceStatus.available,
       });
       expect(devicesCacheService.invalidateAll).toHaveBeenCalled();
+    });
+  });
+
+  describe('getContractForPrint', () => {
+    it('sinh hợp đồng với CCCD giải mã ĐẦY ĐỦ (khác bản lưu masked)', async () => {
+      prisma.booking.findUnique.mockResolvedValue(baseBooking);
+
+      const result = await service.getContractForPrint(baseBooking.id);
+
+      expect(usersService.revealCccd).toHaveBeenCalledWith(
+        baseBooking.userId,
+        '5',
+      );
+      expect(result.content).toContain('001234000000');
+      expect(result.content).not.toContain('********0000');
+      expect(result.signed).toBe(false);
+    });
+
+    it('ném NotFoundException nếu booking không tồn tại', async () => {
+      prisma.booking.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.getContractForPrint('ghost'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe('setContractSigned', () => {
+    it('đánh dấu đã ký kèm thời điểm ký', async () => {
+      prisma.booking.findUnique.mockResolvedValue(baseBooking);
+      prisma.booking.update.mockResolvedValue({
+        ...baseBooking,
+        contractSigned: true,
+        contractSignedAt: new Date(),
+      });
+
+      const result = await service.setContractSigned(baseBooking.id, true);
+
+      expect(prisma.booking.update).toHaveBeenCalledWith({
+        where: { id: baseBooking.id },
+        data: { contractSigned: true, contractSignedAt: expect.any(Date) },
+      });
+      expect(result.contractSigned).toBe(true);
+    });
+
+    it('bỏ đánh dấu ký thì xoá luôn thời điểm ký', async () => {
+      prisma.booking.findUnique.mockResolvedValue(baseBooking);
+      prisma.booking.update.mockResolvedValue({
+        ...baseBooking,
+        contractSigned: false,
+        contractSignedAt: null,
+      });
+
+      await service.setContractSigned(baseBooking.id, false);
+
+      expect(prisma.booking.update).toHaveBeenCalledWith({
+        where: { id: baseBooking.id },
+        data: { contractSigned: false, contractSignedAt: null },
+      });
     });
   });
 

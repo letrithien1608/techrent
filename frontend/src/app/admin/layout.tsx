@@ -26,10 +26,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <TooltipProvider delay={200}>
       <div className="flex min-h-screen w-full flex-1">
-        <AdminSidebar user={user} />
+        <div className="print:hidden">
+          <AdminSidebar user={user} />
+        </div>
         <div className="flex min-w-0 flex-1 flex-col">
-          <AdminTopbar />
-          <main className="flex-1 overflow-y-auto bg-background px-4 py-6 sm:px-6">
+          <div className="print:hidden">
+            <AdminTopbar />
+          </div>
+          <main className="flex-1 overflow-y-auto bg-background px-4 py-6 sm:px-6 print:p-0">
             {children}
           </main>
         </div>

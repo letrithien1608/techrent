@@ -24,8 +24,18 @@ export interface Booking {
   totalPrice: string;
   depositAmount: string;
   createdAt: string;
+  /** Bản MASKED CCCD, tự sinh khi booking chuyển `confirmed` — `null` trước đó. */
+  contractContent?: string | null;
+  contractSigned?: boolean;
+  contractSignedAt?: string | null;
   /** Chỉ có ở `GET /bookings` và `GET /bookings/:id` (BookingsService trả kèm include) */
   device?: BookingDeviceSummary;
+}
+
+export interface BookingContract {
+  content: string;
+  signed: boolean;
+  signedAt: string | null;
 }
 
 export const BOOKING_TTL_MINUTES = 5;
@@ -103,5 +113,25 @@ export async function startBooking(id: string): Promise<Booking> {
 
 export async function completeBooking(id: string): Promise<Booking> {
   const { data } = await api.patch<Booking>(`/bookings/${id}/complete`);
+  return data;
+}
+
+// ---- Staff/admin: hợp đồng thuê — xem/in (CCCD đầy đủ) + đánh dấu đã ký tay ----
+
+export async function fetchContractForPrint(
+  id: string,
+): Promise<BookingContract> {
+  const { data } = await api.get<BookingContract>(`/bookings/${id}/contract`);
+  return data;
+}
+
+export async function setContractSigned(
+  id: string,
+  signed: boolean,
+): Promise<Booking> {
+  const { data } = await api.patch<Booking>(
+    `/bookings/${id}/contract/signed`,
+    { signed },
+  );
   return data;
 }

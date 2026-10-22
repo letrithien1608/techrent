@@ -147,6 +147,13 @@ model Booking {
   status         BookingStatus @default(pending)
   totalPrice     Decimal       @map("total_price") @db.Decimal(10, 2)
   depositAmount  Decimal       @map("deposit_amount") @db.Decimal(10, 2)
+  // Hợp đồng thuê — nội dung text tự sinh khi booking chuyển sang `confirmed`
+  // (xem BookingsService.confirm()/PaymentsService.confirmBookingAfterPayment(),
+  // luôn lưu CCCD dạng MASKED — bản đầy đủ CCCD chỉ sinh TẠM lúc admin in, không
+  // lưu lại). `contractSigned` do nhân viên tự đánh dấu sau khi khách ký tay.
+  contractContent  String?   @map("contract_content") @db.Text
+  contractSigned   Boolean   @default(false) @map("contract_signed")
+  contractSignedAt DateTime? @map("contract_signed_at")
   createdAt      DateTime      @default(now()) @map("created_at")
 
   user     User      @relation(fields: [userId], references: [id])

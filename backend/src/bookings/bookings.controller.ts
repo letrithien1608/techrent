@@ -19,6 +19,7 @@ import { CancelBookingDto } from './dto/cancel-booking.dto';
 import { CheckAvailabilityQueryDto } from './dto/check-availability-query.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { ListBookingsQueryDto } from './dto/list-bookings-query.dto';
+import { SetContractSignedDto } from './dto/set-contract-signed.dto';
 
 @ApiTags('bookings')
 @ApiBearerAuth()
@@ -86,5 +87,22 @@ export class BookingsController {
     @Body() dto: CancelBookingDto,
   ) {
     return this.bookingsService.cancel(id, user, dto);
+  }
+
+  // Admin/staff "Xem/In hợp đồng" — CCCD giải mã đầy đủ để in giấy, KHÔNG lưu
+  // lại (xem BookingsService.getContractForPrint()).
+  @Roles(Role.staff, Role.admin)
+  @Get(':id/contract')
+  getContract(@Param('id') id: string) {
+    return this.bookingsService.getContractForPrint(id);
+  }
+
+  @Roles(Role.staff, Role.admin)
+  @Patch(':id/contract/signed')
+  setContractSigned(
+    @Param('id') id: string,
+    @Body() dto: SetContractSignedDto,
+  ) {
+    return this.bookingsService.setContractSigned(id, dto.signed);
   }
 }

@@ -17,12 +17,14 @@ import { signVnpayParams } from './vnpay.util';
 describe('PaymentsService', () => {
   let service: PaymentsService;
   let prisma: {
-    booking: { findUnique: jest.Mock; updateMany: jest.Mock };
+    booking: { findUnique: jest.Mock; updateMany: jest.Mock; update: jest.Mock };
     payment: {
       create: jest.Mock;
       findFirst: jest.Mock;
       update: jest.Mock;
     };
+    device: { findUniqueOrThrow: jest.Mock };
+    user: { findUniqueOrThrow: jest.Mock };
   };
   let configService: { get: jest.Mock };
   let ttlQueue: { getJob: jest.Mock };
@@ -42,7 +44,24 @@ describe('PaymentsService', () => {
     id: bookingId,
     userId,
     status: BookingStatus.pending,
+    totalPrice: '30000',
     depositAmount: '90000',
+    createdAt: new Date(),
+    startTime: new Date(Date.now() + 48 * 3600 * 1000),
+    endTime: new Date(Date.now() + 50 * 3600 * 1000),
+  };
+  const baseDevice = {
+    id: 'device-1',
+    name: 'MacBook Pro 14"',
+    pricePerDay: '80000',
+    originalPrice: '20000000',
+    detailedDescription: 'Máy đẹp 95%',
+  };
+  const baseUser = {
+    id: userId,
+    name: 'Nguyễn Văn A',
+    phone: '0900000000',
+    cccdMasked: '********0000',
   };
   const admin: RequestUser = {
     userId: 'admin-1',
@@ -52,8 +71,14 @@ describe('PaymentsService', () => {
 
   beforeEach(() => {
     prisma = {
-      booking: { findUnique: jest.fn(), updateMany: jest.fn() },
+      booking: {
+        findUnique: jest.fn(),
+        updateMany: jest.fn(),
+        update: jest.fn(),
+      },
       payment: { create: jest.fn(), findFirst: jest.fn(), update: jest.fn() },
+      device: { findUniqueOrThrow: jest.fn().mockResolvedValue(baseDevice) },
+      user: { findUniqueOrThrow: jest.fn().mockResolvedValue(baseUser) },
     };
     configService = { get: jest.fn((key: string) => envValues[key]) };
     ttlQueue = { getJob: jest.fn().mockResolvedValue(null) };
@@ -198,6 +223,25 @@ describe('PaymentsService', () => {
         'booking_confirmed',
         expect.any(String),
       );
+    });
+
+    it('thanh toán thành công: sinh hợp đồng với CCCD MASKED', async () => {
+      prisma.payment.findFirst.mockResolvedValue({
+        id: 'payment-1',
+        bookingId,
+        amount: '90000',
+        status: PaymentStatus.pending,
+      });
+      ttlQueue.getJob.mockResolvedValue(null);
+      prisma.booking.updateMany.mockResolvedValue({ count: 1 });
+      prisma.booking.findUnique.mockResolvedValue(baseBooking);
+
+      await service.handleIpn(buildQuery());
+
+      expect(prisma.booking.update).toHaveBeenCalledWith({
+        where: { id: bookingId },
+        data: { contractContent: expect.stringContaining('********0000') },
+      });
     });
 
     it('KHÔNG tạo thông báo trùng nếu updateMany không đổi gì (đã confirmed từ trước, race hiếm)', async () => {

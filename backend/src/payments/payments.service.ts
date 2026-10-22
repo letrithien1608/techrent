@@ -18,6 +18,7 @@ import {
 } from '../generated/prisma/client';
 import { RequestUser } from '../auth/interfaces/jwt-payload.interface';
 import { BOOKING_TTL_QUEUE } from '../bookings/bookings.constants';
+import { buildContractContent } from '../bookings/contract-template.util';
 import { NotificationsService } from '../notifications/notifications.service';
 import {
   formatVnpayDate,
@@ -236,20 +237,59 @@ export class PaymentsService {
     });
     if (count === 0) return;
 
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: bookingId },
+    });
+    if (!booking) return;
+
     try {
-      const booking = await this.prisma.booking.findUnique({
-        where: { id: bookingId },
-      });
-      if (booking) {
-        await this.notificationsService.create(
-          booking.userId,
-          'booking_confirmed',
-          'Đơn thuê của bạn đã được xác nhận sau khi thanh toán tiền cọc thành công.',
-        );
-      }
+      await this.notificationsService.create(
+        booking.userId,
+        'booking_confirmed',
+        'Đơn thuê của bạn đã được xác nhận sau khi thanh toán tiền cọc thành công.',
+      );
     } catch (error) {
       this.logger.warn(
         `Không tạo được thông báo xác nhận cho booking ${bookingId}: ${(error as Error).message}`,
+      );
+    }
+
+    // Sinh hợp đồng (CCCD masked) — lặp lại logic của
+    // `BookingsService.generateAndSaveContract()` vì PaymentsModule KHÔNG
+    // import BookingsModule (phụ thuộc 1 chiều Bookings→Payments, xem mục 2
+    // CLAUDE.md) — dùng CHUNG đúng 1 hàm thuần `buildContractContent()`, chỉ
+    // lặp lại phần truy vấn device/user (không có DI nào mới cần thêm).
+    try {
+      const [device, user] = await Promise.all([
+        this.prisma.device.findUniqueOrThrow({
+          where: { id: booking.deviceId },
+        }),
+        this.prisma.user.findUniqueOrThrow({
+          where: { id: booking.userId },
+        }),
+      ]);
+      const content = buildContractContent({
+        bookingId: booking.id,
+        createdAt: booking.createdAt,
+        startTime: booking.startTime,
+        endTime: booking.endTime,
+        totalPrice: Number(booking.totalPrice),
+        depositAmount: Number(booking.depositAmount),
+        customerName: user.name,
+        customerCccd: user.cccdMasked ?? '(chưa có trong hồ sơ)',
+        customerPhone: user.phone,
+        deviceName: device.name,
+        deviceCondition: device.detailedDescription,
+        deviceOriginalPrice: Number(device.originalPrice),
+        devicePricePerDay: Number(device.pricePerDay),
+      });
+      await this.prisma.booking.update({
+        where: { id: booking.id },
+        data: { contractContent: content },
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Không sinh được hợp đồng cho booking ${bookingId}: ${(error as Error).message}`,
       );
     }
   }

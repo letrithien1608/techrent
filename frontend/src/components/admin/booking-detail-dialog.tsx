@@ -1,7 +1,8 @@
 "use client";
 
 import { cn } from "cn";
-import { Eye } from "lucide-react";
+import Link from "next/link";
+import { Eye, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -55,7 +56,22 @@ export function BookingDetailDialog({ booking }: { booking: Booking }) {
         {/* Xem hồ sơ eKYC của khách thuê — xác minh tranh chấp thật (ảnh mờ,
          * sai thông tin...). Không có tên khách sẵn trong `Booking` nên dùng
          * nhãn chung "Khách thuê" — KHÔNG gọi thêm API chỉ để lấy tên. */}
-        <div className="flex justify-end border-t border-border/60 pt-3">
+        <div className="flex flex-wrap justify-end gap-2 border-t border-border/60 pt-3">
+          <Button
+            variant="outline"
+            size="sm"
+            render={
+              <Link
+                href={`/admin/bookings/${booking.id}/contract`}
+                target="_blank"
+                rel="noopener noreferrer"
+              />
+            }
+            nativeButton={false}
+          >
+            <FileText className="size-4" />
+            Xem/In hợp đồng
+          </Button>
           <KycImagesViewer userId={booking.userId} userName="Khách thuê" />
         </div>
       </DialogContent>
