@@ -1,4 +1,8 @@
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Role, User } from '../generated/prisma/client';
 import { UsersService } from './users.service';
@@ -33,6 +37,9 @@ describe('UsersService', () => {
     kycSelfiePublicId: null,
     emailVerifiedAt: null,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    isBlacklisted: false,
+    blacklistReason: null,
+    blacklistedAt: null,
   };
 
   beforeEach(() => {
@@ -117,6 +124,17 @@ describe('UsersService', () => {
             ],
           },
         }),
+      );
+    });
+
+    it('lọc theo isBlacklisted khi có truyền vào', async () => {
+      prisma.user.findMany.mockResolvedValue([baseUser]);
+      prisma.user.count.mockResolvedValue(1);
+
+      await service.findAll(1, 20, undefined, undefined, true);
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { isBlacklisted: true } }),
       );
     });
   });
@@ -215,6 +233,96 @@ describe('UsersService', () => {
       // Chặn ngay từ đầu, không cần tốn 1 lần query kiểm tra tồn tại nữa.
       expect(prisma.user.findUnique).not.toHaveBeenCalled();
     });
+
+    it('chặn xoá user đã bị blacklist — giữ cccdHash chiếm giữ vĩnh viễn để chặn đăng ký lại', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        ...baseUser,
+        isBlacklisted: true,
+      });
+
+      await expect(
+        service.remove(baseUser.id, otherCallerId),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.user.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('setBlacklistStatus', () => {
+    const adminId = 'admin-1';
+
+    it('đưa user vào danh sách đen kèm lý do', async () => {
+      prisma.user.findUnique.mockResolvedValue(baseUser);
+      prisma.user.update.mockResolvedValue({
+        ...baseUser,
+        isBlacklisted: true,
+        blacklistReason: 'Không trả thiết bị quá 30 ngày',
+      });
+
+      const result = await service.setBlacklistStatus(
+        baseUser.id,
+        true,
+        'Không trả thiết bị quá 30 ngày',
+        adminId,
+      );
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: baseUser.id },
+        data: {
+          isBlacklisted: true,
+          blacklistReason: 'Không trả thiết bị quá 30 ngày',
+          blacklistedAt: expect.any(Date),
+        },
+      });
+      expect(result.isBlacklisted).toBe(true);
+    });
+
+    it('ném BadRequestException nếu blacklist mà không có lý do', async () => {
+      prisma.user.findUnique.mockResolvedValue(baseUser);
+
+      await expect(
+        service.setBlacklistStatus(baseUser.id, true, '   ', adminId),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('gỡ blacklist thì xoá luôn lý do + thời điểm', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        ...baseUser,
+        isBlacklisted: true,
+        blacklistReason: 'Lý do cũ',
+        blacklistedAt: new Date(),
+      });
+      prisma.user.update.mockResolvedValue({
+        ...baseUser,
+        isBlacklisted: false,
+      });
+
+      await service.setBlacklistStatus(baseUser.id, false, undefined, adminId);
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: baseUser.id },
+        data: {
+          isBlacklisted: false,
+          blacklistReason: null,
+          blacklistedAt: null,
+        },
+      });
+    });
+
+    it('chặn tự đưa chính mình vào danh sách đen', async () => {
+      await expect(
+        service.setBlacklistStatus(baseUser.id, true, 'bất kỳ', baseUser.id),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.user.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('ném NotFoundException nếu user không tồn tại', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.setBlacklistStatus('ghost', true, 'lý do', adminId),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
   });
 
   describe('sanitize', () => {
@@ -237,6 +345,9 @@ describe('UsersService', () => {
         kycVerified: false,
         emailVerifiedAt: baseUser.emailVerifiedAt,
         createdAt: baseUser.createdAt,
+        isBlacklisted: baseUser.isBlacklisted,
+        blacklistReason: baseUser.blacklistReason,
+        blacklistedAt: baseUser.blacklistedAt,
       });
     });
 

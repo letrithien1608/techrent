@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
 import { BookingStatus } from '../../generated/prisma/client';
 
 export class ListBookingsQueryDto {
@@ -23,4 +23,13 @@ export class ListBookingsQueryDto {
   @IsOptional()
   @IsEnum(BookingStatus)
   status?: BookingStatus;
+
+  // Chỉ staff/admin dùng được thật (customer luôn bị ép lọc theo chính userId
+  // của họ trong BookingsService.findAll(), filter này bị BỎ QUA nếu customer
+  // gửi lên) — dùng ở trang /admin/blacklist để tìm đúng booking liên quan
+  // tới 1 user bị blacklist.
+  @ApiPropertyOptional({ description: 'Lọc theo user — chỉ staff/admin' })
+  @IsOptional()
+  @IsUUID()
+  userId?: string;
 }

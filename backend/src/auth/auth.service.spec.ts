@@ -54,6 +54,9 @@ describe('AuthService', () => {
     kycSelfiePublicId: null,
     emailVerifiedAt: null,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    isBlacklisted: false,
+    blacklistReason: null,
+    blacklistedAt: null,
   };
 
   // 32 byte (64 ký tự hex) — đúng chuẩn AES-256 đọc từ CCCD_ENCRYPTION_KEY.

@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsEnum,
   IsInt,
   IsOptional,
@@ -39,4 +40,12 @@ export class ListUsersQueryDto {
   @IsString()
   @MaxLength(100)
   search?: string;
+
+  // Query param boolean — KHÔNG dùng @Type(() => Boolean) (Boolean("false")
+  // vẫn ra true), phải @Transform so sánh chuỗi trước — xem CLAUDE.md mục 2.
+  @ApiPropertyOptional({ description: 'Lọc user đã bị đưa vào danh sách đen' })
+  @IsOptional()
+  @Transform(({ value }) => (value === undefined ? undefined : value === 'true'))
+  @IsBoolean()
+  isBlacklisted?: boolean;
 }

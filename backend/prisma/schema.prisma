@@ -84,6 +84,16 @@ model User {
   kycCccdBackPublicId  String? @map("kyc_cccd_back_public_id")
   kycSelfiePublicId    String? @map("kyc_selfie_public_id")
   emailVerifiedAt   DateTime? @map("email_verified_at")
+  // Danh sách đen (mở rộng 22/10 buổi 6) — admin đánh dấu khi khách chiếm giữ/
+  // không trả thiết bị. Chặn NGAY tại `BookingsService.create()`. Chặn "theo
+  // CCCD, không chỉ theo tài khoản" được đảm bảo bằng cách KHÔNG CHO XOÁ user
+  // đã blacklist (`UsersService.remove()`) — giữ nguyên hàng đó nên `cccdHash`
+  // unique vẫn còn chiếm giữ vĩnh viễn, khiến `AuthService.register()` (đã có
+  // sẵn check trùng cccdHash) tự động chặn CCCD đó đăng ký tài khoản mới khác,
+  // KHÔNG cần thêm bảng/cơ chế tra cứu riêng — tái dùng đúng unique cccdHash.
+  isBlacklisted     Boolean   @default(false) @map("is_blacklisted")
+  blacklistReason   String?   @db.Text @map("blacklist_reason")
+  blacklistedAt     DateTime? @map("blacklisted_at")
   createdAt         DateTime @default(now()) @map("created_at")
 
   bookings          Booking[]
@@ -154,6 +164,12 @@ model Booking {
   contractContent  String?   @map("contract_content") @db.Text
   contractSigned   Boolean   @default(false) @map("contract_signed")
   contractSignedAt DateTime? @map("contract_signed_at")
+  // Phí trễ hạn leo thang — tính TRONG complete() nếu trả sau `endTime`, CỘNG
+  // thẳng vào `totalPrice` (giữ nguyên ý nghĩa "tổng tiền phải trả") NHƯNG lưu
+  // riêng số tiền phạt ở đây để hiển thị tách bạch cho khách/admin (xem
+  // BookingsService.calculateLateFee()). Mặc định 0 — tuyệt đại đa số booking
+  // trả đúng hạn không có phí này.
+  lateFeeAmount  Decimal       @default(0) @map("late_fee_amount") @db.Decimal(10, 2)
   createdAt      DateTime      @default(now()) @map("created_at")
 
   user     User      @relation(fields: [userId], references: [id])

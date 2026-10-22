@@ -23,6 +23,7 @@ import { Role } from '../generated/prisma/client';
 import { UploadService } from '../upload/upload.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ListUsersQueryDto } from './dto/list-users-query.dto';
+import { SetUserBlacklistDto } from './dto/set-user-blacklist.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
 
@@ -83,6 +84,7 @@ export class UsersController {
       query.limit ?? 20,
       query.role,
       query.search,
+      query.isBlacklisted,
     );
   }
 
@@ -155,6 +157,28 @@ export class UsersController {
     @CurrentUser() currentUser: RequestUser,
   ) {
     await this.usersService.remove(id, currentUser.userId);
+  }
+
+  /**
+   * Đưa/gỡ user khỏi danh sách đen — dùng khi xác nhận khách chiếm giữ/không
+   * trả thiết bị (mục 7 Roadmap, mở rộng 22/10 buổi 6). Kế thừa `@Roles(admin)`
+   * cấp class — staff KHÔNG gọi được (hành động nghiêm trọng, chỉ admin).
+   * Chặn đặt thuê thật sự nằm ở `BookingsService.create()`; chặn "theo CCCD
+   * không chỉ theo tài khoản" nằm ở `UsersService.remove()` (xem comment đó).
+   */
+  @Patch(':id/blacklist')
+  async setBlacklist(
+    @Param('id') id: string,
+    @Body() dto: SetUserBlacklistDto,
+    @CurrentUser() currentUser: RequestUser,
+  ) {
+    const user = await this.usersService.setBlacklistStatus(
+      id,
+      dto.blacklisted,
+      dto.reason,
+      currentUser.userId,
+    );
+    return this.usersService.sanitize(user);
   }
 
   /**

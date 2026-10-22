@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -23,6 +24,9 @@ export interface SafeUser {
   kycVerified: boolean;
   emailVerifiedAt: Date | null;
   createdAt: Date;
+  isBlacklisted: boolean;
+  blacklistReason: string | null;
+  blacklistedAt: Date | null;
 }
 
 export interface PaginatedResult<T> {
@@ -78,9 +82,11 @@ export class UsersService {
     limit: number,
     role?: Role,
     search?: string,
+    isBlacklisted?: boolean,
   ): Promise<PaginatedResult<SafeUser>> {
     const where: Prisma.UserWhereInput = {
       ...(role ? { role } : {}),
+      ...(isBlacklisted !== undefined ? { isBlacklisted } : {}),
       ...(search
         ? {
             OR: [
@@ -146,13 +152,60 @@ export class UsersService {
     return this.prisma.user.update({ where: { id }, data });
   }
 
-  /** Chặn tự xoá chính tài khoản đang gọi request — xem ghi chú ở `update()`. */
+  /**
+   * Chặn tự xoá chính tài khoản đang gọi request — xem ghi chú ở `update()`.
+   * Chặn THÊM xoá user đã blacklist (mục 7 Roadmap, mở rộng 22/10 buổi 6) —
+   * đây chính là cơ chế "chặn theo CCCD, không chỉ theo tài khoản": giữ
+   * nguyên hàng user đã blacklist nghĩa là `cccdHash` unique của họ VẪN bị
+   * chiếm giữ vĩnh viễn, nên `AuthService.register()` (đã có sẵn check trùng
+   * cccdHash) tự động từ chối CCCD đó đăng ký tài khoản mới — KHÔNG cần thêm
+   * bảng/cơ chế tra cứu CCCD riêng, tái dùng đúng unique constraint sẵn có.
+   */
   async remove(id: string, currentUserId: string): Promise<void> {
     if (id === currentUserId) {
       throw new ForbiddenException('Không thể tự xoá tài khoản của chính mình');
     }
-    await this.findByIdOrThrow(id);
+    const existing = await this.findByIdOrThrow(id);
+    if (existing.isBlacklisted) {
+      throw new ForbiddenException(
+        'Không thể xoá người dùng đã bị đưa vào danh sách đen — cần giữ lại để chặn CCCD này đăng ký tài khoản mới',
+      );
+    }
     await this.prisma.user.delete({ where: { id } });
+  }
+
+  /**
+   * Admin đưa 1 user vào/ra khỏi danh sách đen. Bắt buộc `reason` khi
+   * `blacklisted=true` (dùng làm bằng chứng khi trình báo công an/khởi kiện —
+   * xem `/admin/blacklist`), tự xoá `reason`/`blacklistedAt` khi gỡ blacklist.
+   * Chặn tự blacklist chính mình — cùng nguyên tắc "không ai được tự thao
+   * túng quyền/tồn tại của chính tài khoản mình" đã áp dụng cho `update()`/`remove()`.
+   */
+  async setBlacklistStatus(
+    id: string,
+    blacklisted: boolean,
+    reason: string | undefined,
+    currentUserId: string,
+  ): Promise<User> {
+    if (id === currentUserId) {
+      throw new ForbiddenException(
+        'Không thể tự đưa chính tài khoản của mình vào danh sách đen',
+      );
+    }
+    await this.findByIdOrThrow(id);
+    if (blacklisted && !reason?.trim()) {
+      throw new BadRequestException(
+        'Vui lòng nhập lý do khi đưa người dùng vào danh sách đen',
+      );
+    }
+    return this.prisma.user.update({
+      where: { id },
+      data: {
+        isBlacklisted: blacklisted,
+        blacklistReason: blacklisted ? reason!.trim() : null,
+        blacklistedAt: blacklisted ? new Date() : null,
+      },
+    });
   }
 
   updateRefreshTokenHash(userId: string, refreshTokenHash: string | null) {
@@ -218,6 +271,9 @@ export class UsersService {
       ),
       emailVerifiedAt: user.emailVerifiedAt,
       createdAt: user.createdAt,
+      isBlacklisted: user.isBlacklisted,
+      blacklistReason: user.blacklistReason,
+      blacklistedAt: user.blacklistedAt,
     };
   }
 }

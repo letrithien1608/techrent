@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   LogOut,
   Package,
+  ShieldAlert,
   Tags,
   Users,
   Wrench,
@@ -34,6 +35,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/bookings", label: "Đơn thuê", icon: ClipboardList },
   { href: "/admin/maintenance", label: "Bảo trì", icon: Wrench },
   { href: "/admin/users", label: "Người dùng", icon: Users, adminOnly: true },
+  { href: "/admin/blacklist", label: "Danh sách đen", icon: ShieldAlert, adminOnly: true },
 ];
 
 function initialsOf(name: string): string {

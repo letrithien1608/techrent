@@ -37,6 +37,13 @@ export { BOOKING_TTL_QUEUE, BOOKING_TTL_JOB };
 const DEPOSIT_RATIO = 0.5;
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
+// Phí trễ hạn LEO THANG (mục 4.2 mở rộng, 22/10 buổi 6) — tự đề xuất công thức
+// hợp lý: ngày trễ thứ N phạt `LATE_FEE_DAILY_RATIO * N` (lần giá thuê/ngày).
+// VD ngày 1 phạt 20% giá thuê/ngày, ngày 2 phạt THÊM 40% (tổng 2 ngày = 60%),
+// ngày 3 phạt thêm 60% (tổng 3 ngày = 120%)... — mức phạt MỖI NGÀY tăng dần
+// theo số ngày đã trễ, khuyến khích trả sớm càng nhiều càng tốt. Xem
+// `calculateLateFee()`.
+const LATE_FEE_DAILY_RATIO = 0.2;
 
 const ACTIVE_BOOKING_STATUSES: BookingStatus[] = [
   BookingStatus.pending,
@@ -99,6 +106,16 @@ export class BookingsService {
     // đăng ký, vì đăng ký không phải cổng duy nhất tạo được tài khoản (admin
     // cũng tạo được qua POST /users mà không bắt buộc CCCD).
     const user = await this.usersService.findByIdOrThrow(userId);
+    // Lớp chặn danh sách đen (mục 7 Roadmap, mở rộng 22/10 buổi 6) — kiểm tra
+    // TRƯỚC CCCD/KYC (chặn nghiêm trọng nhất, không cần tốn công kiểm tra tiếp
+    // nếu user đã bị khoá). "Chặn theo CCCD, không chỉ theo tài khoản" được
+    // đảm bảo ở `UsersService.remove()` (không cho xoá user đã blacklist —
+    // giữ nguyên hàng đó để cccdHash unique tiếp tục chặn đăng ký lại).
+    if (user.isBlacklisted) {
+      throw new ForbiddenException(
+        'Tài khoản của bạn đã bị đưa vào danh sách đen và không thể đặt thuê. Vui lòng liên hệ cửa hàng để biết thêm chi tiết.',
+      );
+    }
     if (!user.cccdHash) {
       throw new BadRequestException(
         'Vui lòng bổ sung số CCCD trong trang Tài khoản của tôi trước khi đặt thuê',
@@ -256,12 +273,22 @@ export class BookingsService {
 
   async findAll(
     currentUser: RequestUser,
-    filter: { page: number; limit: number; status?: BookingStatus },
+    filter: {
+      page: number;
+      limit: number;
+      status?: BookingStatus;
+      userId?: string;
+    },
   ): Promise<PaginatedResult<BookingWithDevice>> {
+    // customer LUÔN bị ép lọc theo chính userId của họ — filter.userId (nếu
+    // có gửi lên) chỉ có tác dụng với staff/admin, KHÔNG BAO GIỜ cho customer
+    // tự chọn xem booking của người khác qua tham số này.
     const where: Prisma.BookingWhereInput = {
       ...(currentUser.role === Role.customer
         ? { userId: currentUser.userId }
-        : {}),
+        : filter.userId
+          ? { userId: filter.userId }
+          : {}),
       ...(filter.status ? { status: filter.status } : {}),
     };
 
@@ -494,7 +521,13 @@ export class BookingsService {
     return updated;
   }
 
-  /** Staff/admin nhận lại thiết bị: ongoing → completed. */
+  /**
+   * Staff/admin nhận lại thiết bị: ongoing → completed. Nếu trả SAU `endTime`
+   * dự kiến, tự tính phí trễ hạn leo thang (xem `calculateLateFee()`) — cộng
+   * thẳng vào `totalPrice` (giữ đúng ý nghĩa "tổng tiền phải trả") NHƯNG lưu
+   * riêng ở `lateFeeAmount` để khách/admin thấy rõ đây là phần phạt, không
+   * lẫn vào tiền thuê gốc.
+   */
   async complete(id: string): Promise<Booking> {
     const booking = await this.findByIdOrThrow(id);
     if (booking.status !== BookingStatus.ongoing) {
@@ -502,10 +535,22 @@ export class BookingsService {
         `Chỉ có thể hoàn tất booking đang ở trạng thái "ongoing" (hiện tại: "${booking.status}")`,
       );
     }
+
+    const device = await this.prisma.device.findUniqueOrThrow({
+      where: { id: booking.deviceId },
+    });
+    const lateFeeAmount = this.calculateLateFee(
+      new Date(),
+      booking.endTime,
+      Number(device.pricePerDay),
+      Number(device.originalPrice),
+    );
+    const totalPrice = Number(booking.totalPrice) + lateFeeAmount;
+
     const [updated] = await this.prisma.$transaction([
       this.prisma.booking.update({
         where: { id },
-        data: { status: BookingStatus.completed },
+        data: { status: BookingStatus.completed, lateFeeAmount, totalPrice },
       }),
       this.prisma.device.update({
         where: { id: booking.deviceId },
@@ -518,6 +563,29 @@ export class BookingsService {
     });
     await this.devicesCacheService.invalidateAll();
     return updated;
+  }
+
+  /**
+   * Phí trễ hạn LEO THANG — xem giải thích công thức ở hằng số
+   * `LATE_FEE_DAILY_RATIO` phía trên. Cộng dồn phạt của TẤT CẢ ngày đã trễ
+   * (không chỉ ngày cuối), CHẶN TRÊN ở đúng giá trị thiết bị (`deviceOriginalPrice`)
+   * — không phạt vượt quá giá trị tài sản đang tranh chấp, hợp lý về mặt pháp
+   * lý/kinh doanh (khách late-return cùng lắm chỉ "đáng" đền đúng giá thiết bị).
+   */
+  private calculateLateFee(
+    returnedAt: Date,
+    expectedEndTime: Date,
+    pricePerDay: number,
+    deviceOriginalPrice: number,
+  ): number {
+    const lateMs = returnedAt.getTime() - expectedEndTime.getTime();
+    if (lateMs <= 0) return 0;
+    const daysLate = Math.ceil(lateMs / DAY_MS);
+    let total = 0;
+    for (let day = 1; day <= daysLate; day++) {
+      total += pricePerDay * LATE_FEE_DAILY_RATIO * day;
+    }
+    return Math.min(total, deviceOriginalPrice);
   }
 
   /**

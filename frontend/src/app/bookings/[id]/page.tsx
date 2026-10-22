@@ -149,6 +149,14 @@ export default function BookingDetailPage() {
             <p className="text-muted-foreground">Tiền cọc</p>
             <p className="font-medium">{formatVnd(booking.depositAmount)}</p>
           </div>
+          {!!Number(booking.lateFeeAmount) && (
+            <div className="col-span-2">
+              <p className="text-muted-foreground">Phí trễ hạn (đã gồm trong tổng tiền thuê)</p>
+              <p className="font-medium text-destructive">
+                {formatVnd(booking.lateFeeAmount!)}
+              </p>
+            </div>
+          )}
         </div>
 
         {booking.status === "pending" && (

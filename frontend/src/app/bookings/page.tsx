@@ -63,6 +63,11 @@ function BookingCard({ booking, onChanged }: { booking: Booking; onChanged: () =
               {formatDateTimeVi(booking.startTime)} → {formatDateTimeVi(booking.endTime)}
             </p>
             <p className="mt-1 text-sm font-medium">{formatVnd(booking.totalPrice)}</p>
+            {!!Number(booking.lateFeeAmount) && (
+              <p className="text-xs text-destructive">
+                Trong đó phí trễ hạn: {formatVnd(booking.lateFeeAmount!)}
+              </p>
+            )}
           </div>
         </Link>
 

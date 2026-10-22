@@ -121,6 +121,9 @@ export interface AdminUser {
   kycVerified: boolean;
   emailVerifiedAt: string | null;
   createdAt: string;
+  isBlacklisted: boolean;
+  blacklistReason: string | null;
+  blacklistedAt: string | null;
 }
 
 export interface PaginatedUsers {
@@ -129,9 +132,24 @@ export interface PaginatedUsers {
 }
 
 export async function fetchUsers(
-  params: { page?: number; limit?: number; role?: UserRole; search?: string } = {},
+  params: {
+    page?: number;
+    limit?: number;
+    role?: UserRole;
+    search?: string;
+    isBlacklisted?: boolean;
+  } = {},
 ): Promise<PaginatedUsers> {
   const { data } = await api.get<PaginatedUsers>("/users", { params });
+  return data;
+}
+
+/** Đưa/gỡ user khỏi danh sách đen — admin only. Bắt buộc `reason` khi `blacklisted:true`. */
+export async function setUserBlacklist(
+  id: string,
+  payload: { blacklisted: boolean; reason?: string },
+): Promise<AdminUser> {
+  const { data } = await api.patch<AdminUser>(`/users/${id}/blacklist`, payload);
   return data;
 }
 

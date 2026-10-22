@@ -28,6 +28,8 @@ export interface Booking {
   contractContent?: string | null;
   contractSigned?: boolean;
   contractSignedAt?: string | null;
+  /** Phí trễ hạn (ĐÃ cộng vào `totalPrice`) — hiển thị riêng để khách/admin thấy rõ đây là phần phạt. `"0"` nếu trả đúng/trước hạn. */
+  lateFeeAmount?: string;
   /** Chỉ có ở `GET /bookings` và `GET /bookings/:id` (BookingsService trả kèm include) */
   device?: BookingDeviceSummary;
 }
@@ -82,7 +84,13 @@ export async function fetchBookingById(id: string): Promise<Booking> {
 }
 
 export async function fetchBookings(
-  params: { page?: number; limit?: number; status?: BookingStatus } = {},
+  params: {
+    page?: number;
+    limit?: number;
+    status?: BookingStatus;
+    /** Chỉ staff/admin dùng được thật — xem ListBookingsQueryDto backend. */
+    userId?: string;
+  } = {},
 ): Promise<PaginatedBookings> {
   const { data } = await api.get<PaginatedBookings>("/bookings", { params });
   return data;

@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AdminPagination } from "@/components/admin/admin-pagination";
+import { BlacklistUserDialog } from "@/components/admin/blacklist-user-dialog";
 import { ConfirmDeleteDialog } from "@/components/admin/confirm-delete-dialog";
 import { UserFormDialog } from "@/components/admin/user-form-dialog";
 import { deleteUser, fetchUsers } from "@/lib/admin-api";
@@ -166,6 +167,11 @@ export default function AdminUsersPage() {
                                   (bạn)
                                 </span>
                               )}
+                              {user.isBlacklisted && (
+                                <span className="ml-1.5 rounded-full bg-destructive/15 px-1.5 py-0.5 text-[10px] font-medium text-destructive">
+                                  Danh sách đen
+                                </span>
+                              )}
                             </p>
                             <p className="truncate text-xs text-muted-foreground">
                               {user.email}
@@ -198,20 +204,35 @@ export default function AdminUsersPage() {
                             <TooltipContent>Sửa người dùng</TooltipContent>
                           </Tooltip>
                           {!isSelf && (
-                            <Tooltip>
-                              <TooltipTrigger render={<span className="inline-flex" />}>
-                                <ConfirmDeleteDialog
-                                  title="Xoá người dùng này?"
-                                  description={`Tài khoản "${user.name}" (${user.email}) sẽ bị xoá khỏi hệ thống. Hành động không thể hoàn tác.`}
-                                  onConfirm={() => deleteUser(user.id)}
-                                  onDeleted={handleChanged}
-                                  successMessage="Đã xoá người dùng"
-                                >
-                                  <Trash2 className="size-4" />
-                                </ConfirmDeleteDialog>
-                              </TooltipTrigger>
-                              <TooltipContent>Xoá người dùng</TooltipContent>
-                            </Tooltip>
+                            <>
+                              <Tooltip>
+                                <TooltipTrigger render={<span className="inline-flex" />}>
+                                  <BlacklistUserDialog user={user} onChanged={handleChanged} />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {user.isBlacklisted ? "Gỡ khỏi danh sách đen" : "Đưa vào danh sách đen"}
+                                </TooltipContent>
+                              </Tooltip>
+                              {/* Backend chặn VĨNH VIỄN xoá user đã blacklist (giữ cccdHash
+                               * chiếm giữ để chặn đăng ký lại — xem CLAUDE.md) — ẩn nút ở đây
+                               * để không dẫn admin vào 1 hành động chắc chắn thất bại. */}
+                              {!user.isBlacklisted && (
+                                <Tooltip>
+                                  <TooltipTrigger render={<span className="inline-flex" />}>
+                                    <ConfirmDeleteDialog
+                                      title="Xoá người dùng này?"
+                                      description={`Tài khoản "${user.name}" (${user.email}) sẽ bị xoá khỏi hệ thống. Hành động không thể hoàn tác.`}
+                                      onConfirm={() => deleteUser(user.id)}
+                                      onDeleted={handleChanged}
+                                      successMessage="Đã xoá người dùng"
+                                    >
+                                      <Trash2 className="size-4" />
+                                    </ConfirmDeleteDialog>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Xoá người dùng</TooltipContent>
+                                </Tooltip>
+                              )}
+                            </>
                           )}
                         </div>
                       </TableCell>

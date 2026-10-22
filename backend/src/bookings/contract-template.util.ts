@@ -41,7 +41,8 @@ function formatDateTime(value: Date): string {
 
 export function buildContractContent(data: ContractTemplateData): string {
   const contractNo = data.bookingId.slice(0, 8).toUpperCase();
-  const lateFeePerDay = formatVnd(data.devicePricePerDay * 1.5);
+  const lateFeeDay1 = formatVnd(data.devicePricePerDay * 0.2);
+  const lateFeeDay2 = formatVnd(data.devicePricePerDay * 0.2 * 2);
 
   return `HỢP ĐỒNG THUÊ THIẾT BỊ
 Số hợp đồng: ${contractNo} (mã booking đầy đủ: ${data.bookingId})
@@ -73,7 +74,7 @@ Bên B (Bên thuê):
   3. Bên B phải trả lại thiết bị đúng thời hạn nêu tại Điều 3, kèm đầy đủ phụ kiện đã nhận (nếu có).
 
 ĐIỀU 6 — PHẠT TRỄ HẠN VÀ HOÀN TRẢ TIỀN CỌC
-  1. Nếu trả thiết bị trễ hạn, Bên B phải chịu phạt ${lateFeePerDay} cho mỗi ngày trễ (tương đương 150% giá thuê/ngày của thiết bị), tính từ ngày trễ đầu tiên.
+  1. Nếu trả thiết bị trễ hạn, Bên B phải chịu phạt LEO THANG theo từng ngày trễ: ngày trễ thứ 1 phạt ${lateFeeDay1} (20% giá thuê/ngày), ngày trễ thứ 2 phạt THÊM ${lateFeeDay2} (40% giá thuê/ngày), các ngày tiếp theo tiếp tục tăng thêm 20 điểm phần trăm mỗi ngày — tổng phí trễ hạn được cộng dồn qua tất cả các ngày trễ và KHÔNG vượt quá giá trị thiết bị nêu tại Điều 2.
   2. Tiền cọc được hoàn lại theo chính sách: hoàn 100% nếu huỷ trước giờ nhận thiết bị tối thiểu 24 giờ; hoàn 50% nếu huỷ trong khoảng 6-24 giờ trước giờ nhận; không hoàn cọc nếu huỷ trong vòng 6 giờ trước giờ nhận hoặc sau khi đã nhận thiết bị, trừ trường hợp lỗi thuộc về Bên A.
   3. Trường hợp thiết bị có hư hỏng/thiếu hụt khi trả lại, Bên A có quyền trừ chi phí khắc phục vào tiền cọc trước khi hoàn trả phần còn lại (nếu có) cho Bên B.
 

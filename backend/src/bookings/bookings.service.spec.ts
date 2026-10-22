@@ -148,6 +148,26 @@ describe('BookingsService', () => {
       endTime: new Date(Date.now() + 50 * 3600 * 1000).toISOString(),
     };
 
+    // Lớp chặn NGHIÊM TRỌNG NHẤT (mở rộng 22/10 buổi 6, mục 7 Roadmap) — kiểm
+    // tra blacklist TRƯỚC CẢ CCCD/KYC, vì đây là chặn hành chính, không liên
+    // quan tới hồ sơ xác thực danh tính.
+    it('ném ForbiddenException nếu user đã bị đưa vào danh sách đen (isBlacklisted)', async () => {
+      usersService.findByIdOrThrow.mockResolvedValue({
+        id: customer.userId,
+        isBlacklisted: true,
+        cccdHash: 'a'.repeat(64),
+        kycCccdFrontPublicId: 'kyc/u1-cccd-front',
+        kycCccdBackPublicId: 'kyc/u1-cccd-back',
+        kycSelfiePublicId: 'kyc/u1-selfie',
+      });
+
+      await expect(
+        service.create(customer.userId, validDto),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      // Phải chặn NGAY, không tốn công kiểm tra CCCD/KYC hay chạm transaction.
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
     // Lớp chặn quan trọng nhất của KYC (mục 7 Roadmap) — kiểm tra CCCD TRƯỚC
     // cả validate thời gian, nên đặt lên đầu describe cho dễ đối chiếu.
     it('ném BadRequestException nếu user CHƯA có CCCD trong hồ sơ (cccdHash null)', async () => {
@@ -569,6 +589,100 @@ describe('BookingsService', () => {
         status: DeviceStatus.available,
       });
       expect(devicesCacheService.invalidateAll).toHaveBeenCalled();
+    });
+
+    it('complete() KHÔNG tính phí trễ hạn nếu trả đúng/trước hạn', async () => {
+      prisma.booking.findUnique.mockResolvedValue({
+        ...baseBooking,
+        status: BookingStatus.ongoing,
+        // endTime trong TƯƠNG LAI — trả bây giờ coi như chưa trễ.
+        endTime: new Date(Date.now() + 3600 * 1000),
+      });
+      prisma.booking.update.mockResolvedValue({
+        ...baseBooking,
+        status: BookingStatus.completed,
+      });
+      prisma.device.update.mockResolvedValue(baseDevice);
+
+      await service.complete(baseBooking.id);
+
+      expect(prisma.booking.update).toHaveBeenCalledWith({
+        where: { id: baseBooking.id },
+        data: {
+          status: BookingStatus.completed,
+          lateFeeAmount: 0,
+          totalPrice: Number(baseBooking.totalPrice),
+        },
+      });
+    });
+
+    it('complete() trễ 1 ngày: phạt đúng 20% giá thuê/ngày, cộng vào totalPrice', async () => {
+      prisma.booking.findUnique.mockResolvedValue({
+        ...baseBooking,
+        status: BookingStatus.ongoing,
+        // endTime cách đây 12 giờ -> ceil(12h / 24h) = 1 ngày trễ.
+        endTime: new Date(Date.now() - 12 * 3600 * 1000),
+      });
+      prisma.booking.update.mockResolvedValue({});
+      prisma.device.update.mockResolvedValue(baseDevice);
+
+      await service.complete(baseBooking.id);
+
+      // pricePerDay = 80000 -> ngày trễ thứ 1 phạt 80000 * 0.2 * 1 = 16000
+      const expectedLateFee = 80000 * 0.2 * 1;
+      expect(prisma.booking.update).toHaveBeenCalledWith({
+        where: { id: baseBooking.id },
+        data: {
+          status: BookingStatus.completed,
+          lateFeeAmount: expectedLateFee,
+          totalPrice: Number(baseBooking.totalPrice) + expectedLateFee,
+        },
+      });
+    });
+
+    it('complete() trễ 2 ngày: phạt LEO THANG (ngày 1 + ngày 2, không chỉ nhân đôi ngày 1)', async () => {
+      prisma.booking.findUnique.mockResolvedValue({
+        ...baseBooking,
+        status: BookingStatus.ongoing,
+        // endTime cách đây 30 giờ -> ceil(30h / 24h) = 2 ngày trễ.
+        endTime: new Date(Date.now() - 30 * 3600 * 1000),
+      });
+      prisma.booking.update.mockResolvedValue({});
+      prisma.device.update.mockResolvedValue(baseDevice);
+
+      await service.complete(baseBooking.id);
+
+      // Ngày 1: 80000*0.2*1=16000; Ngày 2: 80000*0.2*2=32000 -> tổng 48000
+      // (KHÔNG phải 16000*2=32000 nếu tính phẳng — phải thấy rõ phần leo thang)
+      const expectedLateFee = 80000 * 0.2 * 1 + 80000 * 0.2 * 2;
+      expect(expectedLateFee).toBe(48000);
+      expect(prisma.booking.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ lateFeeAmount: expectedLateFee }),
+        }),
+      );
+    });
+
+    it('complete() KHÔNG phạt vượt quá giá trị thiết bị (originalPrice) dù trễ rất lâu', async () => {
+      prisma.booking.findUnique.mockResolvedValue({
+        ...baseBooking,
+        status: BookingStatus.ongoing,
+        // Trễ 10 ngày -> tổng phạt leo thang chưa chặn sẽ rất lớn
+        endTime: new Date(Date.now() - 10 * 24 * 3600 * 1000),
+      });
+      prisma.booking.update.mockResolvedValue({});
+      // originalPrice THẤP để chắc chắn vượt cap chỉ với vài ngày trễ.
+      prisma.device.update.mockResolvedValue(baseDevice);
+      const lowValueDevice = { ...baseDevice, originalPrice: '10000' };
+      prisma.device.findUniqueOrThrow.mockResolvedValue(lowValueDevice);
+
+      await service.complete(baseBooking.id);
+
+      expect(prisma.booking.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ lateFeeAmount: 10000 }),
+        }),
+      );
     });
   });
 

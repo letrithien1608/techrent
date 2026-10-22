@@ -22,6 +22,7 @@ function resolveBreadcrumb(pathname: string): Crumb[] {
   if (pathname.startsWith("/admin/bookings")) return [{ label: "Đơn thuê" }];
   if (pathname.startsWith("/admin/maintenance")) return [{ label: "Bảo trì" }];
   if (pathname.startsWith("/admin/users")) return [{ label: "Người dùng" }];
+  if (pathname.startsWith("/admin/blacklist")) return [{ label: "Danh sách đen" }];
   return [{ label: "Admin" }];
 }
 

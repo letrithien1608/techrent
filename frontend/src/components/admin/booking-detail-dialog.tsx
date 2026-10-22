@@ -50,6 +50,13 @@ export function BookingDetailDialog({ booking }: { booking: Booking }) {
           <Row label="Kết thúc">{formatDateTimeVi(booking.endTime)}</Row>
           <Row label="Tổng tiền">{formatVnd(booking.totalPrice)}</Row>
           <Row label="Tiền cọc">{formatVnd(booking.depositAmount)}</Row>
+          {!!Number(booking.lateFeeAmount) && (
+            <Row label="Trong đó, phí trễ hạn">
+              <span className="text-destructive">
+                {formatVnd(booking.lateFeeAmount!)}
+              </span>
+            </Row>
+          )}
           <Row label="Tạo lúc">{formatDateTimeVi(booking.createdAt)}</Row>
         </dl>
 

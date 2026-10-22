@@ -37,6 +37,7 @@ describe('UsersController', () => {
     findAll: jest.Mock;
     revealCccd: jest.Mock;
     resetKycImages: jest.Mock;
+    setBlacklistStatus: jest.Mock;
     sanitize: jest.Mock;
   };
   let configService: { get: jest.Mock };
@@ -55,6 +56,7 @@ describe('UsersController', () => {
       findAll: jest.fn(),
       revealCccd: jest.fn(),
       resetKycImages: jest.fn(),
+      setBlacklistStatus: jest.fn(),
       sanitize: jest.fn((user) => ({
         id: user.id,
         email: user.email,
@@ -153,10 +155,11 @@ describe('UsersController', () => {
         10,
         undefined,
         undefined,
+        undefined,
       );
     });
 
-    it('truyền tiếp role/search từ query xuống UsersService.findAll', async () => {
+    it('truyền tiếp role/search/isBlacklisted từ query xuống UsersService.findAll', async () => {
       usersService.findAll.mockResolvedValue({ data: [], meta: {} });
 
       await controller.findAll({
@@ -164,6 +167,7 @@ describe('UsersController', () => {
         limit: 20,
         role: Role.staff,
         search: 'an',
+        isBlacklisted: true,
       });
 
       expect(usersService.findAll).toHaveBeenCalledWith(
@@ -171,6 +175,7 @@ describe('UsersController', () => {
         20,
         Role.staff,
         'an',
+        true,
       );
     });
   });
@@ -397,6 +402,28 @@ describe('UsersController', () => {
 
       expect(uploadService.deleteKycImage).toHaveBeenCalledTimes(1);
       expect(uploadService.deleteKycImage).toHaveBeenCalledWith('kyc/u1-cccd-front');
+    });
+  });
+
+  describe('setBlacklist', () => {
+    it('gọi UsersService.setBlacklistStatus với đúng id/blacklisted/reason/currentUserId', async () => {
+      usersService.setBlacklistStatus.mockResolvedValue({
+        id: 'u1',
+        isBlacklisted: true,
+      });
+
+      await controller.setBlacklist(
+        'u1',
+        { blacklisted: true, reason: 'Không trả thiết bị' },
+        currentAdmin,
+      );
+
+      expect(usersService.setBlacklistStatus).toHaveBeenCalledWith(
+        'u1',
+        true,
+        'Không trả thiết bị',
+        currentAdmin.userId,
+      );
     });
   });
 });
