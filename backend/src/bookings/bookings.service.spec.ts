@@ -101,12 +101,15 @@ describe('BookingsService', () => {
     paymentsService = {
       refundForBooking: jest.fn().mockResolvedValue(undefined),
     };
-    // Mặc định user ĐÃ có CCCD (cccdHash khác null) để các test `create` có sẵn
-    // từ trước không bị ảnh hưởng — test riêng cho lớp chặn CCCD tự override lại.
+    // Mặc định user ĐÃ có CCCD + ĐỦ 3 ảnh KYC để các test `create` có sẵn từ
+    // trước không bị ảnh hưởng — test riêng cho từng lớp chặn tự override lại.
     usersService = {
       findByIdOrThrow: jest.fn().mockResolvedValue({
         id: customer.userId,
         cccdHash: 'a'.repeat(64),
+        kycCccdFrontPublicId: 'kyc/u1-cccd-front',
+        kycCccdBackPublicId: 'kyc/u1-cccd-back',
+        kycSelfiePublicId: 'kyc/u1-selfie',
       }),
     };
     realtimeGateway = { emitDeviceStatusChanged: jest.fn() };
@@ -147,6 +150,22 @@ describe('BookingsService', () => {
         service.create(customer.userId, validDto),
       ).rejects.toBeInstanceOf(BadRequestException);
       // Phải chặn NGAY, không được chạm tới transaction/DB thiết bị.
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    // Mở rộng KYC (22/10) — số CCCD thôi không còn đủ, phải đủ cả 3 ảnh eKYC.
+    it('ném BadRequestException nếu user CÓ cccdHash nhưng CHƯA đủ 3 ảnh KYC', async () => {
+      usersService.findByIdOrThrow.mockResolvedValue({
+        id: customer.userId,
+        cccdHash: 'a'.repeat(64),
+        kycCccdFrontPublicId: 'kyc/u1-cccd-front',
+        kycCccdBackPublicId: null, // thiếu mặt sau
+        kycSelfiePublicId: null, // thiếu ảnh chân dung
+      });
+
+      await expect(
+        service.create(customer.userId, validDto),
+      ).rejects.toBeInstanceOf(BadRequestException);
       expect(prisma.$transaction).not.toHaveBeenCalled();
     });
 

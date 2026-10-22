@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { UploadService } from '../src/upload/upload.service';
 
 /**
  * Test case BẮT BUỘC theo mục 5 Roadmap: 2 khách hàng cùng lúc bấm đặt CÙNG 1
@@ -22,6 +23,9 @@ describe('Bookings race condition (e2e)', () => {
   let deviceId: string;
   let userAToken: string;
   let userBToken: string;
+  let userAId: string;
+  let userBId: string;
+  let uploadService: UploadService;
   const userAEmail = `race-test-a-${Date.now()}@example.com`;
   const userBEmail = `race-test-b-${Date.now()}@example.com`;
 
@@ -44,6 +48,7 @@ describe('Bookings race condition (e2e)', () => {
     await app.init();
 
     prisma = moduleFixture.get(PrismaService);
+    uploadService = moduleFixture.get(UploadService);
 
     const category = await prisma.category.create({
       data: { name: `Race Test Category ${Date.now()}` },
@@ -70,7 +75,7 @@ describe('Bookings race condition (e2e)', () => {
       [userBEmail, 'Str0ngP@ssword'],
     ]) {
       userIndex += 1;
-      await request(server)
+      const registerResponse = await request(server)
         .post('/auth/register')
         .send({
           name: 'Race Tester',
@@ -80,6 +85,8 @@ describe('Bookings race condition (e2e)', () => {
           cccd: `${Date.now().toString().slice(-11)}${userIndex}`,
         })
         .expect(201);
+      if (userIndex === 1) userAId = registerResponse.body.user.id;
+      else userBId = registerResponse.body.user.id;
     }
 
     const loginA = await request(server)
@@ -93,9 +100,41 @@ describe('Bookings race condition (e2e)', () => {
       .send({ email: userBEmail, password: 'Str0ngP@ssword' })
       .expect(200);
     userBToken = loginB.body.accessToken;
+
+    // Mở rộng KYC (22/10): BookingsService.create() giờ bắt buộc đủ 3 ảnh
+    // eKYC, không chỉ số CCCD — mỗi user test phải tự nộp ảnh THẬT (upload
+    // thật lên Cloudinary qua PATCH /auth/kyc-verification) trước khi có thể
+    // đặt thuê, nếu không race-condition test sẽ luôn nhận 400 cho cả 2 request.
+    const tinyPng = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+      'base64',
+    );
+    for (const token of [userAToken, userBToken]) {
+      await request(server)
+        .patch('/auth/kyc-verification')
+        .set('Authorization', `Bearer ${token}`)
+        .attach('cccdFront', tinyPng, 'cccd-front.png')
+        .attach('cccdBack', tinyPng, 'cccd-back.png')
+        .attach('selfie', tinyPng, 'selfie.png')
+        .expect(200);
+    }
   }, 60000);
 
   afterAll(async () => {
+    // Dọn ảnh KYC THẬT đã upload lên Cloudinary trong lúc test (không để lại
+    // rác trên storage — cùng nguyên tắc dọn dẹp dữ liệu test đã áp dụng
+    // xuyên suốt dự án) — xem PATCH /auth/kyc-verification ở beforeAll.
+    const kycPublicIds = [userAId, userBId].flatMap((id) => [
+      `kyc-${id}-cccd-front`,
+      `kyc-${id}-cccd-back`,
+      `kyc-${id}-selfie`,
+    ]);
+    await Promise.all(
+      kycPublicIds.map((publicId) =>
+        uploadService.deleteKycImage(publicId).catch(() => undefined),
+      ),
+    );
+
     await prisma.booking.deleteMany({ where: { deviceId } });
     await prisma.device
       .delete({ where: { id: deviceId } })

@@ -36,6 +36,7 @@ describe('AuthService', () => {
     sendVerificationEmail: jest.Mock;
     sendPasswordResetEmail: jest.Mock;
   };
+  let uploadService: { uploadKycImage: jest.Mock };
 
   const baseUser: User = {
     id: 'user-1',
@@ -48,6 +49,9 @@ describe('AuthService', () => {
     cccdHash: null,
     cccdEncrypted: null,
     cccdMasked: null,
+    kycCccdFrontPublicId: null,
+    kycCccdBackPublicId: null,
+    kycSelfiePublicId: null,
     emailVerifiedAt: null,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
   };
@@ -111,6 +115,9 @@ describe('AuthService', () => {
       sendVerificationEmail: jest.fn().mockResolvedValue(undefined),
       sendPasswordResetEmail: jest.fn().mockResolvedValue(undefined),
     };
+    uploadService = {
+      uploadKycImage: jest.fn().mockResolvedValue('kyc/mock-public-id'),
+    };
 
     service = new AuthService(
       usersService as any,
@@ -118,6 +125,7 @@ describe('AuthService', () => {
       configService as any,
       redisService as any,
       mailService as any,
+      uploadService as any,
     );
 
     // Mỗi lần issueTokens() gọi 2 lần signAsync (access rồi refresh) trong 1 Promise.all;
@@ -287,6 +295,86 @@ describe('AuthService', () => {
       expect(result.cccdMasked).toBe('********2345');
       expect(result).not.toHaveProperty('cccdHash');
       expect(result).not.toHaveProperty('cccdEncrypted');
+    });
+  });
+
+  describe('submitKycVerification', () => {
+    const makeFile = (tag: string) => [
+      { buffer: Buffer.from(tag), mimetype: 'image/jpeg' },
+    ];
+    const validFiles = {
+      cccdFront: makeFile('front'),
+      cccdBack: makeFile('back'),
+      selfie: makeFile('selfie'),
+    };
+
+    it('ném BadRequestException nếu đã nộp đủ 3 ảnh KYC từ trước (không cho tự nộp lại)', async () => {
+      usersService.findByIdOrThrow.mockResolvedValue({
+        ...baseUser,
+        kycCccdFrontPublicId: 'kyc/u1-cccd-front',
+        kycCccdBackPublicId: 'kyc/u1-cccd-back',
+        kycSelfiePublicId: 'kyc/u1-selfie',
+      });
+
+      await expect(
+        service.submitKycVerification(baseUser.id, validFiles),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(uploadService.uploadKycImage).not.toHaveBeenCalled();
+      expect(usersService.update).not.toHaveBeenCalled();
+    });
+
+    it('ném BadRequestException nếu thiếu 1 trong 3 ảnh (VD thiếu selfie)', async () => {
+      usersService.findByIdOrThrow.mockResolvedValue(baseUser);
+
+      await expect(
+        service.submitKycVerification(baseUser.id, {
+          cccdFront: makeFile('front'),
+          cccdBack: makeFile('back'),
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(uploadService.uploadKycImage).not.toHaveBeenCalled();
+    });
+
+    it('upload đủ 3 ảnh với publicId riêng biệt theo đúng userId+slot, lưu lại 3 public_id, trả về user đã sanitize', async () => {
+      usersService.findByIdOrThrow.mockResolvedValue(baseUser);
+      uploadService.uploadKycImage.mockImplementation(
+        (_buffer: Buffer, _mimetype: string, publicId: string) =>
+          Promise.resolve(publicId),
+      );
+      usersService.update.mockImplementation((_id, data: any) =>
+        Promise.resolve({ ...baseUser, ...data }),
+      );
+
+      const result = await service.submitKycVerification(
+        baseUser.id,
+        validFiles,
+      );
+
+      expect(uploadService.uploadKycImage).toHaveBeenCalledWith(
+        validFiles.cccdFront[0].buffer,
+        'image/jpeg',
+        `kyc-${baseUser.id}-cccd-front`,
+      );
+      expect(uploadService.uploadKycImage).toHaveBeenCalledWith(
+        validFiles.cccdBack[0].buffer,
+        'image/jpeg',
+        `kyc-${baseUser.id}-cccd-back`,
+      );
+      expect(uploadService.uploadKycImage).toHaveBeenCalledWith(
+        validFiles.selfie[0].buffer,
+        'image/jpeg',
+        `kyc-${baseUser.id}-selfie`,
+      );
+      expect(usersService.update).toHaveBeenCalledWith(
+        baseUser.id,
+        {
+          kycCccdFrontPublicId: `kyc-${baseUser.id}-cccd-front`,
+          kycCccdBackPublicId: `kyc-${baseUser.id}-cccd-back`,
+          kycSelfiePublicId: `kyc-${baseUser.id}-selfie`,
+        },
+        baseUser.id,
+      );
+      expect(result).not.toHaveProperty('kycCccdFrontPublicId');
     });
   });
 

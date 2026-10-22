@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FormErrorBanner } from "@/components/form-error-banner";
+import { KycImagesViewer } from "@/components/admin/kyc-images-viewer";
 import { createUser, updateUser, type AdminUser } from "@/lib/admin-api";
 import { getErrorMessage } from "@/lib/get-error-message";
 import { ROLE_LABEL, ROLE_VALUES } from "@/lib/user-format";
@@ -238,6 +239,21 @@ export function UserFormDialog({ user, isSelf = false }: Props) {
             </Button>
           </DialogFooter>
         </form>
+
+        {/* Đặt NGOÀI <form> ở trên có chủ đích — nút trigger của Dialog lồng
+         * bên trong (KycImagesViewer) không khai báo type="button", nếu nằm
+         * trong <form> sẽ rơi về type="submit" mặc định của HTML và vô tình
+         * submit form khi bấm. */}
+        {isEdit && (
+          <div className="flex items-center justify-between gap-2 border-t border-border/60 pt-4">
+            <p className="text-xs text-muted-foreground">
+              {user.kycVerified
+                ? "Đã xác thực danh tính"
+                : "Chưa nộp hồ sơ xác thực danh tính"}
+            </p>
+            <KycImagesViewer userId={user.id} userName={user.name} />
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

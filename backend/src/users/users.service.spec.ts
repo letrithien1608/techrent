@@ -28,6 +28,9 @@ describe('UsersService', () => {
     cccdHash: null,
     cccdEncrypted: null,
     cccdMasked: null,
+    kycCccdFrontPublicId: null,
+    kycCccdBackPublicId: null,
+    kycSelfiePublicId: null,
     emailVerifiedAt: null,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
   };
@@ -231,6 +234,7 @@ describe('UsersService', () => {
         role: baseUser.role,
         phone: baseUser.phone,
         cccdMasked: baseUser.cccdMasked,
+        kycVerified: false,
         emailVerifiedAt: baseUser.emailVerifiedAt,
         createdAt: baseUser.createdAt,
       });
@@ -247,6 +251,27 @@ describe('UsersService', () => {
       expect(result).not.toHaveProperty('cccdHash');
       expect(result).not.toHaveProperty('cccdEncrypted');
       expect(result.cccdMasked).toBe('********1234');
+    });
+
+    it('KHÔNG BAO GIỜ trả kycCccdFrontPublicId/kycCccdBackPublicId/kycSelfiePublicId, chỉ trả boolean kycVerified', () => {
+      const resultFull = service.sanitize({
+        ...baseUser,
+        kycCccdFrontPublicId: 'kyc/user-1-cccd-front',
+        kycCccdBackPublicId: 'kyc/user-1-cccd-back',
+        kycSelfiePublicId: 'kyc/user-1-selfie',
+      });
+      expect(resultFull).not.toHaveProperty('kycCccdFrontPublicId');
+      expect(resultFull).not.toHaveProperty('kycCccdBackPublicId');
+      expect(resultFull).not.toHaveProperty('kycSelfiePublicId');
+      expect(resultFull.kycVerified).toBe(true);
+
+      const resultPartial = service.sanitize({
+        ...baseUser,
+        kycCccdFrontPublicId: 'kyc/user-1-cccd-front',
+        kycCccdBackPublicId: null,
+        kycSelfiePublicId: null,
+      });
+      expect(resultPartial.kycVerified).toBe(false);
     });
   });
 
@@ -293,6 +318,48 @@ describe('UsersService', () => {
       await expect(
         service.revealCccd(baseUser.id, encryptionKey),
       ).resolves.toBe('079203012345');
+    });
+  });
+
+  describe('resetKycImages', () => {
+    it('ném NotFoundException nếu user không tồn tại', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.resetKycImages('missing-id'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('xoá cả 3 public_id trong DB và trả về user TRƯỚC khi xoá (để caller tự xoá ảnh trên Cloudinary)', async () => {
+      const userWithKyc = {
+        ...baseUser,
+        kycCccdFrontPublicId: 'kyc/user-1-cccd-front',
+        kycCccdBackPublicId: 'kyc/user-1-cccd-back',
+        kycSelfiePublicId: 'kyc/user-1-selfie',
+      };
+      prisma.user.findUnique.mockResolvedValue(userWithKyc);
+      prisma.user.update.mockResolvedValue({
+        ...userWithKyc,
+        kycCccdFrontPublicId: null,
+        kycCccdBackPublicId: null,
+        kycSelfiePublicId: null,
+      });
+
+      const result = await service.resetKycImages(baseUser.id);
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: baseUser.id },
+        data: {
+          kycCccdFrontPublicId: null,
+          kycCccdBackPublicId: null,
+          kycSelfiePublicId: null,
+        },
+      });
+      // Trả về bản TRƯỚC khi xoá — caller cần đúng public_id cũ để gọi
+      // UploadService.deleteKycImage() trên Cloudinary.
+      expect(result.kycCccdFrontPublicId).toBe('kyc/user-1-cccd-front');
+      expect(result.kycSelfiePublicId).toBe('kyc/user-1-selfie');
     });
   });
 });

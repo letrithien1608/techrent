@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { Role } from '../generated/prisma/client';
@@ -11,6 +12,7 @@ describe('AuthController', () => {
     logout: jest.Mock;
     changePassword: jest.Mock;
     addCccd: jest.Mock;
+    submitKycVerification: jest.Mock;
     verifyEmail: jest.Mock;
     forgotPassword: jest.Mock;
     resetPassword: jest.Mock;
@@ -24,6 +26,7 @@ describe('AuthController', () => {
       logout: jest.fn(),
       changePassword: jest.fn(),
       addCccd: jest.fn(),
+      submitKycVerification: jest.fn(),
       verifyEmail: jest.fn(),
       forgotPassword: jest.fn(),
       resetPassword: jest.fn(),
@@ -114,6 +117,51 @@ describe('AuthController', () => {
 
     expect(authService.addCccd).toHaveBeenCalledWith('u1', dto);
     expect(result).toEqual({ id: 'u1', cccdMasked: '********2345' });
+  });
+
+  describe('submitKycVerification', () => {
+    const user = { userId: 'u1', email: 'a@example.com', role: Role.customer };
+    const makeFile = () => [{ buffer: Buffer.from('x'), mimetype: 'image/jpeg', size: 1024 }];
+
+    it('gọi AuthService.submitKycVerification với userId + files khi đủ cả 3 ảnh', async () => {
+      const files = {
+        cccdFront: makeFile(),
+        cccdBack: makeFile(),
+        selfie: makeFile(),
+      };
+      authService.submitKycVerification.mockResolvedValue({ id: 'u1' });
+
+      await controller.submitKycVerification(user, files);
+
+      expect(authService.submitKycVerification).toHaveBeenCalledWith(
+        'u1',
+        files,
+      );
+    });
+
+    it('ném BadRequestException NGAY ở controller nếu thiếu 1 trong 3 ảnh — KHÔNG gọi service', async () => {
+      const files = { cccdFront: makeFile(), cccdBack: makeFile() };
+
+      expect(() => controller.submitKycVerification(user, files)).toThrow(
+        BadRequestException,
+      );
+      expect(authService.submitKycVerification).not.toHaveBeenCalled();
+    });
+
+    it('ném BadRequestException nếu 1 ảnh vượt quá 8MB — KHÔNG gọi service', async () => {
+      const files = {
+        cccdFront: [
+          { buffer: Buffer.from('x'), mimetype: 'image/jpeg', size: 9 * 1024 * 1024 },
+        ],
+        cccdBack: makeFile(),
+        selfie: makeFile(),
+      };
+
+      expect(() => controller.submitKycVerification(user, files)).toThrow(
+        BadRequestException,
+      );
+      expect(authService.submitKycVerification).not.toHaveBeenCalled();
+    });
   });
 
   it('verifyEmail() gọi AuthService.verifyEmail với token trong query string', async () => {

@@ -86,6 +86,29 @@ export async function addCccdRequest(cccd: string): Promise<AuthUser> {
   return data;
 }
 
+/**
+ * Nộp eKYC: ảnh CCCD mặt trước + mặt sau + ảnh chân dung xác thực, nộp 1 LẦN
+ * DUY NHẤT (backend chặn nộp lại nếu đã đủ — chỉ admin reset được). KHÔNG tự
+ * set header `Content-Type` — để axios tự tính kèm `boundary` đúng cho
+ * `FormData` (bài học cũ: set tay header multipart làm hỏng boundary, xem
+ * CLAUDE.md mục "Sửa bug thật: upload ảnh lúc tạo thiết bị không hoạt động").
+ */
+export async function submitKycVerificationRequest(files: {
+  cccdFront: File;
+  cccdBack: File;
+  selfie: File;
+}): Promise<AuthUser> {
+  const formData = new FormData();
+  formData.append("cccdFront", files.cccdFront);
+  formData.append("cccdBack", files.cccdBack);
+  formData.append("selfie", files.selfie);
+  const { data } = await api.patch<AuthUser>(
+    "/auth/kyc-verification",
+    formData,
+  );
+  return data;
+}
+
 // ---- Quên mật khẩu / đặt lại mật khẩu (public, không cần đăng nhập) ----
 
 /**

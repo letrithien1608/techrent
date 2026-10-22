@@ -72,6 +72,17 @@ model User {
   // Bản che bớt tính sẵn lúc ghi (VD "********1234") — dùng để HIỂN THỊ, tránh
   // phải giải mã cccdEncrypted mỗi lần đọc thông thường (giảm bề mặt lộ dữ liệu).
   cccdMasked        String?  @map("cccd_masked")
+  // eKYC (mở rộng 22/10) — ảnh CCCD mặt trước/sau + ảnh chân dung xác thực
+  // khuôn mặt. CHỈ lưu Cloudinary `public_id` (KHÔNG BAO GIỜ lưu URL) — ảnh
+  // upload với `type: 'private'`, Cloudinary từ chối truy cập trực tiếp nếu
+  // không có URL ký kèm `expires_at` ngắn hạn (đã verify THẬT: Cloudinary trả
+  // 401 "Stale request" sau khi hết hạn — xem UploadService.generateKycImageViewUrl
+  // và CLAUDE.md). Nhạy cảm HƠN cả số CCCD (giấy tờ tuỳ thân + sinh trắc học),
+  // nên mức bảo vệ CAO HƠN cccdEncrypted (vốn chỉ cần mã hoá tại chỗ, ảnh thì
+  // không thể "mã hoá" theo kiểu field text nên bảo vệ ở tầng lưu trữ/truy cập).
+  kycCccdFrontPublicId String? @map("kyc_cccd_front_public_id")
+  kycCccdBackPublicId  String? @map("kyc_cccd_back_public_id")
+  kycSelfiePublicId    String? @map("kyc_selfie_public_id")
   emailVerifiedAt   DateTime? @map("email_verified_at")
   createdAt         DateTime @default(now()) @map("created_at")
 

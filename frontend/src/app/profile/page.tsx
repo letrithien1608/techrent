@@ -8,11 +8,13 @@ import { ChevronRight } from "lucide-react";
 import { SiteBackground } from "@/components/home/site-background";
 import { AccountOverviewSection } from "@/components/profile/account-overview-section";
 import { ChangePasswordSection } from "@/components/profile/change-password-section";
+import { KycVerificationSection } from "@/components/profile/kyc-verification-section";
 import { ProfileInfoSection } from "@/components/profile/profile-info-section";
 import { useAuthStore } from "@/stores/auth-store";
 
 const NAV_ITEMS = [
   { href: "#personal-info", label: "Thông tin cá nhân" },
+  { href: "#kyc-verification", label: "Xác thực danh tính" },
   { href: "#security", label: "Bảo mật" },
   { href: "#overview", label: "Tổng quan tài khoản" },
 ];
@@ -74,6 +76,7 @@ export default function ProfilePage() {
 
           <div className="min-w-0 space-y-8">
             <ProfileInfoSection />
+            <KycVerificationSection />
             <ChangePasswordSection />
             <AccountOverviewSection />
           </div>

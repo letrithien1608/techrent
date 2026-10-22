@@ -96,18 +96,25 @@ export function DeviceBookingPanel({ device, avgRating, reviewCount }: Props) {
         error,
         "Không thể tạo đơn đặt thuê, vui lòng thử lại",
       );
-      // Lớp chặn KYC ở backend (BookingsService.create) — chưa có CCCD trong
-      // hồ sơ thì không đặt thuê được. Thay vì chỉ báo lỗi, kèm luôn nút đi
-      // thẳng tới /profile để bổ sung ngay, tránh khách phải tự tìm đường.
-      const needsCccd =
-        axios.isAxiosError(error) &&
-        error.response?.status === 400 &&
-        message.includes("CCCD");
-      if (needsCccd) {
+      // Lớp chặn KYC ở backend (BookingsService.create) — 2 thông báo KHÁC
+      // NHAU tuỳ thiếu phần nào, dẫn tới 2 section KHÁC NHAU ở /profile (chỉ
+      // dùng "CCCD" làm từ khoá chung sẽ bắt NHẦM cả 2 trường hợp vào cùng 1
+      // section, vì thông báo thiếu-ảnh-KYC cũng CÓ chứa chữ "CCCD").
+      const isBadRequest =
+        axios.isAxiosError(error) && error.response?.status === 400;
+      const needsKycImages = isBadRequest && message.includes("xác thực danh tính");
+      const needsCccdNumber = isBadRequest && !needsKycImages && message.includes("bổ sung số CCCD");
+
+      if (needsKycImages || needsCccdNumber) {
         toast.error(message, {
           action: {
             label: "Bổ sung ngay",
-            onClick: () => router.push("/profile#personal-info"),
+            onClick: () =>
+              router.push(
+                needsKycImages
+                  ? "/profile#kyc-verification"
+                  : "/profile#personal-info",
+              ),
           },
         });
         return;

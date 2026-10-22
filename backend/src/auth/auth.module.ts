@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ThrottlerGuard, ThrottlerModule, minutes } from '@nestjs/throttler';
 import { MailModule } from '../mail/mail.module';
+import { UploadModule } from '../upload/upload.module';
 import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
@@ -17,6 +18,9 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     PassportModule,
     JwtModule.register({}),
     MailModule,
+    // UploadModule là module "lá" (xem mục 2 CLAUDE.md) — AuthService cần nó
+    // để upload 3 ảnh KYC (PATCH /auth/kyc-verification), không rủi ro cycle.
+    UploadModule,
     // Cấu hình ThrottlerModule ngay tại đây (module khai báo ThrottlerGuard) để
     // ThrottlerGuard resolve được token ThrottlerStorage/Options — nếu cấu hình
     // ở module khác (VD AppModule) thì AuthModule sẽ không thấy được provider đó.

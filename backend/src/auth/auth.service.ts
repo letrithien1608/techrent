@@ -20,6 +20,7 @@ import { translateUniqueConstraintError } from '../common/prisma-error.util';
 import { Role, User } from '../generated/prisma/client';
 import { MailService } from '../mail/mail.service';
 import { RedisService } from '../redis/redis.service';
+import { UploadService } from '../upload/upload.service';
 import { SafeUser, UsersService } from '../users/users.service';
 import { AddCccdDto } from './dto/add-cccd.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -60,6 +61,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly redisService: RedisService,
     private readonly mailService: MailService,
+    private readonly uploadService: UploadService,
   ) {}
 
   /**
@@ -149,6 +151,73 @@ export class AuthService {
     } catch (error) {
       throw translateUniqueConstraintError(error, { cccd: DUPLICATE_CCCD_MESSAGE });
     }
+  }
+
+  /**
+   * Khách hàng tự nộp eKYC (ảnh CCCD mặt trước/sau + ảnh chân dung xác thực)
+   * — nhạy cảm HƠN cả số CCCD (giấy tờ tuỳ thân + sinh trắc học khuôn mặt),
+   * nên upload với `type: 'private'` (xem `UploadService.uploadKycImage()` —
+   * đã verify THẬT Cloudinary từ chối truy cập trực tiếp ảnh này). CHỈ cho
+   * nộp 1 LẦN — giống đúng tinh thần `addCccd()` (dữ liệu định danh, không
+   * cho tự đổi tuỳ tiện); muốn nộp lại (ảnh mờ/sai) phải qua admin RESET
+   * (`PATCH /users/:id/kyc-reset`), KHÔNG tự làm được.
+   */
+  async submitKycVerification(
+    userId: string,
+    files: {
+      cccdFront?: Array<{ buffer: Buffer; mimetype: string }>;
+      cccdBack?: Array<{ buffer: Buffer; mimetype: string }>;
+      selfie?: Array<{ buffer: Buffer; mimetype: string }>;
+    },
+  ): Promise<SafeUser> {
+    const user = await this.usersService.findByIdOrThrow(userId);
+    if (
+      user.kycCccdFrontPublicId ||
+      user.kycCccdBackPublicId ||
+      user.kycSelfiePublicId
+    ) {
+      throw new BadRequestException(
+        'Bạn đã nộp hồ sơ xác thực danh tính, không thể tự nộp lại — liên hệ hỗ trợ nếu cần làm lại',
+      );
+    }
+
+    const cccdFront = files.cccdFront?.[0];
+    const cccdBack = files.cccdBack?.[0];
+    const selfie = files.selfie?.[0];
+    if (!cccdFront || !cccdBack || !selfie) {
+      throw new BadRequestException(
+        'Vui lòng tải lên đủ cả 3 ảnh: CCCD mặt trước, CCCD mặt sau, và ảnh chân dung xác thực',
+      );
+    }
+
+    const [frontPublicId, backPublicId, selfiePublicId] = await Promise.all([
+      this.uploadService.uploadKycImage(
+        cccdFront.buffer,
+        cccdFront.mimetype,
+        `kyc-${userId}-cccd-front`,
+      ),
+      this.uploadService.uploadKycImage(
+        cccdBack.buffer,
+        cccdBack.mimetype,
+        `kyc-${userId}-cccd-back`,
+      ),
+      this.uploadService.uploadKycImage(
+        selfie.buffer,
+        selfie.mimetype,
+        `kyc-${userId}-selfie`,
+      ),
+    ]);
+
+    const updated = await this.usersService.update(
+      userId,
+      {
+        kycCccdFrontPublicId: frontPublicId,
+        kycCccdBackPublicId: backPublicId,
+        kycSelfiePublicId: selfiePublicId,
+      },
+      userId,
+    );
+    return this.usersService.sanitize(updated);
   }
 
   async login(dto: LoginDto): Promise<AuthTokens & { user: SafeUser }> {

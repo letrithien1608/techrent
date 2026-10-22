@@ -2,11 +2,20 @@ import { ConfigService } from '@nestjs/config';
 
 const configMock = jest.fn();
 const uploadMock = jest.fn();
+const destroyMock = jest.fn();
+const privateDownloadUrlMock = jest.fn();
 
 jest.mock('cloudinary', () => ({
   v2: {
     config: (...args: unknown[]) => configMock(...args),
-    uploader: { upload: (...args: unknown[]) => uploadMock(...args) },
+    uploader: {
+      upload: (...args: unknown[]) => uploadMock(...args),
+      destroy: (...args: unknown[]) => destroyMock(...args),
+    },
+    utils: {
+      private_download_url: (...args: unknown[]) =>
+        privateDownloadUrlMock(...args),
+    },
   },
 }));
 
@@ -24,6 +33,8 @@ describe('UploadService', () => {
   beforeEach(() => {
     configMock.mockClear();
     uploadMock.mockReset();
+    destroyMock.mockReset();
+    privateDownloadUrlMock.mockReset();
     const configService = {
       get: jest.fn((key: string) => configValues[key]),
     } as unknown as ConfigService;
@@ -131,6 +142,91 @@ describe('UploadService', () => {
         folder: 'techrent/devices',
         public_id: 'macbook-pro-14',
         overwrite: true,
+      });
+    });
+  });
+
+  describe('uploadKycImage', () => {
+    it('upload với type:private, format cố định jpg, folder riêng techrent/kyc, trả về public_id (KHÔNG trả URL)', async () => {
+      uploadMock.mockImplementation((_source, _options, callback) => {
+        callback(null, {
+          public_id: 'techrent/kyc/kyc-user-1-cccd-front',
+          secure_url: 'https://res.cloudinary.com/d7mchans/image/private/xxx.jpg',
+        });
+      });
+
+      const buffer = Buffer.from('fake-id-card-bytes');
+      const publicId = await service.uploadKycImage(
+        buffer,
+        'image/jpeg',
+        'kyc-user-1-cccd-front',
+      );
+
+      expect(publicId).toBe('techrent/kyc/kyc-user-1-cccd-front');
+      const [source, options] = uploadMock.mock.calls[0];
+      expect(source).toBe(`data:image/jpeg;base64,${buffer.toString('base64')}`);
+      expect(options).toEqual({
+        folder: 'techrent/kyc',
+        type: 'private',
+        format: 'jpg',
+        public_id: 'kyc-user-1-cccd-front',
+        overwrite: true,
+      });
+    });
+
+    it('reject Promise nếu Cloudinary trả lỗi', async () => {
+      uploadMock.mockImplementation((_source, _options, callback) => {
+        callback(new Error('Cloudinary quota exceeded'), null);
+      });
+
+      await expect(
+        service.uploadKycImage(Buffer.from('x'), 'image/png', 'kyc-user-1-selfie'),
+      ).rejects.toThrow('Cloudinary quota exceeded');
+    });
+  });
+
+  describe('generateKycImageViewUrl', () => {
+    it('gọi private_download_url với type:private, format jpg, expires_at = hiện tại + ttlSeconds (mặc định 300s)', () => {
+      privateDownloadUrlMock.mockReturnValue(
+        'https://api.cloudinary.com/v1_1/d7mchans/image/download?...',
+      );
+      const nowSeconds = Math.floor(Date.now() / 1000);
+
+      const url = service.generateKycImageViewUrl('kyc-user-1-cccd-front');
+
+      expect(url).toBe(
+        'https://api.cloudinary.com/v1_1/d7mchans/image/download?...',
+      );
+      const [publicId, format, options] = privateDownloadUrlMock.mock.calls[0];
+      expect(publicId).toBe('kyc-user-1-cccd-front');
+      expect(format).toBe('jpg');
+      expect(options.resource_type).toBe('image');
+      expect(options.type).toBe('private');
+      // Cho phép sai số nhỏ do thời gian chạy test — không so khớp tuyệt đối.
+      expect(options.expires_at).toBeGreaterThanOrEqual(nowSeconds + 299);
+      expect(options.expires_at).toBeLessThanOrEqual(nowSeconds + 301);
+    });
+
+    it('dùng đúng ttlSeconds tuỳ chỉnh khi truyền vào', () => {
+      privateDownloadUrlMock.mockReturnValue('https://example.com/url');
+      const nowSeconds = Math.floor(Date.now() / 1000);
+
+      service.generateKycImageViewUrl('kyc-user-1-selfie', 60);
+
+      const [, , options] = privateDownloadUrlMock.mock.calls[0];
+      expect(options.expires_at).toBeGreaterThanOrEqual(nowSeconds + 59);
+      expect(options.expires_at).toBeLessThanOrEqual(nowSeconds + 61);
+    });
+  });
+
+  describe('deleteKycImage', () => {
+    it('gọi cloudinary.uploader.destroy với type:private', async () => {
+      destroyMock.mockResolvedValue({ result: 'ok' });
+
+      await service.deleteKycImage('kyc-user-1-cccd-back');
+
+      expect(destroyMock).toHaveBeenCalledWith('kyc-user-1-cccd-back', {
+        type: 'private',
       });
     });
   });

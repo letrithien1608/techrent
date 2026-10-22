@@ -99,6 +99,20 @@ export class BookingsService {
         'Vui lòng bổ sung số CCCD trong trang Tài khoản của tôi trước khi đặt thuê',
       );
     }
+    // Mở rộng KYC (22/10, mục 7 Roadmap): số CCCD thôi không còn đủ — bắt
+    // buộc ĐỦ CẢ 3 ảnh eKYC (CCCD mặt trước/sau + ảnh chân dung xác thực)
+    // mới cho đặt thuê, giống eKYC ngân hàng. Cùng pattern chặn với cccdHash
+    // ở trên — áp dụng cho CẢ user mới lẫn cũ (user cũ có cccdHash nhưng
+    // CHƯA nộp 3 ảnh này vẫn bị chặn tới khi họ tự nộp qua /profile).
+    if (
+      !user.kycCccdFrontPublicId ||
+      !user.kycCccdBackPublicId ||
+      !user.kycSelfiePublicId
+    ) {
+      throw new BadRequestException(
+        'Vui lòng hoàn tất xác thực danh tính (ảnh CCCD mặt trước/sau + ảnh chân dung) trong trang Tài khoản của tôi trước khi đặt thuê',
+      );
+    }
 
     const startTime = new Date(dto.startTime);
     const endTime = new Date(dto.endTime);

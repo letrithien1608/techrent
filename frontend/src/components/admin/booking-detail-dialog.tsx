@@ -10,6 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { KycImagesViewer } from "@/components/admin/kyc-images-viewer";
 import type { Booking } from "@/lib/bookings-api";
 import { BOOKING_STATUS_LABEL } from "@/lib/booking-format";
 import { formatDateTimeVi, formatVnd } from "@/lib/device-format";
@@ -50,6 +51,13 @@ export function BookingDetailDialog({ booking }: { booking: Booking }) {
           <Row label="Tiền cọc">{formatVnd(booking.depositAmount)}</Row>
           <Row label="Tạo lúc">{formatDateTimeVi(booking.createdAt)}</Row>
         </dl>
+
+        {/* Xem hồ sơ eKYC của khách thuê — xác minh tranh chấp thật (ảnh mờ,
+         * sai thông tin...). Không có tên khách sẵn trong `Booking` nên dùng
+         * nhãn chung "Khách thuê" — KHÔNG gọi thêm API chỉ để lấy tên. */}
+        <div className="flex justify-end border-t border-border/60 pt-3">
+          <KycImagesViewer userId={booking.userId} userName="Khách thuê" />
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -8,8 +9,11 @@ import {
   Post,
   Query,
   Req,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { Throttle, minutes } from '@nestjs/throttler';
 import { Request } from 'express';
 import { AuthService } from './auth.service';
@@ -23,6 +27,16 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { RequestUser } from './interfaces/jwt-payload.interface';
+
+// Ảnh CCCD/chân dung thường nặng hơn hẳn ảnh thiết bị (chụp đủ sáng, rõ nét
+// theo hướng dẫn eKYC) — 8MB/ảnh (so với 5MB cho ảnh thiết bị ở DevicesController).
+const MAX_KYC_IMAGE_SIZE_BYTES = 8 * 1024 * 1024;
+type KycFile = { buffer: Buffer; mimetype: string; size: number };
+type KycFilesPayload = {
+  cccdFront?: KycFile[];
+  cccdBack?: KycFile[];
+  selfie?: KycFile[];
+};
 
 @ApiTags('auth')
 @Controller('auth')
@@ -86,6 +100,47 @@ export class AuthController {
   @Patch('cccd')
   addCccd(@CurrentUser() user: RequestUser, @Body() dto: AddCccdDto) {
     return this.authService.addCccd(user.userId, dto);
+  }
+
+  /**
+   * Khách hàng tự nộp eKYC: ảnh CCCD mặt trước + mặt sau + ảnh chân dung xác
+   * thực, nộp 1 LẦN DUY NHẤT (chặn ở `AuthService.submitKycVerification()`
+   * nếu đã nộp đủ — chỉ admin reset được). 3 field KHÁC TÊN (`cccdFront`/
+   * `cccdBack`/`selfie`) nên dùng `FileFieldsInterceptor` (KHÁC
+   * `FilesInterceptor` đang dùng cho ảnh thiết bị — đó là 1 field tên
+   * `images` chứa NHIỀU file, còn đây là 3 field tên KHÁC NHAU, mỗi field
+   * đúng 1 file).
+   */
+  @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
+  @Patch('kyc-verification')
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'cccdFront', maxCount: 1 },
+      { name: 'cccdBack', maxCount: 1 },
+      { name: 'selfie', maxCount: 1 },
+    ]),
+  )
+  submitKycVerification(
+    @CurrentUser() user: RequestUser,
+    @UploadedFiles() files: KycFilesPayload,
+  ) {
+    for (const [field, label] of [
+      ['cccdFront', 'CCCD mặt trước'],
+      ['cccdBack', 'CCCD mặt sau'],
+      ['selfie', 'chân dung xác thực'],
+    ] as const) {
+      const file = files[field]?.[0];
+      if (!file) {
+        throw new BadRequestException(`Vui lòng tải lên ảnh ${label}`);
+      }
+      if (file.size > MAX_KYC_IMAGE_SIZE_BYTES) {
+        throw new BadRequestException(
+          `Ảnh ${label} vượt quá 8MB, vui lòng chọn ảnh nhỏ hơn`,
+        );
+      }
+    }
+    return this.authService.submitKycVerification(user.userId, files);
   }
 
   @Public()

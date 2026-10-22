@@ -2,6 +2,7 @@ import { ConflictException, ForbiddenException, NotFoundException } from '@nestj
 import * as bcrypt from 'bcrypt';
 import { RequestUser } from '../auth/interfaces/jwt-payload.interface';
 import { Prisma, Role } from '../generated/prisma/client';
+import { UploadService } from '../upload/upload.service';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
@@ -35,9 +36,14 @@ describe('UsersController', () => {
     remove: jest.Mock;
     findAll: jest.Mock;
     revealCccd: jest.Mock;
+    resetKycImages: jest.Mock;
     sanitize: jest.Mock;
   };
   let configService: { get: jest.Mock };
+  let uploadService: {
+    generateKycImageViewUrl: jest.Mock;
+    deleteKycImage: jest.Mock;
+  };
 
   beforeEach(() => {
     usersService = {
@@ -48,6 +54,7 @@ describe('UsersController', () => {
       remove: jest.fn(),
       findAll: jest.fn(),
       revealCccd: jest.fn(),
+      resetKycImages: jest.fn(),
       sanitize: jest.fn((user) => ({
         id: user.id,
         email: user.email,
@@ -57,9 +64,16 @@ describe('UsersController', () => {
     configService = {
       get: jest.fn().mockReturnValue('a'.repeat(64)),
     };
+    uploadService = {
+      generateKycImageViewUrl: jest.fn(
+        (publicId: string) => `https://signed.example.com/${publicId}`,
+      ),
+      deleteKycImage: jest.fn().mockResolvedValue(undefined),
+    };
     controller = new UsersController(
       usersService as unknown as UsersService,
       configService as any,
+      uploadService as unknown as UploadService,
     );
   });
 
@@ -294,6 +308,95 @@ describe('UsersController', () => {
       await expect(controller.revealCccd('u1')).rejects.toBeInstanceOf(
         NotFoundException,
       );
+    });
+  });
+
+  describe('getKycImages', () => {
+    it('submitted=true và trả đủ 3 URL có hạn khi user đã có đủ 3 ảnh KYC', async () => {
+      usersService.findByIdOrThrow.mockResolvedValue({
+        id: 'u1',
+        kycCccdFrontPublicId: 'kyc/u1-cccd-front',
+        kycCccdBackPublicId: 'kyc/u1-cccd-back',
+        kycSelfiePublicId: 'kyc/u1-selfie',
+      });
+
+      const result = await controller.getKycImages('u1');
+
+      expect(result.submitted).toBe(true);
+      expect(result.expiresInSeconds).toBe(300);
+      expect(result.images).toHaveLength(3);
+      expect(result.images.map((i) => i.slot)).toEqual([
+        'cccd-front',
+        'cccd-back',
+        'selfie',
+      ]);
+      expect(uploadService.generateKycImageViewUrl).toHaveBeenCalledWith(
+        'kyc/u1-cccd-front',
+        300,
+      );
+    });
+
+    it('submitted=false và CHỈ trả URL cho các slot đã có khi user chưa nộp đủ', async () => {
+      usersService.findByIdOrThrow.mockResolvedValue({
+        id: 'u1',
+        kycCccdFrontPublicId: 'kyc/u1-cccd-front',
+        kycCccdBackPublicId: null,
+        kycSelfiePublicId: null,
+      });
+
+      const result = await controller.getKycImages('u1');
+
+      expect(result.submitted).toBe(false);
+      expect(result.images).toHaveLength(1);
+      expect(result.images[0].slot).toBe('cccd-front');
+    });
+
+    it('trả images rỗng, submitted=false nếu user chưa nộp KYC gì cả', async () => {
+      usersService.findByIdOrThrow.mockResolvedValue({
+        id: 'u1',
+        kycCccdFrontPublicId: null,
+        kycCccdBackPublicId: null,
+        kycSelfiePublicId: null,
+      });
+
+      const result = await controller.getKycImages('u1');
+
+      expect(result.submitted).toBe(false);
+      expect(result.images).toEqual([]);
+      expect(uploadService.generateKycImageViewUrl).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('resetKycImages', () => {
+    it('xoá cả 3 ảnh trên Cloudinary (dùng public_id TRƯỚC khi reset) rồi mới xoá trong DB', async () => {
+      usersService.resetKycImages.mockResolvedValue({
+        id: 'u1',
+        kycCccdFrontPublicId: 'kyc/u1-cccd-front',
+        kycCccdBackPublicId: 'kyc/u1-cccd-back',
+        kycSelfiePublicId: 'kyc/u1-selfie',
+      });
+
+      await controller.resetKycImages('u1');
+
+      expect(usersService.resetKycImages).toHaveBeenCalledWith('u1');
+      expect(uploadService.deleteKycImage).toHaveBeenCalledWith('kyc/u1-cccd-front');
+      expect(uploadService.deleteKycImage).toHaveBeenCalledWith('kyc/u1-cccd-back');
+      expect(uploadService.deleteKycImage).toHaveBeenCalledWith('kyc/u1-selfie');
+      expect(uploadService.deleteKycImage).toHaveBeenCalledTimes(3);
+    });
+
+    it('KHÔNG gọi deleteKycImage cho slot nào chưa có ảnh (public_id null)', async () => {
+      usersService.resetKycImages.mockResolvedValue({
+        id: 'u1',
+        kycCccdFrontPublicId: 'kyc/u1-cccd-front',
+        kycCccdBackPublicId: null,
+        kycSelfiePublicId: null,
+      });
+
+      await controller.resetKycImages('u1');
+
+      expect(uploadService.deleteKycImage).toHaveBeenCalledTimes(1);
+      expect(uploadService.deleteKycImage).toHaveBeenCalledWith('kyc/u1-cccd-front');
     });
   });
 });

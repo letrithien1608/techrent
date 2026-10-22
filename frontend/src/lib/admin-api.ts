@@ -115,6 +115,8 @@ export interface AdminUser {
   email: string;
   role: UserRole;
   phone: string | null;
+  /** `true` khi user đã nộp ĐỦ 3 ảnh eKYC (CCCD mặt trước/sau + ảnh chân dung). */
+  kycVerified: boolean;
   emailVerifiedAt: string | null;
   createdAt: string;
 }
@@ -161,4 +163,31 @@ export async function updateUser(
 
 export async function deleteUser(id: string): Promise<void> {
   await api.delete(`/users/${id}`);
+}
+
+// ---- Xem/reset ảnh eKYC (admin-only, xác minh tranh chấp thật) ----
+
+export interface KycImage {
+  slot: "cccd-front" | "cccd-back" | "selfie";
+  label: string;
+  /** URL ký, hết hạn sau `expiresInSeconds` — KHÔNG lưu lại/dùng lại sau khi hết hạn. */
+  url: string;
+}
+
+export interface KycImagesResponse {
+  submitted: boolean;
+  expiresInSeconds: number;
+  images: KycImage[];
+}
+
+export async function fetchKycImages(userId: string): Promise<KycImagesResponse> {
+  const { data } = await api.get<KycImagesResponse>(
+    `/users/${userId}/kyc-images`,
+  );
+  return data;
+}
+
+/** Xoá cả 3 ảnh KYC (DB + Cloudinary) để user nộp lại — dùng khi ảnh mờ/sai. */
+export async function resetKycImages(userId: string): Promise<void> {
+  await api.patch(`/users/${userId}/kyc-reset`);
 }

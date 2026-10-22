@@ -20,6 +20,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { RequestUser } from '../auth/interfaces/jwt-payload.interface';
 import { translateUniqueConstraintError } from '../common/prisma-error.util';
 import { Role } from '../generated/prisma/client';
+import { UploadService } from '../upload/upload.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ListUsersQueryDto } from './dto/list-users-query.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -29,6 +30,17 @@ const PASSWORD_SALT_ROUNDS = 10;
 const DUPLICATE_PHONE_MESSAGE =
   'Số điện thoại này đã được đăng ký bởi một tài khoản khác';
 
+// Hạn xem ảnh KYC — ngắn hơn hẳn thời gian sống access token (15 phút) vì
+// đây là dữ liệu nhạy cảm hơn hẳn (giấy tờ tuỳ thân + sinh trắc học khuôn
+// mặt), đã verify THẬT Cloudinary enforce hạn này (xem UploadService).
+const KYC_IMAGE_VIEW_TTL_SECONDS = 300;
+
+const KYC_IMAGE_SLOTS = [
+  { slot: 'cccd-front', label: 'CCCD mặt trước', field: 'kycCccdFrontPublicId' as const },
+  { slot: 'cccd-back', label: 'CCCD mặt sau', field: 'kycCccdBackPublicId' as const },
+  { slot: 'selfie', label: 'Ảnh chân dung xác thực', field: 'kycSelfiePublicId' as const },
+];
+
 @ApiTags('users')
 @ApiBearerAuth()
 @Roles(Role.admin)
@@ -37,6 +49,7 @@ export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
+    private readonly uploadService: UploadService,
   ) {}
 
   @Post()
@@ -158,5 +171,54 @@ export class UsersController {
     );
     const cccd = await this.usersService.revealCccd(id, encryptionKey!);
     return { cccd };
+  }
+
+  /**
+   * Admin xem ảnh KYC (CCCD mặt trước/sau + ảnh chân dung) để xác minh tranh
+   * chấp thật — dùng trong trang chi tiết user HOẶC booking ở frontend. Kế
+   * thừa `@Roles(Role.admin)` cấp class (giống `revealCccd` ở trên) — không
+   * có method-level `@Roles` riêng, staff/customer không gọi được.
+   *
+   * Mỗi URL trả về chỉ sống `KYC_IMAGE_VIEW_TTL_SECONDS` (5 phút) — sinh MỚI
+   * mỗi lần gọi endpoint này, KHÔNG BAO GIỜ cache/lưu lại URL cũ. Đã verify
+   * THẬT (không chỉ tin tài liệu Cloudinary) rằng hạn này được chính Cloudinary
+   * kiểm tra ở tầng API (`401 Stale request` sau khi hết hạn) — xem UploadService.
+   */
+  @Get(':id/kyc-images')
+  async getKycImages(@Param('id') id: string) {
+    const user = await this.usersService.findByIdOrThrow(id);
+    const images = KYC_IMAGE_SLOTS.filter((s) => !!user[s.field]).map(
+      (s) => ({
+        slot: s.slot,
+        label: s.label,
+        url: this.uploadService.generateKycImageViewUrl(
+          user[s.field]!,
+          KYC_IMAGE_VIEW_TTL_SECONDS,
+        ),
+      }),
+    );
+    return {
+      submitted: images.length === KYC_IMAGE_SLOTS.length,
+      expiresInSeconds: KYC_IMAGE_VIEW_TTL_SECONDS,
+      images,
+    };
+  }
+
+  /**
+   * Admin RESET hồ sơ KYC (ảnh mờ/sai/hết hạn...) — xoá CẢ ảnh trên Cloudinary
+   * (không để lại ảnh nhạy cảm nằm mồ côi vô thời hạn trên storage) LẪN
+   * `public_id` trong DB, để khách tự nộp lại qua `PATCH /auth/kyc-verification`
+   * (endpoint đó chặn nộp lại nếu đã đủ cả 3 ảnh — CHỈ admin reset được).
+   */
+  @Patch(':id/kyc-reset')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async resetKycImages(@Param('id') id: string) {
+    const previous = await this.usersService.resetKycImages(id);
+    await Promise.all(
+      KYC_IMAGE_SLOTS.map((s) => {
+        const publicId = previous[s.field];
+        return publicId ? this.uploadService.deleteKycImage(publicId) : null;
+      }),
+    );
   }
 }

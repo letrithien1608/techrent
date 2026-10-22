@@ -15,6 +15,12 @@ export interface SafeUser {
   phone: string | null;
   /** Bản che bớt (VD "********1234"), `null` nếu chưa bổ sung CCCD — KHÔNG BAO GIỜ trả CCCD đầy đủ ở đây. */
   cccdMasked: string | null;
+  /**
+   * `true` khi ĐỦ CẢ 3 ảnh KYC (CCCD mặt trước/sau + ảnh chân dung). Chỉ trả
+   * boolean đã tính sẵn — KHÔNG BAO GIỜ trả `public_id`/URL ảnh ở response
+   * thông thường này (xem `UsersController.getKycImages`, admin-only).
+   */
+  kycVerified: boolean;
   emailVerifiedAt: Date | null;
   createdAt: Date;
 }
@@ -123,6 +129,9 @@ export class UsersService {
       cccdHash?: string;
       cccdEncrypted?: string;
       cccdMasked?: string;
+      kycCccdFrontPublicId?: string;
+      kycCccdBackPublicId?: string;
+      kycSelfiePublicId?: string;
     },
     currentUserId: string,
   ): Promise<User> {
@@ -174,6 +183,26 @@ export class UsersService {
     return decryptCccd(user.cccdEncrypted, encryptionKey);
   }
 
+  /**
+   * Admin RESET hồ sơ KYC (ảnh mờ/sai/hết hạn...) — xoá cả 3 `public_id` khỏi
+   * DB để khách nộp lại được (giống `addCccd()`, mặc định KHÔNG cho tự nộp
+   * lại nếu đã đủ cả 3 ảnh — CHỈ admin mới gỡ được). Trả về user TRƯỚC khi
+   * xoá (để caller — `UsersController` — biết public_id cũ mà xoá luôn trên
+   * Cloudinary, tránh ảnh nhạy cảm nằm lại vô thời hạn trên storage).
+   */
+  async resetKycImages(id: string): Promise<User> {
+    const existing = await this.findByIdOrThrow(id);
+    await this.prisma.user.update({
+      where: { id },
+      data: {
+        kycCccdFrontPublicId: null,
+        kycCccdBackPublicId: null,
+        kycSelfiePublicId: null,
+      },
+    });
+    return existing;
+  }
+
   sanitize(user: User): SafeUser {
     return {
       id: user.id,
@@ -182,6 +211,11 @@ export class UsersService {
       role: user.role,
       phone: user.phone,
       cccdMasked: user.cccdMasked,
+      kycVerified: !!(
+        user.kycCccdFrontPublicId &&
+        user.kycCccdBackPublicId &&
+        user.kycSelfiePublicId
+      ),
       emailVerifiedAt: user.emailVerifiedAt,
       createdAt: user.createdAt,
     };
