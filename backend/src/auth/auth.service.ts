@@ -23,17 +23,22 @@ import { RedisService } from '../redis/redis.service';
 import { SafeUser, UsersService } from '../users/users.service';
 import { AddCccdDto } from './dto/add-cccd.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import {
   EmailVerificationPayload,
   JwtPayload,
+  PasswordResetPayload,
 } from './interfaces/jwt-payload.interface';
 
 const PASSWORD_SALT_ROUNDS = 10;
 const INVALID_CREDENTIALS_MESSAGE = 'Email hoặc mật khẩu không đúng';
 const INVALID_VERIFICATION_TOKEN_MESSAGE =
   'Token xác thực email không hợp lệ hoặc đã hết hạn';
+const INVALID_RESET_TOKEN_MESSAGE =
+  'Token đặt lại mật khẩu không hợp lệ hoặc đã hết hạn';
 const INVALID_CURRENT_PASSWORD_MESSAGE = 'Mật khẩu hiện tại không đúng';
 const DUPLICATE_CCCD_MESSAGE =
   'Số CCCD này đã được đăng ký bởi một tài khoản khác';
@@ -197,7 +202,7 @@ export class AuthService {
   }
 
   async logout(userId: string, accessToken: string): Promise<void> {
-    await this.blacklistAccessToken(accessToken);
+    await this.blacklistTokenUntilExpiry(accessToken);
     await this.usersService.updateRefreshTokenHash(userId, null);
   }
 
@@ -233,8 +238,79 @@ export class AuthService {
     );
     await this.usersService.update(user.id, { passwordHash }, user.id);
 
-    await this.blacklistAccessToken(accessToken);
+    await this.blacklistTokenUntilExpiry(accessToken);
     await this.usersService.updateRefreshTokenHash(user.id, null);
+  }
+
+  /**
+   * Luôn trả về `void` (thành công) dù email có tồn tại trong hệ thống hay
+   * không — tránh lộ email nào đã đăng ký qua phản hồi khác nhau, CÙNG
+   * nguyên tắc đã áp dụng cho message lỗi trùng CCCD (xem `register()`).
+   * Controller rate-limit endpoint này qua `@Throttle` để chống spam gửi
+   * email (xem `AuthController`).
+   */
+  async forgotPassword(dto: ForgotPasswordDto): Promise<void> {
+    const user = await this.usersService.findByEmail(dto.email);
+    if (!user) {
+      this.logger.log(
+        `Yêu cầu đặt lại mật khẩu cho email không tồn tại: ${dto.email}`,
+      );
+      return;
+    }
+
+    await this.sendPasswordResetEmail(user);
+  }
+
+  /**
+   * Verify token (secret + purpose RIÊNG, giống `verifyEmail()`), hash mật
+   * khẩu mới, rồi THU HỒI refresh token hiện có của user (cùng tinh thần
+   * `changePassword()` — coi phiên đăng nhập cũ không còn đáng tin sau khi
+   * đổi mật khẩu). Khác `changePassword()`: người gọi ở đây CHƯA đăng nhập
+   * (không có access token hiện tại trong tay để blacklist riêng) — access
+   * token cũ (nếu còn) tự hết hạn sau tối đa 15 phút như bình thường.
+   *
+   * ⚠️ Reset token PHẢI chỉ dùng được ĐÚNG 1 LẦN — khác `verifyEmail()` (token
+   * đó idempotent, gọi lại vô hại vì chỉ set 1 cờ `emailVerifiedAt`). Nếu
+   * không chặn, 1 reset token bị lộ (VD lưu trong lịch sử trình duyệt/log
+   * proxy/email bị forward) cho phép đổi mật khẩu người dùng NHIỀU LẦN tuỳ ý
+   * trong suốt 15 phút còn hạn — kể cả SAU KHI chính chủ đã dùng token đó đổi
+   * mật khẩu của mình. Dùng lại CHÍNH blacklist Redis đang dùng cho access
+   * token (`blacklistTokenUntilExpiry`, đổi tên từ `blacklistAccessToken` vì
+   * giờ dùng cho cả 2 loại token) — không cần hạ tầng mới.
+   */
+  async resetPassword(dto: ResetPasswordDto): Promise<void> {
+    if (await this.redisService.isTokenBlacklisted(dto.token)) {
+      throw new BadRequestException(INVALID_RESET_TOKEN_MESSAGE);
+    }
+
+    let payload: PasswordResetPayload;
+    try {
+      payload = await this.jwtService.verifyAsync<PasswordResetPayload>(
+        dto.token,
+        {
+          secret: this.configService.get<string>('PASSWORD_RESET_SECRET'),
+        },
+      );
+    } catch {
+      throw new BadRequestException(INVALID_RESET_TOKEN_MESSAGE);
+    }
+
+    if (payload.purpose !== 'password-reset') {
+      throw new BadRequestException(INVALID_RESET_TOKEN_MESSAGE);
+    }
+
+    const user = await this.usersService.findById(payload.sub);
+    if (!user) {
+      throw new BadRequestException(INVALID_RESET_TOKEN_MESSAGE);
+    }
+
+    const passwordHash = await bcrypt.hash(
+      dto.newPassword,
+      PASSWORD_SALT_ROUNDS,
+    );
+    await this.usersService.update(user.id, { passwordHash }, user.id);
+    await this.usersService.updateRefreshTokenHash(user.id, null);
+    await this.blacklistTokenUntilExpiry(dto.token);
   }
 
   async verifyEmail(token: string): Promise<void> {
@@ -293,14 +369,52 @@ export class AuthService {
     );
   }
 
-  private async blacklistAccessToken(accessToken: string): Promise<void> {
-    const decoded = this.jwtService.decode(accessToken) as {
+  /**
+   * Link reset trỏ vào trang FRONTEND (`/reset-password?token=...`, người
+   * dùng nhập mật khẩu mới ở đó rồi frontend gọi `POST /auth/reset-password`)
+   * — KHÁC link xác thực email (trỏ thẳng vào backend). Dùng lại `CORS_ORIGIN`
+   * làm base URL frontend (đã là "origin của frontend" theo đúng nghĩa dùng
+   * cho CORS từ đầu dự án), không thêm biến môi trường mới trùng ý nghĩa.
+   */
+  private async sendPasswordResetEmail(user: User): Promise<void> {
+    const token = await this.jwtService.signAsync(
+      {
+        sub: user.id,
+        purpose: 'password-reset',
+      } satisfies PasswordResetPayload,
+      {
+        secret: this.configService.get<string>('PASSWORD_RESET_SECRET'),
+        expiresIn: this.configService.get<string>(
+          'PASSWORD_RESET_EXPIRES_IN',
+        ) as StringValue,
+      },
+    );
+
+    const frontendBaseUrl =
+      this.configService.get<string>('CORS_ORIGIN') ?? 'http://localhost:3000';
+    const resetUrl = `${frontendBaseUrl}/reset-password?token=${token}`;
+
+    this.logger.log(`Gửi email đặt lại mật khẩu cho ${user.email}`);
+    await this.mailService.sendPasswordResetEmail(
+      user.email,
+      user.name,
+      resetUrl,
+    );
+  }
+
+  /**
+   * Dùng cho CẢ access token (logout/changePassword) VÀ reset-password token
+   * (resetPassword) — cả 2 đều cần "vô hiệu hoá sớm, tới đúng lúc hết hạn tự
+   * nhiên" nên dùng chung 1 cơ chế, chỉ khác secret/nội dung payload.
+   */
+  private async blacklistTokenUntilExpiry(token: string): Promise<void> {
+    const decoded = this.jwtService.decode(token) as {
       exp?: number;
     } | null;
     const ttlSeconds = decoded?.exp
       ? decoded.exp - Math.floor(Date.now() / 1000)
       : 0;
-    await this.redisService.blacklistToken(accessToken, ttlSeconds);
+    await this.redisService.blacklistToken(token, ttlSeconds);
   }
 
   private async issueTokens(user: User): Promise<AuthTokens> {

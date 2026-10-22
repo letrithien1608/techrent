@@ -12,6 +12,8 @@ describe('AuthController', () => {
     changePassword: jest.Mock;
     addCccd: jest.Mock;
     verifyEmail: jest.Mock;
+    forgotPassword: jest.Mock;
+    resetPassword: jest.Mock;
   };
 
   beforeEach(() => {
@@ -23,6 +25,8 @@ describe('AuthController', () => {
       changePassword: jest.fn(),
       addCccd: jest.fn(),
       verifyEmail: jest.fn(),
+      forgotPassword: jest.fn(),
+      resetPassword: jest.fn(),
     };
     controller = new AuthController(authService as unknown as AuthService);
   });
@@ -119,5 +123,28 @@ describe('AuthController', () => {
 
     expect(authService.verifyEmail).toHaveBeenCalledWith('some-token');
     expect(result).toEqual({ message: 'Xác thực email thành công' });
+  });
+
+  it('forgotPassword() gọi AuthService.forgotPassword với đúng DTO, luôn trả về message chung', async () => {
+    const dto = { email: 'a@example.com' };
+    authService.forgotPassword.mockResolvedValue(undefined);
+
+    const result = await controller.forgotPassword(dto);
+
+    expect(authService.forgotPassword).toHaveBeenCalledWith(dto);
+    expect(result).toEqual({
+      message:
+        'Nếu email tồn tại trong hệ thống, chúng tôi đã gửi link đặt lại mật khẩu',
+    });
+  });
+
+  it('resetPassword() gọi AuthService.resetPassword với đúng DTO', async () => {
+    const dto = { token: 'reset-token', newPassword: 'NewStr0ngPass1' };
+    authService.resetPassword.mockResolvedValue(undefined);
+
+    const result = await controller.resetPassword(dto);
+
+    expect(authService.resetPassword).toHaveBeenCalledWith(dto);
+    expect(result).toEqual({ message: 'Đặt lại mật khẩu thành công' });
   });
 });

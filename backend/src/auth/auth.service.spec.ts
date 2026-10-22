@@ -32,7 +32,10 @@ describe('AuthService', () => {
     blacklistToken: jest.Mock;
     isTokenBlacklisted: jest.Mock;
   };
-  let mailService: { sendVerificationEmail: jest.Mock };
+  let mailService: {
+    sendVerificationEmail: jest.Mock;
+    sendPasswordResetEmail: jest.Mock;
+  };
 
   const baseUser: User = {
     id: 'user-1',
@@ -60,6 +63,9 @@ describe('AuthService', () => {
     JWT_REFRESH_EXPIRES_IN: '7d',
     EMAIL_VERIFICATION_SECRET: 'email-verification-secret',
     EMAIL_VERIFICATION_EXPIRES_IN: '24h',
+    PASSWORD_RESET_SECRET: 'password-reset-secret',
+    PASSWORD_RESET_EXPIRES_IN: '15m',
+    CORS_ORIGIN: 'http://localhost:3000',
     PORT: '3001',
     CCCD_ENCRYPTION_KEY: cccdEncryptionKey,
   };
@@ -103,6 +109,7 @@ describe('AuthService', () => {
     redisService = { blacklistToken: jest.fn(), isTokenBlacklisted: jest.fn() };
     mailService = {
       sendVerificationEmail: jest.fn().mockResolvedValue(undefined),
+      sendPasswordResetEmail: jest.fn().mockResolvedValue(undefined),
     };
 
     service = new AuthService(
@@ -120,6 +127,8 @@ describe('AuthService', () => {
         return Promise.resolve('access-token');
       if (opts.secret === configValues.JWT_REFRESH_SECRET)
         return Promise.resolve('refresh-token');
+      if (opts.secret === configValues.PASSWORD_RESET_SECRET)
+        return Promise.resolve('password-reset-token');
       return Promise.resolve('email-verification-token');
     });
   });
@@ -485,6 +494,115 @@ describe('AuthService', () => {
       expect(usersService.updateRefreshTokenHash).toHaveBeenCalledWith(
         baseUser.id,
         null,
+      );
+    });
+  });
+
+  describe('forgotPassword', () => {
+    it('không gửi email và không throw nếu email không tồn tại (tránh lộ email nào đã đăng ký)', async () => {
+      usersService.findByEmail.mockResolvedValue(null);
+
+      await expect(
+        service.forgotPassword({ email: 'ghost@example.com' }),
+      ).resolves.toBeUndefined();
+
+      expect(mailService.sendPasswordResetEmail).not.toHaveBeenCalled();
+    });
+
+    it('gửi email chứa link reset kèm token khi email tồn tại', async () => {
+      usersService.findByEmail.mockResolvedValue(baseUser);
+
+      await service.forgotPassword({ email: baseUser.email });
+
+      expect(mailService.sendPasswordResetEmail).toHaveBeenCalledWith(
+        baseUser.email,
+        baseUser.name,
+        expect.stringContaining('password-reset-token'),
+      );
+    });
+  });
+
+  describe('resetPassword', () => {
+    beforeEach(() => {
+      redisService.isTokenBlacklisted.mockResolvedValue(false);
+    });
+
+    it('ném BadRequestException nếu token đã bị blacklist (đã dùng 1 lần trước đó — chống dùng lại)', async () => {
+      redisService.isTokenBlacklisted.mockResolvedValue(true);
+
+      await expect(
+        service.resetPassword({
+          token: 'already-used-token',
+          newPassword: 'NewStr0ngPass1',
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(jwtService.verifyAsync).not.toHaveBeenCalled();
+      expect(usersService.update).not.toHaveBeenCalled();
+    });
+
+    it('ném BadRequestException nếu token sai chữ ký / hết hạn', async () => {
+      jwtService.verifyAsync.mockRejectedValue(new Error('invalid signature'));
+
+      await expect(
+        service.resetPassword({ token: 'bad-token', newPassword: 'NewStr0ngPass1' }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(usersService.update).not.toHaveBeenCalled();
+    });
+
+    it('ném BadRequestException nếu token không có purpose "password-reset" (chống dùng nhầm access/email-verification token)', async () => {
+      jwtService.verifyAsync.mockResolvedValue({
+        sub: baseUser.id,
+        purpose: 'email-verification',
+      });
+
+      await expect(
+        service.resetPassword({ token: 'some-token', newPassword: 'NewStr0ngPass1' }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(usersService.update).not.toHaveBeenCalled();
+    });
+
+    it('ném BadRequestException nếu user trong token không còn tồn tại', async () => {
+      jwtService.verifyAsync.mockResolvedValue({
+        sub: 'ghost-id',
+        purpose: 'password-reset',
+      });
+      usersService.findById.mockResolvedValue(null);
+
+      await expect(
+        service.resetPassword({ token: 'some-token', newPassword: 'NewStr0ngPass1' }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('đổi mật khẩu thành công, thu hồi refresh token hiện có (bắt đăng nhập lại), và blacklist LUÔN chính token đã dùng (chống dùng lại trong thời gian còn hạn)', async () => {
+      jwtService.verifyAsync.mockResolvedValue({
+        sub: baseUser.id,
+        purpose: 'password-reset',
+      });
+      jwtService.decode.mockReturnValue({
+        exp: Math.floor(Date.now() / 1000) + 600,
+      });
+      usersService.findById.mockResolvedValue(baseUser);
+      usersService.update.mockResolvedValue({ ...baseUser });
+
+      await service.resetPassword({
+        token: 'valid-reset-token',
+        newPassword: 'NewStr0ngPass1',
+      });
+
+      expect(usersService.update).toHaveBeenCalledWith(
+        baseUser.id,
+        { passwordHash: expect.any(String) },
+        baseUser.id,
+      );
+      const savedHash = usersService.update.mock.calls[0][1].passwordHash;
+      expect(await bcrypt.compare('NewStr0ngPass1', savedHash)).toBe(true);
+      expect(usersService.updateRefreshTokenHash).toHaveBeenCalledWith(
+        baseUser.id,
+        null,
+      );
+      expect(redisService.blacklistToken).toHaveBeenCalledWith(
+        'valid-reset-token',
+        expect.any(Number),
       );
     });
   });

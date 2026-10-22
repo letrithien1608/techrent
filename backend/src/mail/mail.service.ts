@@ -53,4 +53,28 @@ export class MailService {
       );
     }
   }
+
+  async sendPasswordResetEmail(
+    to: string,
+    name: string,
+    resetUrl: string,
+  ): Promise<void> {
+    try {
+      await this.transporter.sendMail({
+        from: this.from,
+        to,
+        subject: 'Đặt lại mật khẩu TechRent',
+        html: `
+          <p>Chào ${name},</p>
+          <p>Chúng tôi vừa nhận được yêu cầu đặt lại mật khẩu cho tài khoản TechRent của bạn. Bấm vào liên kết dưới đây để đặt mật khẩu mới (liên kết có hiệu lực trong 15 phút):</p>
+          <p><a href="${resetUrl}">${resetUrl}</a></p>
+          <p>Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này — mật khẩu hiện tại của bạn vẫn an toàn.</p>
+        `,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Gửi email đặt lại mật khẩu tới ${to} thất bại: ${(error as Error).message}`,
+      );
+    }
+  }
 }

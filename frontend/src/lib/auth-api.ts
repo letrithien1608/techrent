@@ -85,3 +85,31 @@ export async function addCccdRequest(cccd: string): Promise<AuthUser> {
   const { data } = await api.patch<AuthUser>("/auth/cccd", { cccd });
   return data;
 }
+
+// ---- Quên mật khẩu / đặt lại mật khẩu (public, không cần đăng nhập) ----
+
+/**
+ * Backend LUÔN trả về cùng message dù email có tồn tại hay không (tránh lộ
+ * email nào đã đăng ký — xem `AuthService.forgotPassword()`) — frontend chỉ
+ * cần hiện message đó, KHÔNG tự suy luận thêm trạng thái "email tồn tại".
+ */
+export async function forgotPasswordRequest(
+  email: string,
+): Promise<{ message: string }> {
+  const { data } = await api.post<{ message: string }>(
+    "/auth/forgot-password",
+    { email },
+  );
+  return data;
+}
+
+export async function resetPasswordRequest(payload: {
+  token: string;
+  newPassword: string;
+}): Promise<{ message: string }> {
+  const { data } = await api.post<{ message: string }>(
+    "/auth/reset-password",
+    payload,
+  );
+  return data;
+}

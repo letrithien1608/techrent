@@ -123,6 +123,12 @@ function LoginForm() {
                   {errors.password.message}
                 </p>
               )}
+              <Link
+                href="/forgot-password"
+                className="self-end text-xs font-medium text-primary hover:underline"
+              >
+                Quên mật khẩu?
+              </Link>
             </div>
 
             <Button

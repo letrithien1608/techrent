@@ -23,3 +23,14 @@ export interface EmailVerificationPayload {
   sub: string;
   purpose: 'email-verification';
 }
+
+/**
+ * Payload riêng cho token đặt lại mật khẩu — ký bằng PASSWORD_RESET_SECRET
+ * (khác secret access/refresh/email-verification), hết hạn sau 15 phút
+ * (ngắn hơn hẳn các loại token khác vì rủi ro cao hơn nếu lộ — ai cầm được
+ * token này đổi được mật khẩu người khác).
+ */
+export interface PasswordResetPayload {
+  sub: string;
+  purpose: 'password-reset';
+}
