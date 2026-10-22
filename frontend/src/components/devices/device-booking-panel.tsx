@@ -183,6 +183,14 @@ export function DeviceBookingPanel({ device, avgRating, reviewCount }: Props) {
           )}
         </motion.div>
 
+        <motion.p variants={fadeUp} className="mt-2 text-xs text-muted-foreground">
+          Giá trị tài sản:{" "}
+          <span className="font-medium text-foreground">
+            {formatVnd(device.originalPrice)}
+          </span>{" "}
+          — tiền cọc khi thuê bằng 50% giá trị này
+        </motion.p>
+
         <motion.div
           variants={fadeUp}
           className="mt-6 rounded-2xl border border-border/60 bg-card/60 p-5 shadow-sm shadow-black/5"

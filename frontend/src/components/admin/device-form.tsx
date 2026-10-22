@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -38,7 +39,14 @@ interface SpecRow {
   value: string;
 }
 
-type FieldErrors = Partial<Record<"name" | "categoryId" | "pricePerHour" | "pricePerDay", string>>;
+type FieldErrors = Partial<
+  Record<"name" | "categoryId" | "pricePerHour" | "pricePerDay" | "originalPrice" | "images", string>
+>;
+
+// Đồng bộ ĐÚNG số tối thiểu backend validate (`@ArrayMinSize(5)` ở
+// CreateDeviceDto/UpdateDeviceDto) — chặn ở FE để UX rõ ràng hơn, nhưng
+// backend mới là lớp chặn thật (xem CLAUDE.md nguyên tắc bảo mật/nghiệp vụ).
+const MIN_DEVICE_IMAGES = 5;
 
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
@@ -72,6 +80,10 @@ export function DeviceForm({ device }: { device?: Device }) {
   const [categoryId, setCategoryId] = useState(device?.categoryId ?? "");
   const [pricePerHour, setPricePerHour] = useState(device?.pricePerHour ?? "");
   const [pricePerDay, setPricePerDay] = useState(device?.pricePerDay ?? "");
+  const [originalPrice, setOriginalPrice] = useState(device?.originalPrice ?? "");
+  const [detailedDescription, setDetailedDescription] = useState(
+    device?.detailedDescription ?? "",
+  );
   const [status, setStatus] = useState(device?.status ?? "available");
   const [specRows, setSpecRows] = useState<SpecRow[]>(() => specsToRows(device?.specs ?? null));
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -170,6 +182,15 @@ export function DeviceForm({ device }: { device?: Device }) {
     if (!pricePerDay || Number.isNaN(dayNumber) || dayNumber < 0) {
       errors.pricePerDay = "Giá theo ngày không hợp lệ";
     }
+    const originalNumber = Number(originalPrice);
+    if (!originalPrice || Number.isNaN(originalNumber) || originalNumber < 0) {
+      errors.originalPrice = "Giá gốc không hợp lệ";
+    }
+    // Chỉ chặn ở bước TẠO MỚI — ảnh của thiết bị đang SỬA không quản lý qua
+    // form này (xem DeviceImageManager ở trang edit), nên không có gì để đếm.
+    if (!isEdit && pendingFiles.length < MIN_DEVICE_IMAGES) {
+      errors.images = `Vui lòng chọn tối thiểu ${MIN_DEVICE_IMAGES} ảnh (đang chọn ${pendingFiles.length})`;
+    }
     return errors;
   }
 
@@ -186,6 +207,8 @@ export function DeviceForm({ device }: { device?: Device }) {
       categoryId,
       pricePerHour: Number(pricePerHour),
       pricePerDay: Number(pricePerDay),
+      originalPrice: Number(originalPrice),
+      detailedDescription: detailedDescription.trim() || undefined,
       specs: rowsToSpecs(specRows),
       ...(isEdit ? { status: status as Device["status"] } : {}),
     });
@@ -268,6 +291,34 @@ export function DeviceForm({ device }: { device?: Device }) {
           />
           <FieldError message={fieldErrors.pricePerDay} />
         </div>
+
+        <div className="flex flex-col gap-1.5 sm:col-span-2">
+          <Label htmlFor="device-original-price">Giá gốc / giá trị tài sản (VNĐ)</Label>
+          <Input
+            id="device-original-price"
+            type="number"
+            min={0}
+            value={originalPrice}
+            onChange={(e) => setOriginalPrice(e.target.value)}
+            placeholder="VD: 45000000"
+            aria-invalid={!!fieldErrors.originalPrice}
+          />
+          <p className="text-xs text-muted-foreground">
+            Dùng để tính tiền cọc (50% giá gốc) và hiển thị minh bạch cho khách — KHÁC giá thuê ở trên.
+          </p>
+          <FieldError message={fieldErrors.originalPrice} />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="device-detailed-description">Mô tả chi tiết (không bắt buộc)</Label>
+        <Textarea
+          id="device-detailed-description"
+          value={detailedDescription}
+          onChange={(e) => setDetailedDescription(e.target.value)}
+          placeholder="Tình trạng máy, phụ kiện đi kèm, năm sản xuất, bảo hành còn lại..."
+          rows={4}
+        />
       </div>
 
       <div className="rounded-xl border border-border/60 p-4">
@@ -319,39 +370,45 @@ export function DeviceForm({ device }: { device?: Device }) {
 
       {!isEdit && (
         <div>
-          <Label>Ảnh thiết bị (không bắt buộc)</Label>
+          <Label>Ảnh thiết bị (tối thiểu {MIN_DEVICE_IMAGES} ảnh)</Label>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Có thể thêm ngay bây giờ, hoặc bỏ qua và thêm sau ở trang sửa.
+            Mỗi thiết bị cần tối thiểu {MIN_DEVICE_IMAGES} ảnh để khách xem rõ trước khi thuê.
           </p>
           <ImageDropzone
             onFilesSelected={handleFilesSelected}
             hint="Tối đa 8 ảnh, mỗi ảnh không quá 5MB"
             className="mt-2"
           />
+          <FieldError message={fieldErrors.images} />
           {previews.length > 0 && (
-            <div className="mt-3 grid grid-cols-4 gap-3 sm:grid-cols-6">
-              {previews.map((src, index) => (
-                <div
-                  key={src}
-                  className="group relative aspect-square overflow-hidden rounded-xl border border-border/60 bg-muted"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element -- blob: URL xem trước cục bộ, next/image chỉ nhận domain đã whitelist */}
-                  <img
-                    src={src}
-                    alt={`Xem trước ${index + 1}`}
-                    className="size-full object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removePendingFile(index)}
-                    aria-label="Bỏ ảnh này"
-                    className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
+            <>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Đã chọn {previews.length}/{MIN_DEVICE_IMAGES} ảnh tối thiểu
+              </p>
+              <div className="mt-1 grid grid-cols-4 gap-3 sm:grid-cols-6">
+                {previews.map((src, index) => (
+                  <div
+                    key={src}
+                    className="group relative aspect-square overflow-hidden rounded-xl border border-border/60 bg-muted"
                   >
-                    <X className="size-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
+                    {/* eslint-disable-next-line @next/next/no-img-element -- blob: URL xem trước cục bộ, next/image chỉ nhận domain đã whitelist */}
+                    <img
+                      src={src}
+                      alt={`Xem trước ${index + 1}`}
+                      className="size-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removePendingFile(index)}
+                      aria-label="Bỏ ảnh này"
+                      className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       )}

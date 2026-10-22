@@ -11,6 +11,10 @@ export interface Device {
   status: DeviceStatus;
   pricePerHour: string;
   pricePerDay: string;
+  /** Giá gốc/giá trị tài sản (VNĐ) — dùng tính tiền cọc 50%, hiển thị minh bạch cho khách. */
+  originalPrice: string;
+  /** Mô tả dài: tình trạng máy, phụ kiện kèm theo, năm sản xuất, bảo hành — null nếu thiết bị cũ chưa có. */
+  detailedDescription: string | null;
   images: string[];
   createdAt: string;
   category: { id: string; name: string };

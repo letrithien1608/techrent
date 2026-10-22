@@ -8,8 +8,10 @@ export interface DevicePayload {
   name: string;
   categoryId: string;
   specs?: Record<string, unknown>;
+  detailedDescription?: string;
   pricePerHour: number;
   pricePerDay: number;
+  originalPrice: number;
   status?: DeviceStatus;
   images?: string[];
 }

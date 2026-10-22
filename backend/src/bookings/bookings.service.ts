@@ -29,7 +29,11 @@ import { BOOKING_TTL_JOB, BOOKING_TTL_QUEUE } from './bookings.constants';
 
 export { BOOKING_TTL_QUEUE, BOOKING_TTL_JOB };
 
-const DEPOSIT_RATIO = 0.3;
+// Tiền cọc = % GIÁ GỐC thiết bị (originalPrice — giá trị tài sản), KHÔNG PHẢI
+// % tổng tiền thuê (totalPrice) như cách tính cũ — đổi theo yêu cầu: cọc phải
+// phản ánh đúng giá trị tài sản đang giao cho khách giữ, không phụ thuộc thời
+// lượng thuê (thuê 1 giờ hay 1 tuần thì rủi ro mất/hỏng thiết bị là như nhau).
+const DEPOSIT_RATIO = 0.5;
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
 
@@ -215,7 +219,7 @@ export class BookingsService {
           startTime,
           endTime,
         );
-        const depositAmount = totalPrice * DEPOSIT_RATIO;
+        const depositAmount = Number(device.originalPrice) * DEPOSIT_RATIO;
 
         return tx.booking.create({
           data: {

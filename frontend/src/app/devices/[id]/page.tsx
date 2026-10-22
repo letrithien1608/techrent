@@ -61,7 +61,7 @@ export default async function DeviceDetailPage({ params }: PageParams) {
         </div>
 
         <div className="mt-16 space-y-16">
-          <DeviceSpecs specs={device.specs} />
+          <DeviceSpecs specs={device.specs} detailedDescription={device.detailedDescription} />
           <DeviceReviews
             reviews={reviews}
             avgRating={avgRating}

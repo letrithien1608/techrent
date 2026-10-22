@@ -107,8 +107,10 @@ export class DevicesService {
     name: string;
     categoryId: string;
     specs?: Record<string, unknown>;
+    detailedDescription?: string;
     pricePerHour: number;
     pricePerDay: number;
+    originalPrice: number;
     images?: string[];
   }): Promise<Device> {
     await this.assertCategoryExists(data.categoryId);
@@ -118,8 +120,10 @@ export class DevicesService {
         name: data.name,
         categoryId: data.categoryId,
         specs: data.specs as Prisma.InputJsonValue | undefined,
+        detailedDescription: data.detailedDescription,
         pricePerHour: data.pricePerHour,
         pricePerDay: data.pricePerDay,
+        originalPrice: data.originalPrice,
         images: data.images ?? [],
       },
     });
@@ -133,8 +137,10 @@ export class DevicesService {
       name?: string;
       categoryId?: string;
       specs?: Record<string, unknown>;
+      detailedDescription?: string;
       pricePerHour?: number;
       pricePerDay?: number;
+      originalPrice?: number;
       status?: DeviceStatus;
       images?: string[];
     },

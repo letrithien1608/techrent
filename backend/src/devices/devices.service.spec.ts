@@ -33,6 +33,8 @@ describe('DevicesService', () => {
     status: DeviceStatus.available,
     pricePerHour: '50000' as unknown as Device['pricePerHour'],
     pricePerDay: '350000' as unknown as Device['pricePerDay'],
+    originalPrice: '45000000' as unknown as Device['originalPrice'],
+    detailedDescription: null,
     images: [],
     avgRating: null,
     reviewCount: 0,
@@ -176,6 +178,7 @@ describe('DevicesService', () => {
           categoryId: 'ghost-cat',
           pricePerHour: 1000,
           pricePerDay: 5000,
+          originalPrice: 500000,
         }),
       ).rejects.toBeInstanceOf(NotFoundException);
       expect(prisma.device.create).not.toHaveBeenCalled();
@@ -193,6 +196,7 @@ describe('DevicesService', () => {
         categoryId: 'cat-1',
         pricePerHour: 50000,
         pricePerDay: 350000,
+        originalPrice: 45000000,
       });
 
       expect(prisma.device.create).toHaveBeenCalledWith({
@@ -351,6 +355,7 @@ describe('DevicesService', () => {
         categoryId: 'cat-1',
         pricePerHour: 1000,
         pricePerDay: 5000,
+        originalPrice: 500000,
       });
 
       expect(devicesCacheService.invalidateAll).toHaveBeenCalledTimes(1);

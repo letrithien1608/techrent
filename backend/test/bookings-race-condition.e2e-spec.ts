@@ -61,6 +61,7 @@ describe('Bookings race condition (e2e)', () => {
         categoryId,
         pricePerHour: 10000,
         pricePerDay: 80000,
+        originalPrice: 20000000,
       },
     });
     deviceId = device.id;

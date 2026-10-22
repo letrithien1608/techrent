@@ -111,7 +111,16 @@ model Device {
   status        DeviceStatus @default(available)
   pricePerHour  Decimal      @map("price_per_hour") @db.Decimal(10, 2)
   pricePerDay   Decimal      @map("price_per_day") @db.Decimal(10, 2)
+  // Giá gốc/giá trị tài sản của thiết bị — TÁCH BIỆT với giá thuê theo giờ/
+  // ngày ở trên. Dùng để tính tiền cọc (50% originalPrice, xem BookingsService)
+  // và hiển thị minh bạch cho khách ở trang chi tiết thiết bị.
+  originalPrice Decimal      @map("original_price") @db.Decimal(12, 2)
   images        String[]
+  // Mô tả dài: tình trạng máy, phụ kiện đi kèm, bảo hành còn lại, năm sản
+  // xuất... — KHÁC `specs` (JSON tự do, field-value ngắn) ở trên, đây là văn
+  // bản tự do dài hơn, hiển thị riêng ở trang chi tiết. Nullable vì không bắt
+  // buộc (thiết bị cũ trước khi có field này không có).
+  detailedDescription String?   @map("detailed_description") @db.Text
   createdAt     DateTime     @default(now()) @map("created_at")
   // Denormalize từ Review (qua Booking.deviceId) — tính lại mỗi khi có review
   // mới trong ReviewsService.create() (cùng transaction với tạo review), KHÔNG

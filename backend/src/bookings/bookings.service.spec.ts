@@ -57,6 +57,7 @@ describe('BookingsService', () => {
     status: DeviceStatus.available,
     pricePerHour: '10000',
     pricePerDay: '80000',
+    originalPrice: '20000000',
   };
 
   const baseBooking = {
@@ -250,7 +251,8 @@ describe('BookingsService', () => {
 
       const createArg = tx.booking.create.mock.calls[0][0];
       expect(createArg.data.totalPrice).toBe(10000 * 5); // pricePerHour * 5
-      expect(createArg.data.depositAmount).toBeCloseTo(10000 * 5 * 0.3);
+      // Cọc = 50% originalPrice, KHÔNG phụ thuộc totalPrice/thời lượng thuê.
+      expect(createArg.data.depositAmount).toBeCloseTo(20000000 * 0.5);
     });
 
     it('tính totalPrice theo NGÀY nếu thời lượng > 24h', async () => {

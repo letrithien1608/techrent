@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  ArrayMinSize,
   IsArray,
   IsEnum,
   IsNumber,
@@ -30,6 +31,14 @@ export class UpdateDeviceDto {
   @IsObject()
   specs?: Record<string, unknown>;
 
+  @ApiPropertyOptional({
+    description:
+      'Mô tả chi tiết: tình trạng máy, phụ kiện đi kèm, bảo hành còn lại, năm sản xuất...',
+  })
+  @IsOptional()
+  @IsString()
+  detailedDescription?: string;
+
   @ApiProperty({ required: false })
   @IsOptional()
   @Type(() => Number)
@@ -44,6 +53,15 @@ export class UpdateDeviceDto {
   @Min(0)
   pricePerDay?: number;
 
+  @ApiPropertyOptional({
+    description: 'Giá gốc/giá trị tài sản (VNĐ) — dùng tính tiền cọc 50%',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  originalPrice?: number;
+
   @ApiProperty({ enum: DeviceStatus, required: false })
   @IsOptional()
   @IsEnum(DeviceStatus)
@@ -52,10 +70,12 @@ export class UpdateDeviceDto {
   @ApiProperty({
     type: [String],
     required: false,
-    description: 'Thay toàn bộ danh sách ảnh hiện có',
+    description:
+      'Thay toàn bộ danh sách ảnh hiện có. Nếu có, tối thiểu 5 ảnh.',
   })
   @IsOptional()
   @IsArray()
+  @ArrayMinSize(5, { message: 'Thiết bị cần tối thiểu 5 ảnh' })
   @IsString({ each: true })
   images?: string[];
 }
