@@ -34,17 +34,28 @@ export class UploadService {
   /**
    * Upload từ một URL từ xa (Cloudinary tự tải ảnh về rồi host lại) — dùng cho
    * script seed data, không cần có file buffer thật trên máy.
+   *
+   * `publicId` (tuỳ chọn) đặt cố định tên file trên Cloudinary (kèm
+   * `overwrite: true`) — dùng khi script seed cần CHẠY LẠI ĐƯỢC NHIỀU LẦN mà
+   * không tạo ra ảnh trùng lặp mỗi lần chạy (không truyền thì Cloudinary tự
+   * sinh tên ngẫu nhiên như trước, đúng hành vi cũ cho mọi lời gọi khác).
    */
-  async uploadFromUrl(remoteUrl: string): Promise<string> {
-    const result = await this.uploadDataUri(remoteUrl);
+  async uploadFromUrl(remoteUrl: string, publicId?: string): Promise<string> {
+    const result = await this.uploadDataUri(remoteUrl, publicId);
     return result.secure_url;
   }
 
-  private uploadDataUri(source: string): Promise<UploadApiResponse> {
+  private uploadDataUri(
+    source: string,
+    publicId?: string,
+  ): Promise<UploadApiResponse> {
     return new Promise((resolve, reject) => {
       cloudinary.uploader.upload(
         source,
-        { folder: UPLOAD_FOLDER },
+        {
+          folder: UPLOAD_FOLDER,
+          ...(publicId ? { public_id: publicId, overwrite: true } : {}),
+        },
         (error, result) => {
           if (error || !result) {
             reject(error ?? new Error('Upload Cloudinary thất bại'));

@@ -112,5 +112,26 @@ describe('UploadService', () => {
         'https://picsum.photos/seed/x/800/600',
       );
     });
+
+    it('truyền kèm public_id + overwrite:true khi gọi với publicId — dùng cho script seed chạy lại nhiều lần không tạo ảnh trùng', async () => {
+      uploadMock.mockImplementation((_source, _options, callback) => {
+        callback(null, {
+          secure_url:
+            'https://res.cloudinary.com/d7mchans/image/upload/techrent/devices/macbook-pro-14.jpg',
+        });
+      });
+
+      await service.uploadFromUrl(
+        'https://images.unsplash.com/photo-xyz',
+        'macbook-pro-14',
+      );
+
+      const [, options] = uploadMock.mock.calls[0];
+      expect(options).toEqual({
+        folder: 'techrent/devices',
+        public_id: 'macbook-pro-14',
+        overwrite: true,
+      });
+    });
   });
 });
