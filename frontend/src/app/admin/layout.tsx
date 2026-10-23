@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminTopbar } from "@/components/admin/admin-topbar";
@@ -15,6 +15,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (hasHydrated && !isAllowed) {
+      // Chỉ chặn người KHÔNG đủ quyền; admin rời /admin bình thường (không ép ở lại).
       router.replace("/");
     }
   }, [hasHydrated, isAllowed, router]);
@@ -31,7 +32,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </div>
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="print:hidden">
-            <AdminTopbar />
+            {/* AdminTopbar đọc ?bookingId= (useSearchParams) cho breadcrumb — bắt buộc bọc Suspense. */}
+            <Suspense fallback={<div className="h-14 border-b border-border/60" />}>
+              <AdminTopbar user={user} />
+            </Suspense>
           </div>
           <main className="flex-1 overflow-y-auto bg-background px-4 py-6 sm:px-6 print:p-0">
             {children}

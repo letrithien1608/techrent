@@ -45,11 +45,11 @@ export default function BookingContractPage() {
         <Button
           variant="ghost"
           size="sm"
-          render={<Link href="/admin/bookings" />}
+          render={<Link href={`/admin/bookings?bookingId=${params.id}`} />}
           nativeButton={false}
         >
           <ArrowLeft className="size-4" />
-          Quay lại danh sách đơn
+          Quay lại chi tiết đơn
         </Button>
 
         {contractQuery.data && (

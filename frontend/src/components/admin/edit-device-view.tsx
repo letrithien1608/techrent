@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AdminBackButton } from "@/components/admin/admin-back-button";
 import { DeviceForm } from "@/components/admin/device-form";
 import { DeviceImageManager } from "@/components/admin/device-image-manager";
 import { fetchDevice } from "@/lib/devices-api";
@@ -43,7 +44,10 @@ export function EditDeviceView({ deviceId }: { deviceId: string }) {
 
   return (
     <div className="space-y-8">
-      <DeviceForm device={device} />
+      <div>
+        <AdminBackButton href="/admin/devices" label="Quay lại danh sách thiết bị" />
+        <DeviceForm device={device} />
+      </div>
       <div className="max-w-2xl border-t border-border/60 pt-6">
         <h2 className="font-heading text-base font-semibold">Ảnh thiết bị</h2>
         <div className="mt-3">
