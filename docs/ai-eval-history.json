@@ -74,5 +74,37 @@
     "failedIds": [
       "O1 (0/3)"
     ]
+  },
+  {
+    "at": "2026-10-23T23:03:58.639Z",
+    "label": "Sau đợt 5 phần: thông số có cấu trúc, ảnh thật, đánh giá thật",
+    "passed": 69,
+    "total": 75,
+    "repeat": 3,
+    "failedIds": [
+      "D4 (0/3)",
+      "O1 (0/3)"
+    ]
+  },
+  {
+    "at": "2026-10-23T23:15:43.105Z",
+    "label": "Tách quy tắc điểm đánh giá thành mục riêng",
+    "passed": 69,
+    "total": 75,
+    "repeat": 3,
+    "failedIds": [
+      "D4 (0/3)",
+      "O1 (0/3)"
+    ]
+  },
+  {
+    "at": "2026-10-23T23:26:25.510Z",
+    "label": "Nhắc ghi giá/ngày + tiền cọc ngay cạnh câu hỏi khi có danh sách thiết bị",
+    "passed": 72,
+    "total": 75,
+    "repeat": 3,
+    "failedIds": [
+      "O1 (0/3)"
+    ]
   }
 ]
