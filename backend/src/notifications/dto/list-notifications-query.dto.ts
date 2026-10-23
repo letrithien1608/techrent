@@ -1,6 +1,14 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsInt, IsOptional, Max, Min } from 'class-validator';
+import {
+  ArrayMaxSize,
+  IsBoolean,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class ListNotificationsQueryDto {
   @ApiPropertyOptional({ default: 1 })
@@ -30,4 +38,21 @@ export class ListNotificationsQueryDto {
   @Transform(({ value }) => value === 'true')
   @IsBoolean()
   isRead?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Lọc theo loại, nhiều loại cách nhau bằng dấu phẩy (VD booking_pending,booking_paid)',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string'
+      ? value
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean)
+      : value,
+  )
+  @IsString({ each: true })
+  @ArrayMaxSize(20)
+  types?: string[];
 }

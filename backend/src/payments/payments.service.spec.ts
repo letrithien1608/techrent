@@ -17,7 +17,11 @@ import { signVnpayParams } from './vnpay.util';
 describe('PaymentsService', () => {
   let service: PaymentsService;
   let prisma: {
-    booking: { findUnique: jest.Mock; updateMany: jest.Mock; update: jest.Mock };
+    booking: {
+      findUnique: jest.Mock;
+      updateMany: jest.Mock;
+      update: jest.Mock;
+    };
     payment: {
       create: jest.Mock;
       findFirst: jest.Mock;
@@ -49,6 +53,8 @@ describe('PaymentsService', () => {
     createdAt: new Date(),
     startTime: new Date(Date.now() + 48 * 3600 * 1000),
     endTime: new Date(Date.now() + 50 * 3600 * 1000),
+    device: { id: 'device-1', name: 'MacBook Pro 14"', images: [] },
+    user: { name: 'Khách A' },
   };
   const baseDevice = {
     id: 'device-1',
@@ -220,8 +226,10 @@ describe('PaymentsService', () => {
       });
       expect(notificationsService.create).toHaveBeenCalledWith(
         userId,
-        'booking_confirmed',
-        expect.any(String),
+        expect.objectContaining({
+          type: 'booking_paid',
+          message: expect.stringContaining('Đã nhận cọc'),
+        }),
       );
     });
 

@@ -170,6 +170,13 @@ model Booking {
   // BookingsService.calculateLateFee()). Mặc định 0 — tuyệt đại đa số booking
   // trả đúng hạn không có phí này.
   lateFeeAmount  Decimal       @default(0) @map("late_fee_amount") @db.Decimal(10, 2)
+  // Ai đã xác nhận/huỷ đơn (staff/admin hoặc chính khách) — để thông báo hiển
+  // thị đúng "Đã xác nhận bởi ..." và trạng thái thật khi nhiều admin cùng thấy
+  // 1 đơn. NULL khi xác nhận tự động (IPN VNPay) hoặc huỷ tự động (TTL). Cố ý
+  // KHÔNG khai báo quan hệ Prisma tới User (chỉ cần tra tên để hiển thị).
+  confirmedById      String?   @map("confirmed_by_id")
+  cancelledById      String?   @map("cancelled_by_id")
+  cancellationReason String?   @map("cancellation_reason") @db.Text
   createdAt      DateTime      @default(now()) @map("created_at")
 
   user     User      @relation(fields: [userId], references: [id])
@@ -229,7 +236,14 @@ model Notification {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
   type      String
+  // Tiêu đề ngắn + đường dẫn tới trang liên quan + dữ liệu chi tiết (bookingId,
+  // tên/ảnh thiết bị, tên khách, thời gian thuê, số tiền...) để giao diện hiển
+  // thị phong phú và điều hướng đúng. Thông báo cũ: title backfill theo type
+  // trong migration, link NULL, metadata '{}' — vẫn hiển thị bình thường.
+  title     String?
   message   String
+  link      String?
+  metadata  Json     @default("{}")
   isRead    Boolean  @default(false) @map("is_read")
   createdAt DateTime @default(now()) @map("created_at")
 

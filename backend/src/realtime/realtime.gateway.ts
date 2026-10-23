@@ -21,7 +21,10 @@ export interface DeviceStatusChangedPayload {
 export interface NotificationCreatedPayload {
   id: string;
   type: string;
+  title: string | null;
   message: string;
+  link: string | null;
+  metadata: unknown;
   isRead: boolean;
   createdAt: Date;
 }
@@ -48,7 +51,9 @@ function userRoom(userId: string): string {
  * đáng tin cậy.
  */
 @WebSocketGateway()
-export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class RealtimeGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   private readonly logger = new Logger(RealtimeGateway.name);
 
   @WebSocketServer()

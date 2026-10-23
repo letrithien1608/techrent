@@ -20,6 +20,7 @@ describe('BookingsService', () => {
     $transaction: jest.Mock;
     booking: {
       findUnique: jest.Mock;
+      findUniqueOrThrow: jest.Mock;
       findFirst: jest.Mock;
       findMany: jest.Mock;
       count: jest.Mock;
@@ -91,6 +92,16 @@ describe('BookingsService', () => {
       }),
       booking: {
         findUnique: jest.fn(),
+        // Dữ liệu dựng nội dung thông báo (BookingsService.notificationContent()).
+        findUniqueOrThrow: jest.fn().mockResolvedValue({
+          id: 'booking-1',
+          startTime: new Date('2026-10-25T02:00:00Z'),
+          endTime: new Date('2026-10-27T11:00:00Z'),
+          totalPrice: 100000,
+          depositAmount: 10000000,
+          device: { id: 'device-1', name: 'MacBook Pro', images: [] },
+          user: { name: 'Khách A' },
+        }),
         findFirst: jest.fn(),
         findMany: jest.fn(),
         count: jest.fn(),
@@ -351,8 +362,7 @@ describe('BookingsService', () => {
 
       expect(notificationsService.createForRoles).toHaveBeenCalledWith(
         [Role.staff, Role.admin],
-        'booking_pending',
-        expect.any(String),
+        expect.objectContaining({ type: 'booking_pending' }),
       );
     });
 
@@ -467,8 +477,7 @@ describe('BookingsService', () => {
       expect(removeMock).toHaveBeenCalled();
       expect(notificationsService.create).toHaveBeenCalledWith(
         baseBooking.userId,
-        'booking_confirmed',
-        expect.any(String),
+        expect.objectContaining({ type: 'booking_confirmed' }),
       );
     });
 
@@ -552,8 +561,7 @@ describe('BookingsService', () => {
       expect(devicesCacheService.invalidateAll).toHaveBeenCalled();
       expect(notificationsService.create).toHaveBeenCalledWith(
         baseBooking.userId,
-        'booking_ongoing',
-        expect.any(String),
+        expect.objectContaining({ type: 'booking_ongoing' }),
       );
     });
 
@@ -786,8 +794,7 @@ describe('BookingsService', () => {
       expect(realtimeGateway.emitDeviceStatusChanged).not.toHaveBeenCalled();
       expect(notificationsService.create).toHaveBeenCalledWith(
         booking.userId,
-        'booking_cancelled',
-        expect.stringContaining('100%'),
+        expect.objectContaining({ type: 'booking_cancelled' }),
       );
     });
 
@@ -892,8 +899,7 @@ describe('BookingsService', () => {
       });
       expect(notificationsService.create).toHaveBeenCalledWith(
         baseBooking.userId,
-        'booking_cancelled',
-        expect.any(String),
+        expect.objectContaining({ type: 'booking_cancelled' }),
       );
     });
 
@@ -907,6 +913,78 @@ describe('BookingsService', () => {
 
       expect(prisma.booking.update).not.toHaveBeenCalled();
       expect(notificationsService.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('xác nhận / từ chối ngay trong thông báo (lưu người xử lý + lý do)', () => {
+    it('confirm() lưu id người xác nhận để thông báo hiện "Đã xác nhận bởi ..."', async () => {
+      prisma.booking.findUnique.mockResolvedValue(baseBooking);
+      prisma.booking.update.mockResolvedValue({
+        ...baseBooking,
+        status: BookingStatus.confirmed,
+      });
+
+      await service.confirm(baseBooking.id, admin.userId);
+
+      expect(prisma.booking.update).toHaveBeenCalledWith({
+        where: { id: baseBooking.id },
+        data: { status: BookingStatus.confirmed, confirmedById: admin.userId },
+      });
+    });
+
+    it('admin từ chối kèm lý do: lưu người huỷ + lý do, báo khách "bởi cửa hàng" kèm lý do', async () => {
+      const booking = {
+        ...baseBooking,
+        startTime: new Date(Date.now() + 48 * 3600 * 1000),
+      };
+      prisma.booking.findUnique.mockResolvedValue(booking);
+      prisma.booking.update.mockResolvedValue({
+        ...booking,
+        status: BookingStatus.cancelled,
+      });
+
+      await service.cancel(booking.id, admin, {
+        reason: '  Thiết bị đang bảo trì  ',
+        storeFault: true,
+      });
+
+      expect(prisma.booking.update).toHaveBeenCalledWith({
+        where: { id: booking.id },
+        data: {
+          status: BookingStatus.cancelled,
+          cancelledById: admin.userId,
+          cancellationReason: 'Thiết bị đang bảo trì',
+        },
+      });
+      expect(notificationsService.create).toHaveBeenCalledWith(
+        booking.userId,
+        expect.objectContaining({
+          type: 'booking_cancelled',
+          title: 'Đơn thuê bị từ chối/huỷ',
+          message: expect.stringContaining('Lý do: Thiết bị đang bảo trì.'),
+        }),
+      );
+    });
+
+    it('đơn chưa thu cọc (pending) bị từ chối: KHÔNG nhắc hoàn tiền trong thông báo', async () => {
+      prisma.booking.findUnique.mockResolvedValue(baseBooking);
+      prisma.booking.update.mockResolvedValue({
+        ...baseBooking,
+        status: BookingStatus.cancelled,
+      });
+
+      await service.cancel(baseBooking.id, admin, { storeFault: true });
+
+      const content = notificationsService.create.mock.calls[0][1];
+      expect(content.message).not.toContain('Hoàn');
+    });
+
+    it('khách không huỷ được đơn của người khác (phân quyền phía server)', async () => {
+      prisma.booking.findUnique.mockResolvedValue(baseBooking);
+      await expect(
+        service.cancel(baseBooking.id, otherCustomer, { reason: 'x' }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.booking.update).not.toHaveBeenCalled();
     });
   });
 });

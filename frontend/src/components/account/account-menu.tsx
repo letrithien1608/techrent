@@ -7,6 +7,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Menu } from "@base-ui/react/menu";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  Bell,
   ChevronDown,
   LayoutDashboard,
   LogOut,
@@ -151,6 +152,9 @@ export function AccountMenu({ user }: { user: AuthUser }) {
                   </MenuLink>
                   <MenuLink href="/bookings" icon={Ticket}>
                     Đơn thuê của tôi
+                  </MenuLink>
+                  <MenuLink href="/notifications" icon={Bell}>
+                    Thông báo
                   </MenuLink>
                   <MenuLink href="/profile#kyc-verification" icon={ShieldCheck}>
                     Xác thực danh tính

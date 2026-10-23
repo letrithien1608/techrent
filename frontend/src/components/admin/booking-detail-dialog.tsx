@@ -25,14 +25,30 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-export function BookingDetailDialog({ booking }: { booking: Booking }) {
+/**
+ * Mặc định tự quản lý trạng thái mở bằng nút con mắt. Truyền `open`/`onOpenChange`
+ * + `hideTrigger` để mở từ bên ngoài (VD bấm thông báo → /admin/bookings?bookingId=).
+ */
+export function BookingDetailDialog({
+  booking,
+  open,
+  onOpenChange,
+  hideTrigger = false,
+}: {
+  booking: Booking;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
+}) {
   const status = BOOKING_STATUS_LABEL[booking.status];
 
   return (
-    <Dialog>
-      <DialogTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Xem chi tiết" />}>
-        <Eye className="size-4" />
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {!hideTrigger && (
+        <DialogTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Xem chi tiết" />}>
+          <Eye className="size-4" />
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{booking.device?.name ?? "Chi tiết đơn thuê"}</DialogTitle>

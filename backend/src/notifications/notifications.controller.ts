@@ -1,4 +1,12 @@
-import { Controller, Get, Param, Patch, Query } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  Patch,
+  Query,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { RequestUser } from '../auth/interfaces/jwt-payload.interface';
@@ -23,6 +31,7 @@ export class NotificationsController {
       page: query.page ?? 1,
       limit: query.limit ?? 20,
       isRead: query.isRead,
+      types: query.types,
     });
   }
 
@@ -37,5 +46,11 @@ export class NotificationsController {
   @Patch(':id/read')
   markAsRead(@CurrentUser() user: RequestUser, @Param('id') id: string) {
     return this.notificationsService.markAsRead(id, user.userId);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  async remove(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+    await this.notificationsService.remove(id, user.userId);
   }
 }

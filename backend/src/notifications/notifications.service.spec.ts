@@ -14,7 +14,9 @@ describe('NotificationsService', () => {
       findUnique: jest.Mock;
       update: jest.Mock;
       updateMany: jest.Mock;
+      delete: jest.Mock;
     };
+    booking: { findMany: jest.Mock };
     user: { findMany: jest.Mock };
   };
   let realtimeGateway: { emitNotificationCreated: jest.Mock };
@@ -24,9 +26,19 @@ describe('NotificationsService', () => {
     id: 'notif-1',
     userId,
     type: 'booking_confirmed',
+    title: 'Đơn thuê đã được xác nhận',
     message: 'Đơn của bạn đã được xác nhận',
+    link: '/bookings/b-1',
+    metadata: {},
     isRead: false,
     createdAt: new Date(),
+  };
+  const content = {
+    type: 'booking_confirmed',
+    title: 'Đơn thuê đã được xác nhận',
+    message: 'Đơn #B1 – MacBook đã được xác nhận',
+    link: '/bookings/b-1',
+    metadata: { bookingId: 'b-1', deviceName: 'MacBook' },
   };
 
   beforeEach(() => {
@@ -39,8 +51,10 @@ describe('NotificationsService', () => {
         findUnique: jest.fn(),
         update: jest.fn(),
         updateMany: jest.fn(),
+        delete: jest.fn(),
       },
-      user: { findMany: jest.fn() },
+      booking: { findMany: jest.fn().mockResolvedValue([]) },
+      user: { findMany: jest.fn().mockResolvedValue([]) },
     };
     realtimeGateway = { emitNotificationCreated: jest.fn() };
     service = new NotificationsService(
@@ -53,23 +67,19 @@ describe('NotificationsService', () => {
     it('ghi 1 dòng notification VÀ emit realtime tới đúng userId', async () => {
       prisma.notification.create.mockResolvedValue(baseNotification);
 
-      const result = await service.create(
-        userId,
-        'booking_confirmed',
-        'Đơn của bạn đã được xác nhận',
-      );
+      const result = await service.create(userId, content);
 
       expect(result).toEqual(baseNotification);
       expect(prisma.notification.create).toHaveBeenCalledWith({
-        data: {
-          userId,
-          type: 'booking_confirmed',
-          message: 'Đơn của bạn đã được xác nhận',
-        },
+        data: { userId, ...content },
       });
       expect(realtimeGateway.emitNotificationCreated).toHaveBeenCalledWith(
         userId,
-        expect.objectContaining({ id: baseNotification.id }),
+        expect.objectContaining({
+          id: baseNotification.id,
+          title: baseNotification.title,
+          link: baseNotification.link,
+        }),
       );
     });
   });
@@ -82,11 +92,7 @@ describe('NotificationsService', () => {
       ]);
       prisma.notification.create.mockResolvedValue(baseNotification);
 
-      await service.createForRoles(
-        [Role.staff, Role.admin],
-        'maintenance_reported',
-        'Có sự cố mới',
-      );
+      await service.createForRoles([Role.staff, Role.admin], content);
 
       expect(prisma.user.findMany).toHaveBeenCalledWith({
         where: { role: { in: [Role.staff, Role.admin] } },
@@ -99,12 +105,9 @@ describe('NotificationsService', () => {
       prisma.user.findMany.mockResolvedValue([{ id: 'admin-2' }]);
       prisma.notification.create.mockResolvedValue(baseNotification);
 
-      await service.createForRoles(
-        [Role.staff, Role.admin],
-        'maintenance_reported',
-        'Có sự cố mới',
-        { excludeUserId: 'staff-1' },
-      );
+      await service.createForRoles([Role.staff, Role.admin], content, {
+        excludeUserId: 'staff-1',
+      });
 
       expect(prisma.user.findMany).toHaveBeenCalledWith({
         where: {
@@ -129,7 +132,9 @@ describe('NotificationsService', () => {
       expect(prisma.notification.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: { userId } }),
       );
-      expect(result.data).toEqual([baseNotification]);
+      expect(result.data).toEqual([
+        { ...baseNotification, bookingState: null },
+      ]);
       expect(result.meta.total).toBe(1);
     });
 
@@ -137,11 +142,91 @@ describe('NotificationsService', () => {
       prisma.notification.findMany.mockResolvedValue([]);
       prisma.notification.count.mockResolvedValue(0);
 
-      await service.findAllForUser(userId, { page: 1, limit: 1, isRead: false });
+      await service.findAllForUser(userId, {
+        page: 1,
+        limit: 1,
+        isRead: false,
+      });
 
       expect(prisma.notification.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: { userId, isRead: false } }),
       );
+    });
+  });
+
+  describe('findAllForUser — kèm trạng thái thật của đơn', () => {
+    it('lọc theo danh sách loại', async () => {
+      prisma.notification.findMany.mockResolvedValue([]);
+      prisma.notification.count.mockResolvedValue(0);
+
+      await service.findAllForUser(userId, {
+        page: 1,
+        limit: 20,
+        types: ['booking_pending', 'booking_paid'],
+      });
+
+      expect(prisma.notification.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId, type: { in: ['booking_pending', 'booking_paid'] } },
+        }),
+      );
+    });
+
+    it('gắn trạng thái đơn + tên người xử lý (đơn đã được admin khác xác nhận)', async () => {
+      prisma.notification.findMany.mockResolvedValue([
+        {
+          ...baseNotification,
+          type: 'booking_pending',
+          metadata: { bookingId: 'b-1' },
+        },
+        { ...baseNotification, id: 'notif-2', metadata: {} },
+      ]);
+      prisma.notification.count.mockResolvedValue(2);
+      prisma.booking.findMany.mockResolvedValue([
+        {
+          id: 'b-1',
+          status: 'confirmed',
+          confirmedById: 'admin-2',
+          cancelledById: null,
+          cancellationReason: null,
+        },
+      ]);
+      prisma.user.findMany.mockResolvedValue([
+        { id: 'admin-2', name: 'Lê Thị Hoa' },
+      ]);
+
+      const result = await service.findAllForUser(userId, {
+        page: 1,
+        limit: 20,
+      });
+
+      expect(result.data[0].bookingState).toEqual({
+        status: 'confirmed',
+        confirmedByName: 'Lê Thị Hoa',
+        cancelledByName: null,
+        cancellationReason: null,
+      });
+      expect(result.data[1].bookingState).toBeNull();
+      // Gộp truy vấn cho cả trang, không N+1.
+      expect(prisma.booking.findMany).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('remove', () => {
+    it('chỉ chủ thông báo mới xoá được', async () => {
+      prisma.notification.findUnique.mockResolvedValue(baseNotification);
+      await expect(
+        service.remove(baseNotification.id, 'other-user'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.notification.delete).not.toHaveBeenCalled();
+    });
+
+    it('xoá thông báo của chính mình', async () => {
+      prisma.notification.findUnique.mockResolvedValue(baseNotification);
+      await service.remove(baseNotification.id, userId);
+      expect(prisma.notification.delete).toHaveBeenCalledWith({
+        where: { id: baseNotification.id },
+      });
     });
   });
 

@@ -65,8 +65,8 @@ export class BookingsController {
 
   @Roles(Role.staff, Role.admin)
   @Patch(':id/confirm')
-  confirm(@Param('id') id: string) {
-    return this.bookingsService.confirm(id);
+  confirm(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    return this.bookingsService.confirm(id, user.userId);
   }
 
   @Roles(Role.staff, Role.admin)

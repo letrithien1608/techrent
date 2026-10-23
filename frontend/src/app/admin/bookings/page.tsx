@@ -1,7 +1,8 @@
 "use client";
 
 import { cn } from "cn";
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, ClipboardList, Loader2, PlayCircle, WifiOff } from "lucide-react";
 import { toast } from "sonner";
@@ -29,6 +30,7 @@ import { CancelBookingDialog } from "@/components/bookings/cancel-booking-dialog
 import {
   completeBooking,
   confirmBooking,
+  fetchBookingById,
   fetchBookings,
   startBooking,
   type BookingStatus,
@@ -49,7 +51,39 @@ const FILTERS: { value: BookingStatus | "all"; label: string }[] = [
 ];
 
 export default function AdminBookingsPage() {
+  // useSearchParams() bắt buộc nằm trong <Suspense> (quy tắc mục 2 CLAUDE.md).
+  return (
+    <Suspense fallback={null}>
+      <AdminBookingsContent />
+    </Suspense>
+  );
+}
+
+/** Mở sẵn chi tiết 1 đơn khi đi từ thông báo (`?bookingId=`), kể cả đơn không nằm ở trang hiện tại. */
+function FocusedBookingDialog({ bookingId }: { bookingId: string }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(true);
+  const query = useQuery({
+    queryKey: ["admin", "booking", bookingId],
+    queryFn: () => fetchBookingById(bookingId),
+  });
+  if (!query.data) return null;
+  return (
+    <BookingDetailDialog
+      booking={query.data}
+      hideTrigger
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) router.replace("/admin/bookings");
+      }}
+    />
+  );
+}
+
+function AdminBookingsContent() {
   const queryClient = useQueryClient();
+  const focusBookingId = useSearchParams().get("bookingId");
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState<BookingStatus | "all">("all");
 
@@ -88,6 +122,7 @@ export default function AdminBookingsPage() {
 
   return (
     <div className="space-y-4">
+      {focusBookingId && <FocusedBookingDialog key={focusBookingId} bookingId={focusBookingId} />}
       <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/50">
         <div className="border-b border-border/60 p-4">
           <Select

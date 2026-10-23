@@ -96,13 +96,15 @@ export async function fetchBookings(
   return data;
 }
 
+/** `storeFault` chỉ có tác dụng khi người gọi là staff/admin (backend tự kiểm tra) — dùng khi cửa hàng từ chối đơn. */
 export async function cancelBooking(
   id: string,
   reason?: string,
+  options: { storeFault?: boolean } = {},
 ): Promise<CancelBookingResult> {
   const { data } = await api.patch<CancelBookingResult>(
     `/bookings/${id}/cancel`,
-    { reason },
+    { reason, ...options },
   );
   return data;
 }

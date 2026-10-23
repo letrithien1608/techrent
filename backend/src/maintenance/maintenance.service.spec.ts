@@ -1,6 +1,10 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { DeviceStatus, MaintenanceStatus, Role } from '../generated/prisma/client';
+import {
+  DeviceStatus,
+  MaintenanceStatus,
+  Role,
+} from '../generated/prisma/client';
 import { MaintenanceService } from './maintenance.service';
 
 describe('MaintenanceService', () => {
@@ -8,6 +12,7 @@ describe('MaintenanceService', () => {
   let prisma: {
     $transaction: jest.Mock;
     device: { findUnique: jest.Mock; update: jest.Mock };
+    user: { findUnique: jest.Mock };
     maintenance: {
       create: jest.Mock;
       findMany: jest.Mock;
@@ -35,6 +40,9 @@ describe('MaintenanceService', () => {
     prisma = {
       $transaction: jest.fn((ops: any[]) => Promise.all(ops)),
       device: { findUnique: jest.fn(), update: jest.fn() },
+      user: {
+        findUnique: jest.fn().mockResolvedValue({ name: 'Nhân viên B' }),
+      },
       maintenance: {
         create: jest.fn(),
         findMany: jest.fn(),
@@ -44,8 +52,12 @@ describe('MaintenanceService', () => {
       },
     };
     realtimeGateway = { emitDeviceStatusChanged: jest.fn() };
-    notificationsService = { createForRoles: jest.fn().mockResolvedValue(undefined) };
-    devicesCacheService = { invalidateAll: jest.fn().mockResolvedValue(undefined) };
+    notificationsService = {
+      createForRoles: jest.fn().mockResolvedValue(undefined),
+    };
+    devicesCacheService = {
+      invalidateAll: jest.fn().mockResolvedValue(undefined),
+    };
     service = new MaintenanceService(
       prisma as unknown as PrismaService,
       realtimeGateway as any,
@@ -94,8 +106,11 @@ describe('MaintenanceService', () => {
       expect(devicesCacheService.invalidateAll).toHaveBeenCalled();
       expect(notificationsService.createForRoles).toHaveBeenCalledWith(
         [Role.staff, Role.admin],
-        'maintenance_reported',
-        expect.stringContaining('MacBook Pro'),
+        expect.objectContaining({
+          type: 'maintenance_reported',
+          message: expect.stringContaining('MacBook Pro'),
+          link: '/admin/maintenance',
+        }),
         { excludeUserId: reporterId },
       );
     });
@@ -111,7 +126,9 @@ describe('MaintenanceService', () => {
         id: deviceId,
         status: DeviceStatus.maintenance,
       });
-      notificationsService.createForRoles.mockRejectedValue(new Error('DB down'));
+      notificationsService.createForRoles.mockRejectedValue(
+        new Error('DB down'),
+      );
 
       await expect(
         service.create(reporterId, { deviceId, issue: 'Màn hình bị vỡ' }),

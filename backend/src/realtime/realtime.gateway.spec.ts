@@ -20,7 +20,10 @@ describe('RealtimeGateway', () => {
 
   beforeEach(() => {
     toEmit = jest.fn();
-    server = { emit: jest.fn(), to: jest.fn().mockReturnValue({ emit: toEmit }) };
+    server = {
+      emit: jest.fn(),
+      to: jest.fn().mockReturnValue({ emit: toEmit }),
+    };
     jwtService = { verifyAsync: jest.fn() };
     configService = { get: jest.fn().mockReturnValue('secret') };
     gateway = new RealtimeGateway(jwtService as any, configService as any);
@@ -44,7 +47,10 @@ describe('RealtimeGateway', () => {
     const payload = {
       id: 'notif-1',
       type: 'booking_confirmed',
+      title: 'Đơn thuê đã được xác nhận',
       message: 'Đơn của bạn đã được xác nhận',
+      link: '/bookings/b-1',
+      metadata: { bookingId: 'b-1' },
       isRead: false,
       createdAt: new Date(),
     };
@@ -71,7 +77,9 @@ describe('RealtimeGateway', () => {
 
   it('handleConnection KHÔNG throw và không join room nào nếu không có token', async () => {
     const client = makeClient();
-    await expect(gateway.handleConnection(client as any)).resolves.toBeUndefined();
+    await expect(
+      gateway.handleConnection(client as any),
+    ).resolves.toBeUndefined();
     expect(client.join).not.toHaveBeenCalled();
   });
 
@@ -80,7 +88,9 @@ describe('RealtimeGateway', () => {
     client.handshake.auth.token = 'bad-token';
     jwtService.verifyAsync.mockRejectedValue(new Error('invalid token'));
 
-    await expect(gateway.handleConnection(client as any)).resolves.toBeUndefined();
+    await expect(
+      gateway.handleConnection(client as any),
+    ).resolves.toBeUndefined();
     expect(client.join).not.toHaveBeenCalled();
   });
 

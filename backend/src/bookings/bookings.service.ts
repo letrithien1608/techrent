@@ -27,6 +27,10 @@ import { CancelBookingDto } from './dto/cancel-booking.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { BOOKING_TTL_JOB, BOOKING_TTL_QUEUE } from './bookings.constants';
 import {
+  type BookingNotificationKind,
+  buildBookingNotification,
+} from '../notifications/notification-templates';
+import {
   calculateDeposit,
   calculateLateFee,
   calculateRefundPercentage,
@@ -175,8 +179,11 @@ export class BookingsService {
     try {
       await this.notificationsService.createForRoles(
         [Role.staff, Role.admin],
-        'booking_pending',
-        'Có đơn thuê mới đang chờ xác nhận.',
+        await this.notificationContent(
+          booking.id,
+          { kind: 'pending' },
+          'staff',
+        ),
       );
     } catch (error) {
       this.logger.warn(
@@ -341,7 +348,7 @@ export class BookingsService {
   }
 
   /** Staff/admin xác nhận booking đang pending → confirmed, huỷ job TTL tự huỷ. */
-  async confirm(id: string): Promise<Booking> {
+  async confirm(id: string, actorId?: string): Promise<Booking> {
     const booking = await this.findByIdOrThrow(id);
     if (booking.status !== BookingStatus.pending) {
       throw new BadRequestException(
@@ -351,14 +358,13 @@ export class BookingsService {
     await this.cancelTtlExpiry(id);
     const updated = await this.prisma.booking.update({
       where: { id },
-      data: { status: BookingStatus.confirmed },
+      data: { status: BookingStatus.confirmed, confirmedById: actorId ?? null },
     });
 
     try {
       await this.notificationsService.create(
         booking.userId,
-        'booking_confirmed',
-        'Đơn thuê của bạn đã được xác nhận.',
+        await this.notificationContent(id, { kind: 'confirmed' }, 'customer'),
       );
     } catch (error) {
       this.logger.warn(
@@ -504,8 +510,7 @@ export class BookingsService {
     try {
       await this.notificationsService.create(
         booking.userId,
-        'booking_ongoing',
-        'Thiết bị đã được giao — đơn thuê của bạn hiện đang trong thời gian sử dụng.',
+        await this.notificationContent(id, { kind: 'ongoing' }, 'customer'),
       );
     } catch (error) {
       this.logger.warn(
@@ -592,9 +597,14 @@ export class BookingsService {
       (Number(booking.depositAmount) * refundPercentage) / 100;
 
     await this.cancelTtlExpiry(id);
+    const reason = dto.reason?.trim() || null;
     const updated = await this.prisma.booking.update({
       where: { id },
-      data: { status: BookingStatus.cancelled },
+      data: {
+        status: BookingStatus.cancelled,
+        cancelledById: currentUser.userId,
+        cancellationReason: reason,
+      },
     });
 
     // KHÔNG emit realtime ở đây: huỷ booking `pending`/`confirmed` không đổi
@@ -624,10 +634,21 @@ export class BookingsService {
     // — nếu staff huỷ thay, khách hàng vẫn cần biết ngay, không chỉ khi họ tự
     // bấm huỷ mới biết.
     try {
+      // Đơn còn "pending" thì chưa thu cọc — không nhắc hoàn tiền cho khỏi hiểu nhầm.
+      const depositCollected = booking.status !== BookingStatus.pending;
       await this.notificationsService.create(
         booking.userId,
-        'booking_cancelled',
-        `Đơn thuê của bạn đã bị huỷ${refundPercentage > 0 ? ` (hoàn ${refundPercentage}% tiền cọc)` : ''}.`,
+        await this.notificationContent(
+          id,
+          {
+            kind: 'cancelled',
+            byStore: isStaffOrAdmin && booking.userId !== currentUser.userId,
+            reason,
+            refundPercentage: depositCollected ? refundPercentage : 0,
+            refundAmount: depositCollected ? refundAmount : 0,
+          },
+          'customer',
+        ),
       );
     } catch (error) {
       this.logger.warn(
@@ -676,6 +697,22 @@ export class BookingsService {
     }
   }
 
+  /** Nạp booking kèm thiết bị + tên khách rồi dựng nội dung thông báo (notification-templates.ts). */
+  private async notificationContent(
+    bookingId: string,
+    event: BookingNotificationKind,
+    audience: 'customer' | 'staff',
+  ) {
+    const booking = await this.prisma.booking.findUniqueOrThrow({
+      where: { id: bookingId },
+      include: {
+        device: { select: { id: true, name: true, images: true } },
+        user: { select: { name: true } },
+      },
+    });
+    return buildBookingNotification(booking, event, audience);
+  }
+
   private async scheduleTtlExpiry(bookingId: string): Promise<void> {
     const ttlMinutes = Number(
       this.configService.get<string>('BOOKING_TTL_MINUTES') ??
@@ -712,8 +749,11 @@ export class BookingsService {
     try {
       await this.notificationsService.create(
         booking.userId,
-        'booking_cancelled',
-        'Đơn thuê của bạn đã tự động bị huỷ do quá hạn thanh toán.',
+        await this.notificationContent(
+          bookingId,
+          { kind: 'expired' },
+          'customer',
+        ),
       );
     } catch (error) {
       this.logger.warn(

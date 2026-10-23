@@ -1,184 +1,179 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, CheckCheck, Inbox, Loader2, WifiOff } from "lucide-react";
+import { ArrowRight, Bell, CheckCheck } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "cn";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useNotificationRealtime } from "@/hooks/use-notification-realtime";
-import { formatDateTimeVi } from "@/lib/device-format";
+import { notificationKind } from "@/lib/notification-kinds";
 import {
   fetchNotifications,
   markAllNotificationsAsRead,
   markNotificationAsRead,
+  type AppNotification,
 } from "@/lib/notifications-api";
+import type { NotificationCreatedPayload } from "@/lib/realtime-socket";
+import { useAuthStore } from "@/stores/auth-store";
+import { NotificationList } from "./notification-list";
+import { RejectBookingDialog } from "./reject-booking-dialog";
 
 const UNREAD_COUNT_KEY = ["notifications", "unread-count"];
-const RECENT_LIST_KEY = ["notifications", "recent"];
+const POPOVER_LIMIT = 15;
 
-function NotificationSkeleton() {
-  return (
-    <div className="flex flex-col gap-3 p-3">
-      {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="flex flex-col gap-1.5">
-          <Skeleton className="h-3.5 w-4/5" />
-          <Skeleton className="h-3 w-1/3" />
-        </div>
-      ))}
-    </div>
+type Tab = "all" | "unread";
+
+export function useOpenNotification() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const markRead = useMutation({
+    mutationFn: markNotificationAsRead,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notifications"] }),
+  });
+  return useCallback(
+    (notification: AppNotification, afterOpen?: () => void) => {
+      if (!notification.isRead) markRead.mutate(notification.id);
+      afterOpen?.();
+      if (notification.link) router.push(notification.link);
+    },
+    [markRead, router],
   );
 }
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<Tab>("all");
+  const [rejecting, setRejecting] = useState<AppNotification | null>(null);
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const role = useAuthStore((state) => state.user?.role);
+  const canModerate = role === "admin" || role === "staff";
+  const openNotification = useOpenNotification();
 
   const unreadCountQuery = useQuery({
     queryKey: UNREAD_COUNT_KEY,
     queryFn: () => fetchNotifications({ isRead: false, limit: 1 }),
     select: (result) => result.meta.total,
-    // Chỉ cần con số cho badge — không cần refetch liên tục theo interval vì
-    // realtime (WebSocket) đã tự invalidate đúng lúc có thông báo mới.
+    // Realtime tự invalidate khi có thông báo mới — không cần refetch định kỳ.
     staleTime: 60_000,
   });
   const unreadCount = unreadCountQuery.data ?? 0;
 
-  // Chỉ fetch danh sách chi tiết khi popover thật sự mở (lazy) — tránh gọi
-  // API mỗi lần Header render trong khi phần lớn thời gian người dùng không
-  // bấm vào chuông.
+  // Chỉ tải danh sách khi popover mở; mở lại luôn lấy mới để thấy đúng trạng
+  // thái đơn (có thể đã được admin khác xử lý).
   const listQuery = useQuery({
-    queryKey: RECENT_LIST_KEY,
-    queryFn: () => fetchNotifications({ limit: 20 }),
+    queryKey: ["notifications", "popover", tab],
+    queryFn: () =>
+      fetchNotifications({ limit: POPOVER_LIMIT, ...(tab === "unread" ? { isRead: false } : {}) }),
     enabled: open,
+    staleTime: 0,
   });
 
-  const handleNotificationCreated = useCallback(() => {
-    // Thông báo mới tới — làm mới cả số đếm chưa đọc lẫn danh sách gần đây.
-    // Số lượng thông báo/phiên thấp (không phải chat realtime tần suất cao)
-    // nên invalidate rồi refetch đơn giản hơn hẳn tự ghép thủ công vào
-    // cache, mà chi phí không đáng kể.
-    queryClient.invalidateQueries({ queryKey: ["notifications"] });
-  }, [queryClient]);
-  useNotificationRealtime(handleNotificationCreated);
-
-  const markReadMutation = useMutation({
-    mutationFn: markNotificationAsRead,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+  const handleNotificationCreated = useCallback(
+    (payload: NotificationCreatedPayload) => {
+      void queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      const kind = notificationKind(payload.type);
+      toast(payload.title ?? kind.label, {
+        description: payload.message,
+        ...(payload.link
+          ? { action: { label: "Xem", onClick: () => router.push(payload.link!) } }
+          : {}),
+      });
     },
-  });
+    [queryClient, router],
+  );
+  useNotificationRealtime(handleNotificationCreated);
 
   const markAllReadMutation = useMutation({
     mutationFn: markAllNotificationsAsRead,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notifications"] }),
   });
 
-  const notifications = listQuery.data?.data ?? [];
+  const badge = unreadCount > 9 ? "9+" : String(unreadCount);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
-        className="relative inline-flex size-9 items-center justify-center rounded-full text-foreground/80 outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
-        aria-label="Thông báo"
-      >
-        <Bell className="size-4.5" />
-        {unreadCount > 0 && (
-          <span className="absolute right-1 top-1 flex size-2 rounded-full bg-primary ring-2 ring-background" />
-        )}
-      </PopoverTrigger>
-
-      <PopoverContent className="p-0">
-        <div className="flex items-center justify-between gap-2 border-b border-border/60 px-3 py-2.5">
-          <p className="text-sm font-semibold">Thông báo</p>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-xs"
-            disabled={unreadCount === 0 || markAllReadMutation.isPending}
-            onClick={() => markAllReadMutation.mutate()}
-          >
-            {markAllReadMutation.isPending ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : (
-              <CheckCheck className="size-3.5" />
-            )}
-            Đánh dấu tất cả đã đọc
-          </Button>
-        </div>
-
-        <div className="max-h-80 overflow-y-auto">
-          {listQuery.isPending ? (
-            <NotificationSkeleton />
-          ) : listQuery.isError ? (
-            <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
-              <WifiOff className="size-6 text-muted-foreground/50" />
-              <p className="text-xs text-muted-foreground">
-                Không thể tải thông báo
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 text-xs"
-                onClick={() => listQuery.refetch()}
-              >
-                Thử lại
-              </Button>
-            </div>
-          ) : notifications.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
-              <Inbox className="size-6 text-muted-foreground/40" />
-              <p className="text-xs text-muted-foreground">
-                Chưa có thông báo nào
-              </p>
-            </div>
-          ) : (
-            <ul className="divide-y divide-border/60">
-              {notifications.map((notification) => (
-                <li key={notification.id}>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      !notification.isRead &&
-                      markReadMutation.mutate(notification.id)
-                    }
-                    className={cn(
-                      "flex w-full flex-col gap-1 px-3 py-2.5 text-left transition-colors hover:bg-muted/60",
-                      !notification.isRead && "bg-primary/[0.04]",
-                    )}
-                  >
-                    <div className="flex items-start gap-2">
-                      {!notification.isRead && (
-                        <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
-                      )}
-                      <p
-                        className={cn(
-                          "text-sm leading-snug",
-                          notification.isRead
-                            ? "text-muted-foreground"
-                            : "text-foreground",
-                        )}
-                      >
-                        {notification.message}
-                      </p>
-                    </div>
-                    <span className="pl-3.5 text-xs text-muted-foreground/70">
-                      {formatDateTimeVi(notification.createdAt)}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+    <>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative size-10 rounded-full"
+              aria-label={unreadCount > 0 ? `Thông báo, ${unreadCount} chưa đọc` : "Thông báo"}
+            />
+          }
+        >
+          <Bell className="size-5" />
+          {unreadCount > 0 && (
+            <span className="absolute top-1 right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[11px] leading-none font-bold text-primary-foreground ring-2 ring-background">
+              {badge}
+            </span>
           )}
-        </div>
-      </PopoverContent>
-    </Popover>
+        </PopoverTrigger>
+        <PopoverContent
+          sideOffset={10}
+          className="flex w-[400px] max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-2xl border border-border p-0 shadow-2xl shadow-black/40 ring-0"
+        >
+          <div className="flex items-center justify-between gap-2 px-4 pt-4 pb-3">
+            <h2 className="text-base font-semibold">Thông báo</h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-[13px] text-primary hover:text-primary"
+              disabled={unreadCount === 0 || markAllReadMutation.isPending}
+              onClick={() => markAllReadMutation.mutate()}
+            >
+              <CheckCheck />
+              Đánh dấu đã đọc
+            </Button>
+          </div>
+          <div role="tablist" aria-label="Lọc thông báo" className="flex gap-1 border-b border-border px-4">
+            {(["all", "unread"] as const).map((value) => (
+              <button
+                key={value}
+                role="tab"
+                type="button"
+                aria-selected={tab === value}
+                onClick={() => setTab(value)}
+                className={cn(
+                  "-mb-px border-b-2 px-2 pb-2.5 text-sm font-medium outline-none transition-colors focus-visible:text-foreground",
+                  tab === value
+                    ? "border-primary text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {value === "all" ? "Tất cả" : `Chưa đọc${unreadCount > 0 ? ` (${badge})` : ""}`}
+              </button>
+            ))}
+          </div>
+          <div className="scrollbar-thin max-h-[min(480px,65vh)] overflow-y-auto p-2">
+            <NotificationList
+              query={listQuery}
+              canModerate={canModerate}
+              emptyText={tab === "unread" ? "Bạn đã đọc hết thông báo" : "Chưa có thông báo nào"}
+              onOpen={(n) => openNotification(n, () => setOpen(false))}
+              onReject={(n) => {
+                setOpen(false);
+                setRejecting(n);
+              }}
+            />
+          </div>
+          <Link
+            href="/notifications"
+            onClick={() => setOpen(false)}
+            className="flex items-center justify-center gap-1.5 border-t border-border py-3 text-sm font-medium text-primary outline-none transition-colors hover:bg-muted/50 focus-visible:bg-muted/50"
+          >
+            Xem tất cả thông báo
+            <ArrowRight className="size-4" />
+          </Link>
+        </PopoverContent>
+      </Popover>
+      <RejectBookingDialog notification={rejecting} onClose={() => setRejecting(null)} />
+    </>
   );
 }

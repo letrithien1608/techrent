@@ -10,7 +10,10 @@ export interface DeviceStatusChangedPayload {
 export interface NotificationCreatedPayload {
   id: string;
   type: string;
+  title: string | null;
   message: string;
+  link: string | null;
+  metadata: unknown;
   isRead: boolean;
   createdAt: string;
 }

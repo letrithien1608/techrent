@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { DevicesCacheService } from '../devices/devices-cache.service';
+import { buildMaintenanceNotification } from '../notifications/notification-templates';
 import { NotificationsService } from '../notifications/notifications.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import {
@@ -71,10 +72,18 @@ export class MaintenanceService {
     // Thông báo cho TOÀN BỘ staff/admin (trừ chính người vừa báo hỏng — họ
     // đã biết, không cần tự thông báo cho mình) có sự cố mới cần xử lý.
     try {
+      const reporter = await this.prisma.user.findUnique({
+        where: { id: reportedBy },
+        select: { name: true },
+      });
       await this.notificationsService.createForRoles(
         [Role.staff, Role.admin],
-        'maintenance_reported',
-        `Thiết bị "${device.name}" vừa được báo hỏng: ${dto.issue}`,
+        buildMaintenanceNotification({
+          maintenanceId: record.id,
+          device,
+          issue: dto.issue,
+          reporterName: reporter?.name ?? null,
+        }),
         { excludeUserId: reportedBy },
       );
     } catch (error) {

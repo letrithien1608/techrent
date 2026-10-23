@@ -19,6 +19,7 @@ import {
 import { RequestUser } from '../auth/interfaces/jwt-payload.interface';
 import { BOOKING_TTL_QUEUE } from '../bookings/bookings.constants';
 import { buildContractContent } from '../bookings/contract-template.util';
+import { buildBookingNotification } from '../notifications/notification-templates';
 import { NotificationsService } from '../notifications/notifications.service';
 import {
   formatVnpayDate,
@@ -239,14 +240,17 @@ export class PaymentsService {
 
     const booking = await this.prisma.booking.findUnique({
       where: { id: bookingId },
+      include: {
+        device: { select: { id: true, name: true, images: true } },
+        user: { select: { name: true } },
+      },
     });
     if (!booking) return;
 
     try {
       await this.notificationsService.create(
         booking.userId,
-        'booking_confirmed',
-        'Đơn thuê của bạn đã được xác nhận sau khi thanh toán tiền cọc thành công.',
+        buildBookingNotification(booking, { kind: 'paid' }, 'customer'),
       );
     } catch (error) {
       this.logger.warn(
