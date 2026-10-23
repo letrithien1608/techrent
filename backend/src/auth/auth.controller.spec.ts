@@ -11,6 +11,7 @@ describe('AuthController', () => {
     refreshTokens: jest.Mock;
     logout: jest.Mock;
     changePassword: jest.Mock;
+    getMe: jest.Mock;
     addCccd: jest.Mock;
     submitKycVerification: jest.Mock;
     verifyEmail: jest.Mock;
@@ -25,6 +26,7 @@ describe('AuthController', () => {
       refreshTokens: jest.fn(),
       logout: jest.fn(),
       changePassword: jest.fn(),
+      getMe: jest.fn(),
       addCccd: jest.fn(),
       submitKycVerification: jest.fn(),
       verifyEmail: jest.fn(),
@@ -84,6 +86,14 @@ describe('AuthController', () => {
     await controller.logout(user, req);
 
     expect(authService.logout).toHaveBeenCalledWith('u1', 'my-access-token');
+  });
+
+  it('me() lấy hồ sơ theo userId trong token, không nhận id từ client', async () => {
+    authService.getMe.mockResolvedValue({ id: 'user-1', name: 'A' });
+    await expect(
+      controller.me({ userId: 'user-1', email: 'a@b.c', role: Role.customer }),
+    ).resolves.toEqual({ id: 'user-1', name: 'A' });
+    expect(authService.getMe).toHaveBeenCalledWith('user-1');
   });
 
   it('profile() trả về thẳng user lấy từ @CurrentUser()', () => {

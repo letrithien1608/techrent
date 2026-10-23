@@ -71,6 +71,13 @@ export class AuthController {
     await this.authService.logout(user.userId, accessToken);
   }
 
+  /** Hồ sơ đầy đủ của chính mình (trang /profile) — khác /auth/profile chỉ trả thông tin trong token. */
+  @ApiBearerAuth()
+  @Get('me')
+  me(@CurrentUser() user: RequestUser) {
+    return this.authService.getMe(user.userId);
+  }
+
   @ApiBearerAuth()
   @Get('profile')
   profile(@CurrentUser() user: RequestUser) {

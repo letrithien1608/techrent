@@ -1,154 +1,145 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
-import { motion } from "framer-motion";
-import { Loader2, ShieldCheck } from "lucide-react";
+import { KeyRound, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "cn";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FormErrorBanner } from "@/components/form-error-banner";
 import { changePasswordRequest } from "@/lib/auth-api";
 import { getErrorMessage } from "@/lib/get-error-message";
-import {
-  changePasswordSchema,
-  type ChangePasswordFormValues,
-} from "@/lib/validation/auth-schemas";
+import { changePasswordSchema, type ChangePasswordFormValues } from "@/lib/validation/auth-schemas";
 import { useAuthStore } from "@/stores/auth-store";
+import { FieldError, LABEL_CLASS, PasswordInput, SectionCard } from "./profile-shared";
+
+const STRENGTH_LEVELS = [
+  { label: "Rất yếu", bar: "bg-red-500", text: "text-red-300" },
+  { label: "Yếu", bar: "bg-orange-500", text: "text-orange-300" },
+  { label: "Trung bình", bar: "bg-amber-400", text: "text-amber-300" },
+  { label: "Mạnh", bar: "bg-emerald-500", text: "text-emerald-300" },
+  { label: "Rất mạnh", bar: "bg-emerald-400", text: "text-emerald-300" },
+];
+
+/** Điểm 0-4: độ dài + đa dạng ký tự (chỉ gợi ý, backend vẫn chỉ yêu cầu ≥ 8 ký tự). */
+export function passwordStrength(password: string): number {
+  if (!password) return 0;
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (password.length >= 12) score++;
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
+  if (/\d/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+  return Math.min(4, Math.max(0, score - (password.length < 8 ? 1 : 0)));
+}
+
+function StrengthMeter({ password }: { password: string }) {
+  if (!password) return null;
+  const score = passwordStrength(password);
+  const level = STRENGTH_LEVELS[score];
+  return (
+    <div className="flex flex-col gap-1.5" aria-live="polite">
+      <div className="flex gap-1.5" aria-hidden>
+        {STRENGTH_LEVELS.slice(1).map((_, index) => (
+          <span key={index} className={cn("h-1.5 flex-1 rounded-full", index < score ? level.bar : "bg-muted")} />
+        ))}
+      </div>
+      <p className={cn("text-[13px]", level.text)}>
+        Độ mạnh: {level.label}
+        {score < 3 && " — thêm chữ hoa, số và ký tự đặc biệt để an toàn hơn"}
+      </p>
+    </div>
+  );
+}
 
 export function ChangePasswordSection() {
   const router = useRouter();
   const clearAuth = useAuthStore((state) => state.clearAuth);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<ChangePasswordFormValues>({
     resolver: zodResolver(changePasswordSchema),
-    defaultValues: {
-      currentPassword: "",
-      newPassword: "",
-      confirmNewPassword: "",
-    },
+    mode: "onTouched",
+    defaultValues: { currentPassword: "", newPassword: "", confirmNewPassword: "" },
   });
+  const newPassword = useWatch({ control, name: "newPassword" });
 
   const mutation = useMutation({
     mutationFn: changePasswordRequest,
     onSuccess: () => {
       toast.success("Đã đổi mật khẩu — vui lòng đăng nhập lại");
-      // Đổi mật khẩu xong, backend đã thu hồi access/refresh token hiện tại
-      // (xem AuthService.changePassword) — dọn sạch state phía client rồi
-      // bắt đăng nhập lại, đúng chuẩn bảo mật.
+      // Backend đã thu hồi access/refresh token hiện tại (AuthService.changePassword).
       clearAuth();
       router.push("/login");
     },
-    onError: (error) => {
-      setErrorMessage(
-        getErrorMessage(error, "Không thể đổi mật khẩu, vui lòng thử lại"),
-      );
-    },
+    onError: (error) => toast.error(getErrorMessage(error, "Không thể đổi mật khẩu, vui lòng thử lại")),
   });
 
-  function onSubmit(values: ChangePasswordFormValues) {
-    setErrorMessage(null);
-    mutation.mutate({
-      currentPassword: values.currentPassword,
-      newPassword: values.newPassword,
-    });
-  }
-
   return (
-    <motion.section
+    <SectionCard
       id="security"
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className="scroll-mt-24 rounded-3xl border border-white/10 bg-white/[0.03] p-6 shadow-2xl shadow-black/20 backdrop-blur-xl sm:p-8"
+      icon={KeyRound}
+      title="Bảo mật"
+      description="Đổi mật khẩu đăng nhập. Sau khi đổi, bạn sẽ cần đăng nhập lại trên mọi thiết bị."
     >
-      <div className="flex items-center gap-3">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
-          <ShieldCheck className="size-5" />
-        </div>
-        <div>
-          <h2 className="font-heading text-xl font-semibold">Bảo mật</h2>
-          <p className="text-sm text-muted-foreground">
-            Đổi mật khẩu đăng nhập của bạn.
-          </p>
-        </div>
-      </div>
-
       <form
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit((v) => mutation.mutate({ currentPassword: v.currentPassword, newPassword: v.newPassword }))}
         noValidate
-        className="mt-6 flex flex-col gap-4"
+        className="flex flex-col gap-5"
       >
-        {errorMessage && <FormErrorBanner message={errorMessage} />}
-
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="current-password">Mật khẩu hiện tại</Label>
-          <Input
+        <div className="flex flex-col gap-2 md:max-w-[calc(50%-0.625rem)]">
+          <Label htmlFor="current-password" className={LABEL_CLASS}>
+            Mật khẩu hiện tại
+          </Label>
+          <PasswordInput
             id="current-password"
-            type="password"
             autoComplete="current-password"
             aria-invalid={!!errors.currentPassword}
             {...register("currentPassword")}
           />
-          {errors.currentPassword && (
-            <p className="text-xs text-destructive">
-              {errors.currentPassword.message}
-            </p>
-          )}
+          <FieldError message={errors.currentPassword?.message} />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="new-password">Mật khẩu mới</Label>
-            <Input
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="new-password" className={LABEL_CLASS}>
+              Mật khẩu mới
+            </Label>
+            <PasswordInput
               id="new-password"
-              type="password"
               autoComplete="new-password"
               aria-invalid={!!errors.newPassword}
               {...register("newPassword")}
             />
-            {errors.newPassword && (
-              <p className="text-xs text-destructive">
-                {errors.newPassword.message}
-              </p>
-            )}
+            <FieldError message={errors.newPassword?.message} />
+            <StrengthMeter password={newPassword} />
           </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="confirm-new-password">Xác nhận mật khẩu mới</Label>
-            <Input
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="confirm-new-password" className={LABEL_CLASS}>
+              Nhập lại mật khẩu mới
+            </Label>
+            <PasswordInput
               id="confirm-new-password"
-              type="password"
               autoComplete="new-password"
               aria-invalid={!!errors.confirmNewPassword}
               {...register("confirmNewPassword")}
             />
-            {errors.confirmNewPassword && (
-              <p className="text-xs text-destructive">
-                {errors.confirmNewPassword.message}
-              </p>
-            )}
+            <FieldError message={errors.confirmNewPassword?.message} />
           </div>
         </div>
 
-        <Button
-          type="submit"
-          className="mt-2 self-start"
-          disabled={mutation.isPending}
-        >
-          {mutation.isPending && <Loader2 className="animate-spin" />}
-          Đổi mật khẩu
-        </Button>
+        <div className="border-t border-border/60 pt-5">
+          <Button type="submit" className="h-11 px-6" disabled={mutation.isPending}>
+            {mutation.isPending && <Loader2 className="animate-spin" />}
+            Đổi mật khẩu
+          </Button>
+        </div>
       </form>
-    </motion.section>
+    </SectionCard>
   );
 }

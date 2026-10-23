@@ -286,6 +286,12 @@ export class AuthService {
    * đáng tin (cùng nguyên tắc với `logout()`) — blacklist access token +
    * xoá refresh token hash, bắt đăng nhập lại bằng mật khẩu mới.
    */
+  /** Hồ sơ đầy đủ (đã lọc an toàn qua sanitize — không có hash/CCCD gốc) của chính người đang đăng nhập. */
+  async getMe(userId: string) {
+    const user = await this.usersService.findByIdOrThrow(userId);
+    return this.usersService.sanitize(user);
+  }
+
   async changePassword(
     userId: string,
     dto: ChangePasswordDto,

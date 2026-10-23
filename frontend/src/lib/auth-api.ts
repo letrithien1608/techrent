@@ -136,3 +136,14 @@ export async function resetPasswordRequest(payload: {
   );
   return data;
 }
+
+/** Hồ sơ mới nhất từ server (có thêm `isBlacklisted` mà store đăng nhập không lưu). */
+export interface MyProfile extends AuthUser {
+  isBlacklisted?: boolean;
+  createdAt?: string;
+}
+
+export async function fetchMyProfile(): Promise<MyProfile> {
+  const { data } = await api.get<MyProfile>("/auth/me");
+  return data;
+}

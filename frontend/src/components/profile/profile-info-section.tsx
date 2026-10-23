@@ -1,16 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
-import { motion } from "framer-motion";
-import { IdCard, Loader2, ShieldCheck } from "lucide-react";
+import { IdCard, Loader2, Lock, ShieldCheck, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FormErrorBanner } from "@/components/form-error-banner";
 import { addCccdRequest, updateProfileRequest } from "@/lib/auth-api";
 import { getErrorMessage } from "@/lib/get-error-message";
 import {
@@ -20,27 +17,21 @@ import {
   type ProfileFormValues,
 } from "@/lib/validation/auth-schemas";
 import { useAuthStore } from "@/stores/auth-store";
-
-function initialsOf(name: string): string {
-  return name.trim().charAt(0).toUpperCase() || "?";
-}
+import { FIELD_CLASS, FieldError, LABEL_CLASS, SectionCard } from "./profile-shared";
 
 /**
  * Form bổ sung CCCD — CHỈ hiện khi `user.cccdMasked` chưa có (tài khoản cũ
- * tạo trước khi có KYC, hoặc bỏ sót lúc đăng ký). Sau khi bổ sung, KHÔNG cho
- * tự đổi lại nữa — đây là dữ liệu định danh, đổi thật cần luồng xác minh
- * riêng (ngoài phạm vi hiện tại), nên component này tự ẩn hẳn khi đã có CCCD.
+ * tạo trước khi có KYC). Đã có thì không cho tự đổi (dữ liệu định danh).
  */
 function AddCccdForm() {
   const updateUser = useAuthStore((state) => state.updateUser);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<AddCccdFormValues>({
     resolver: zodResolver(addCccdSchema),
+    mode: "onChange",
     defaultValues: { cccd: "" },
   });
 
@@ -48,50 +39,35 @@ function AddCccdForm() {
     mutationFn: (values: AddCccdFormValues) => addCccdRequest(values.cccd),
     onSuccess: (updated) => {
       updateUser({ cccdMasked: updated.cccdMasked });
-      toast.success("Đã bổ sung CCCD — giờ bạn có thể đặt thuê thiết bị");
+      toast.success("Đã bổ sung CCCD — giờ bạn có thể tiếp tục xác thực danh tính");
     },
-    onError: (error) => {
-      setErrorMessage(
-        getErrorMessage(error, "Không thể bổ sung CCCD, vui lòng thử lại"),
-      );
-    },
+    onError: (error) => toast.error(getErrorMessage(error, "Không thể bổ sung CCCD, vui lòng thử lại")),
   });
 
-  function onSubmit(values: AddCccdFormValues) {
-    setErrorMessage(null);
-    mutation.mutate(values);
-  }
-
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      noValidate
-      className="mt-3 flex flex-col gap-3"
-    >
-      {errorMessage && <FormErrorBanner message={errorMessage} />}
-      <p className="text-sm text-muted-foreground">
-        Bạn cần bổ sung số CCCD để xác minh danh tính trước khi đặt thuê thiết
-        bị — dữ liệu được mã hoá khi lưu, không hiển thị đầy đủ ở bất kỳ đâu.
-      </p>
-      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:gap-2">
-        <div className="flex-1">
-          <Input
-            id="add-cccd"
-            inputMode="numeric"
-            autoComplete="off"
-            placeholder="079203012345"
-            aria-invalid={!!errors.cccd}
-            {...register("cccd")}
-          />
-          {errors.cccd && (
-            <p className="mt-1 text-xs text-destructive">{errors.cccd.message}</p>
-          )}
-        </div>
-        <Button type="submit" disabled={mutation.isPending} className="shrink-0">
+    <form onSubmit={handleSubmit((v) => mutation.mutate(v))} noValidate className="flex flex-col gap-2">
+      <Label htmlFor="add-cccd" className={LABEL_CLASS}>
+        Số CCCD (12 số)
+      </Label>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Input
+          id="add-cccd"
+          inputMode="numeric"
+          autoComplete="off"
+          placeholder="079203012345"
+          aria-invalid={!!errors.cccd}
+          className={FIELD_CLASS}
+          {...register("cccd")}
+        />
+        <Button type="submit" disabled={mutation.isPending} className="h-11 shrink-0 px-5">
           {mutation.isPending && <Loader2 className="animate-spin" />}
-          Xác nhận
+          Bổ sung CCCD
         </Button>
       </div>
+      <FieldError message={errors.cccd?.message} />
+      <p className="text-[13px] text-muted-foreground">
+        Bắt buộc trước khi đặt thuê. Số CCCD được mã hoá khi lưu, chỉ hiển thị 4 số cuối.
+      </p>
     </form>
   );
 }
@@ -99,7 +75,6 @@ function AddCccdForm() {
 export function ProfileInfoSection() {
   const user = useAuthStore((state) => state.user);
   const updateUser = useAuthStore((state) => state.updateUser);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const {
     register,
@@ -108,127 +83,115 @@ export function ProfileInfoSection() {
     formState: { errors, isDirty },
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
+    // Kiểm tra ngay khi gõ (VD số điện thoại sai định dạng).
+    mode: "onChange",
     defaultValues: { name: user?.name ?? "", phone: user?.phone ?? "" },
   });
 
   const mutation = useMutation({
     mutationFn: (values: ProfileFormValues) =>
-      updateProfileRequest(user!.id, {
-        name: values.name,
-        phone: values.phone || undefined,
-      }),
+      updateProfileRequest(user!.id, { name: values.name, phone: values.phone || undefined }),
     onSuccess: (updated) => {
       updateUser({ name: updated.name, phone: updated.phone });
-      // Đặt lại form về "sạch" (isDirty=false) với giá trị vừa lưu — nút
-      // "Lưu thay đổi" tự disable lại cho tới khi người dùng sửa tiếp.
       reset({ name: updated.name, phone: updated.phone ?? "" });
-      toast.success("Đã lưu thay đổi");
+      toast.success("Đã lưu thông tin cá nhân");
     },
-    onError: (error) => {
-      setErrorMessage(
-        getErrorMessage(error, "Không thể lưu thay đổi, vui lòng thử lại"),
-      );
-    },
+    onError: (error) => toast.error(getErrorMessage(error, "Không thể lưu thay đổi, vui lòng thử lại")),
   });
 
   if (!user) return null;
 
-  function onSubmit(values: ProfileFormValues) {
-    setErrorMessage(null);
-    mutation.mutate(values);
-  }
-
   return (
-    <motion.section
+    <SectionCard
       id="personal-info"
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className="scroll-mt-24 rounded-3xl border border-white/10 bg-white/[0.03] p-6 shadow-2xl shadow-black/20 backdrop-blur-xl sm:p-8"
+      icon={UserRound}
+      title="Thông tin cá nhân"
+      description="Tên hiển thị và số điện thoại để cửa hàng liên hệ khi giao nhận máy."
     >
-      <div className="flex items-center gap-4">
-        <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-cyan-400 font-heading text-xl font-bold text-primary-foreground sm:size-20 sm:text-2xl">
-          {initialsOf(user.name)}
-        </div>
-        <div>
-          <h2 className="font-heading text-xl font-semibold">
-            Thông tin cá nhân
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Cập nhật tên hiển thị và số điện thoại liên hệ.
-          </p>
-        </div>
-      </div>
+      <form onSubmit={handleSubmit((v) => mutation.mutate(v))} noValidate className="flex flex-col gap-5">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="profile-name" className={LABEL_CLASS}>
+              Họ và tên
+            </Label>
+            <Input
+              id="profile-name"
+              autoComplete="name"
+              aria-invalid={!!errors.name}
+              className={FIELD_CLASS}
+              {...register("name")}
+            />
+            <FieldError message={errors.name?.message} />
+          </div>
 
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        noValidate
-        className="mt-6 flex flex-col gap-4"
-      >
-        {errorMessage && <FormErrorBanner message={errorMessage} />}
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="profile-phone" className={LABEL_CLASS}>
+              Số điện thoại
+            </Label>
+            <Input
+              id="profile-phone"
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="0901234567"
+              aria-invalid={!!errors.phone}
+              className={FIELD_CLASS}
+              {...register("phone")}
+            />
+            <FieldError message={errors.phone?.message} />
+          </div>
 
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="profile-name">Họ và tên</Label>
-          <Input
-            id="profile-name"
-            aria-invalid={!!errors.name}
-            {...register("name")}
-          />
-          {errors.name && (
-            <p className="text-xs text-destructive">{errors.name.message}</p>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="profile-email" className={LABEL_CLASS}>
+              Email đăng nhập
+            </Label>
+            <div className="relative">
+              <Input id="profile-email" value={user.email} readOnly aria-readonly className={`${FIELD_CLASS} cursor-default pr-11 text-muted-foreground`} />
+              <Lock className="absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+            </div>
+            <p className="text-[13px] text-muted-foreground">Email dùng để đăng nhập, không thể thay đổi.</p>
+          </div>
+
+          {user.cccdMasked && (
+            <div className="flex flex-col gap-2">
+              <span className={LABEL_CLASS}>Số CCCD</span>
+              <div className="flex h-11 items-center justify-between gap-2 rounded-xl border border-input bg-input/30 px-3.5">
+                <span className="flex items-center gap-2 font-mono text-[15px] tracking-wider">
+                  <IdCard className="size-4 text-muted-foreground" aria-hidden />
+                  {user.cccdMasked}
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-medium text-emerald-400">
+                  <ShieldCheck className="size-3.5" aria-hidden />
+                  Đã xác thực
+                </span>
+              </div>
+              <p className="text-[13px] text-muted-foreground">Dữ liệu định danh, liên hệ nhân viên nếu cần sửa.</p>
+            </div>
           )}
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="profile-email">Email</Label>
-          <Input id="profile-email" value={user.email} disabled />
-          <p className="text-xs text-muted-foreground">
-            Email dùng để đăng nhập, không thể thay đổi.
-          </p>
+        <div className="flex flex-wrap items-center gap-3 border-t border-border/60 pt-5">
+          <Button type="submit" className="h-11 px-6" disabled={mutation.isPending || !isDirty}>
+            {mutation.isPending && <Loader2 className="animate-spin" />}
+            Lưu thay đổi
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 px-5"
+            disabled={mutation.isPending || !isDirty}
+            onClick={() => reset({ name: user.name, phone: user.phone ?? "" })}
+          >
+            Huỷ thay đổi
+          </Button>
+          {isDirty && <span className="text-[13px] text-amber-300">Bạn có thay đổi chưa lưu</span>}
         </div>
-
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="profile-phone">Số điện thoại</Label>
-          <Input
-            id="profile-phone"
-            placeholder="0901234567"
-            aria-invalid={!!errors.phone}
-            {...register("phone")}
-          />
-          {errors.phone && (
-            <p className="text-xs text-destructive">{errors.phone.message}</p>
-          )}
-        </div>
-
-        <Button
-          type="submit"
-          className="mt-2 self-start"
-          disabled={mutation.isPending || !isDirty}
-        >
-          {mutation.isPending && <Loader2 className="animate-spin" />}
-          Lưu thay đổi
-        </Button>
       </form>
 
-      <div className="mt-6 border-t border-border/60 pt-6">
-        <div className="flex items-center gap-2">
-          <IdCard className="size-4 text-muted-foreground" />
-          <p className="text-sm font-medium text-foreground">Số CCCD</p>
-        </div>
-
-        {user.cccdMasked ? (
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <ShieldCheck className="size-4 shrink-0 text-emerald-400" />
-            <span className="font-mono text-sm">{user.cccdMasked}</span>
-            <span className="text-xs text-muted-foreground">
-              — đã xác thực, không thể tự đổi
-            </span>
-          </div>
-        ) : (
+      {!user.cccdMasked && (
+        <div className="mt-6 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 sm:p-5">
           <AddCccdForm />
-        )}
-      </div>
-    </motion.section>
+        </div>
+      )}
+    </SectionCard>
   );
 }
