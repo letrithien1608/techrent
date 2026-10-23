@@ -7,58 +7,100 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { BookingStatus } from '../generated/prisma/client';
 import { ReviewsService } from './reviews.service';
+import { maskReviewerName, sanitizeReviewComment } from './review-content.util';
+
+describe('review-content.util', () => {
+  it('che tên người đánh giá: giữ họ, các chữ sau lấy chữ cái đầu', () => {
+    expect(maskReviewerName('Nguyễn Văn An')).toBe('Nguyễn V. A');
+    expect(maskReviewerName('  Trần   bình ')).toBe('Trần B');
+    expect(maskReviewerName('Linh')).toBe('L.');
+    expect(maskReviewerName('')).toBe('Khách hàng');
+  });
+
+  it('gọn khoảng trắng và chấp nhận nội dung hợp lệ', () => {
+    expect(sanitizeReviewComment('  Máy   chạy rất êm, pin tốt  ')).toBe(
+      'Máy chạy rất êm, pin tốt',
+    );
+  });
+
+  it.each([
+    ['quá ngắn', 'Tốt lắm'],
+    ['quá dài', 'a b '.repeat(400)],
+    ['có link', 'Mua rẻ hơn tại https://abc.example nhé bạn'],
+    ['có tên miền', 'Xem thêm ở shopgiare.vn để có giá tốt'],
+    ['ký tự lặp', 'Tuyệt vờiiiiiiii luôn mọi người'],
+  ])('chặn nội dung %s', (_label, comment) => {
+    expect(() => sanitizeReviewComment(comment)).toThrow(BadRequestException);
+  });
+});
 
 describe('ReviewsService', () => {
   let service: ReviewsService;
   let prisma: {
     $transaction: jest.Mock;
-    booking: { findUnique: jest.Mock };
+    user: { findUnique: jest.Mock };
+    device: { findUnique: jest.Mock; update: jest.Mock };
+    booking: { findFirst: jest.Mock };
     review: {
       findUnique: jest.Mock;
       create: jest.Mock;
+      update: jest.Mock;
+      delete: jest.Mock;
       findMany: jest.Mock;
       count: jest.Mock;
       aggregate: jest.Mock;
+      groupBy: jest.Mock;
     };
-    device: { update: jest.Mock };
   };
   let devicesCacheService: { invalidateAll: jest.Mock };
 
   const userId = 'user-1';
-  const bookingId = 'booking-1';
   const deviceId = 'device-1';
-  const baseBooking = {
-    id: bookingId,
+  const comment = 'Máy chạy rất ổn định, giao nhận nhanh';
+  const ownReview = {
+    id: 'review-1',
     userId,
     deviceId,
-    status: BookingStatus.completed,
+    bookingId: 'booking-1',
+    rating: 4,
+    comment,
+    isHidden: false,
   };
 
   beforeEach(() => {
     prisma = {
-      // `create()` dùng $transaction dạng CALLBACK (như BookingsService) —
-      // truyền thẳng `prisma` làm "tx" vì test không cần phân biệt client
-      // trong/ngoài transaction, chỉ cần đúng mock nào được gọi với đúng dữ liệu.
-      $transaction: jest.fn((arg: unknown) => {
-        if (typeof arg === 'function') {
-          return (arg as (tx: unknown) => Promise<unknown>)(prisma);
-        }
-        return Promise.all(arg as Promise<unknown>[]);
-      }),
-      booking: { findUnique: jest.fn() },
-      review: {
-        findUnique: jest.fn(),
-        create: jest.fn(),
-        findMany: jest.fn(),
-        count: jest.fn(),
-        aggregate: jest.fn().mockResolvedValue({
-          _avg: { rating: null },
-          _count: { rating: 0 },
-        }),
+      $transaction: jest.fn((arg: unknown) =>
+        typeof arg === 'function'
+          ? (arg as (tx: unknown) => Promise<unknown>)(prisma)
+          : Promise.all(arg as Promise<unknown>[]),
+      ),
+      user: {
+        findUnique: jest.fn().mockResolvedValue({ isBlacklisted: false }),
       },
-      device: { update: jest.fn() },
+      device: {
+        findUnique: jest.fn().mockResolvedValue({ id: deviceId }),
+        update: jest.fn(),
+      },
+      booking: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'booking-1' }),
+      },
+      review: {
+        findUnique: jest.fn().mockResolvedValue(null),
+        create: jest.fn().mockResolvedValue({ id: 'review-new' }),
+        update: jest.fn().mockResolvedValue({ id: 'review-1' }),
+        delete: jest.fn(),
+        findMany: jest.fn().mockResolvedValue([]),
+        count: jest.fn().mockResolvedValue(0),
+        aggregate: jest.fn().mockResolvedValue({
+          _avg: { rating: 4.5 },
+          _count: { rating: 2 },
+        }),
+        groupBy: jest.fn().mockResolvedValue([]),
+      },
     };
-    devicesCacheService = { invalidateAll: jest.fn().mockResolvedValue(undefined) };
+    devicesCacheService = {
+      invalidateAll: jest.fn().mockResolvedValue(undefined),
+    };
     service = new ReviewsService(
       prisma as unknown as PrismaService,
       devicesCacheService as any,
@@ -66,153 +108,196 @@ describe('ReviewsService', () => {
   });
 
   describe('create', () => {
-    it('ném NotFoundException nếu không tìm thấy booking', async () => {
-      prisma.booking.findUnique.mockResolvedValue(null);
-      await expect(
-        service.create(userId, { bookingId, rating: 5 }),
-      ).rejects.toBeInstanceOf(NotFoundException);
+    const dto = { deviceId, rating: 5, comment };
+
+    it('chỉ người đã thuê VÀ trả thiết bị (đơn completed) mới được đánh giá', async () => {
+      prisma.booking.findFirst.mockResolvedValue(null);
+      await expect(service.create(userId, dto)).rejects.toThrow(
+        'Bạn cần thuê và trả thiết bị này để đánh giá',
+      );
+      expect(prisma.booking.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId, deviceId, status: BookingStatus.completed },
+        }),
+      );
+      expect(prisma.review.create).not.toHaveBeenCalled();
     });
 
-    it('ném ForbiddenException nếu không phải chủ booking', async () => {
-      prisma.booking.findUnique.mockResolvedValue(baseBooking);
-      await expect(
-        service.create('other-user', { bookingId, rating: 5 }),
-      ).rejects.toBeInstanceOf(ForbiddenException);
+    it('chặn tài khoản trong danh sách đen', async () => {
+      prisma.user.findUnique.mockResolvedValue({ isBlacklisted: true });
+      await expect(service.create(userId, dto)).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+      expect(prisma.review.create).not.toHaveBeenCalled();
     });
 
-    it('ném BadRequestException nếu booking chưa completed', async () => {
-      prisma.booking.findUnique.mockResolvedValue({
-        ...baseBooking,
-        status: BookingStatus.ongoing,
-      });
+    it('chặn nội dung spam trước khi chạm DB', async () => {
       await expect(
-        service.create(userId, { bookingId, rating: 5 }),
+        service.create(userId, { ...dto, comment: 'vào www.abc.com' }),
       ).rejects.toBeInstanceOf(BadRequestException);
+      expect(prisma.booking.findFirst).not.toHaveBeenCalled();
     });
 
-    it('ném ConflictException nếu booking đã được đánh giá rồi', async () => {
-      prisma.booking.findUnique.mockResolvedValue(baseBooking);
-      prisma.review.findUnique.mockResolvedValue({ id: 'review-1' });
-      await expect(
-        service.create(userId, { bookingId, rating: 5 }),
-      ).rejects.toBeInstanceOf(ConflictException);
+    it('404 khi thiết bị không tồn tại', async () => {
+      prisma.device.findUnique.mockResolvedValue(null);
+      await expect(service.create(userId, dto)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
 
-    it('tạo review thành công với booking hợp lệ, chưa từng đánh giá', async () => {
-      prisma.booking.findUnique.mockResolvedValue(baseBooking);
-      prisma.review.findUnique.mockResolvedValue(null);
-      prisma.review.create.mockResolvedValue({
-        id: 'review-1',
-        bookingId,
-        rating: 5,
-        comment: 'Tốt',
-      });
+    it('mỗi khách chỉ 1 đánh giá cho 1 thiết bị', async () => {
+      prisma.review.findUnique.mockResolvedValue(ownReview);
+      await expect(service.create(userId, dto)).rejects.toBeInstanceOf(
+        ConflictException,
+      );
+    });
 
-      const result = await service.create(userId, {
-        bookingId,
-        rating: 5,
-        comment: 'Tốt',
-      });
+    it('tạo đánh giá gắn đơn đã trả, tính lại rating trong cùng transaction rồi xoá cache', async () => {
+      await service.create(userId, dto);
 
-      expect(result.id).toBe('review-1');
       expect(prisma.review.create).toHaveBeenCalledWith({
-        data: { bookingId, rating: 5, comment: 'Tốt' },
+        data: {
+          bookingId: 'booking-1',
+          userId,
+          deviceId,
+          rating: 5,
+          comment,
+        },
       });
-    });
-
-    it('review ĐẦU TIÊN của thiết bị: cập nhật avgRating/reviewCount đúng bằng chính review đó', async () => {
-      prisma.booking.findUnique.mockResolvedValue(baseBooking);
-      prisma.review.findUnique.mockResolvedValue(null);
-      prisma.review.create.mockResolvedValue({
-        id: 'review-1',
-        bookingId,
-        rating: 5,
-        comment: null,
-      });
-      prisma.review.aggregate.mockResolvedValue({
-        _avg: { rating: 5 },
-        _count: { rating: 1 },
-      });
-
-      await service.create(userId, { bookingId, rating: 5 });
-
-      expect(prisma.review.aggregate).toHaveBeenCalledWith({
-        where: { booking: { deviceId } },
-        _avg: { rating: true },
-        _count: { rating: true },
-      });
-      expect(prisma.device.update).toHaveBeenCalledWith({
-        where: { id: deviceId },
-        data: { avgRating: 5, reviewCount: 1 },
-      });
-    });
-
-    it('nhiều review cùng thiết bị: avgRating lấy ĐÚNG kết quả trung bình đã tính (aggregate)', async () => {
-      prisma.booking.findUnique.mockResolvedValue(baseBooking);
-      prisma.review.findUnique.mockResolvedValue(null);
-      prisma.review.create.mockResolvedValue({
-        id: 'review-2',
-        bookingId,
-        rating: 4,
-        comment: null,
-      });
-      // Giả lập: thiết bị đã có 1 review 5 sao từ trước, vừa thêm review 4 sao
-      // -> trung bình 2 review là 4.5, reviewCount = 2 (Postgres AVG() tự tính
-      // đúng, service chỉ cần TRUYỀN ĐÚNG kết quả xuống Device.update).
-      prisma.review.aggregate.mockResolvedValue({
-        _avg: { rating: 4.5 },
-        _count: { rating: 2 },
-      });
-
-      await service.create(userId, { bookingId, rating: 4 });
-
+      expect(prisma.review.aggregate).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { deviceId, isHidden: false } }),
+      );
       expect(prisma.device.update).toHaveBeenCalledWith({
         where: { id: deviceId },
         data: { avgRating: 4.5, reviewCount: 2 },
       });
-    });
-
-    it('xoá cache danh sách thiết bị sau khi cập nhật avgRating', async () => {
-      prisma.booking.findUnique.mockResolvedValue(baseBooking);
-      prisma.review.findUnique.mockResolvedValue(null);
-      prisma.review.create.mockResolvedValue({
-        id: 'review-1',
-        bookingId,
-        rating: 5,
-        comment: null,
-      });
-
-      await service.create(userId, { bookingId, rating: 5 });
-
-      expect(devicesCacheService.invalidateAll).toHaveBeenCalledTimes(1);
+      expect(devicesCacheService.invalidateAll).toHaveBeenCalled();
     });
   });
 
-  describe('findAll', () => {
-    it('lọc theo deviceId qua quan hệ booking khi có truyền deviceId', async () => {
-      prisma.review.findMany.mockResolvedValue([]);
-      prisma.review.count.mockResolvedValue(0);
-
-      await service.findAll({ page: 1, limit: 20, deviceId: 'device-1' });
-
-      expect(prisma.review.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { booking: { deviceId: 'device-1' } },
-        }),
-      );
+  describe('update/remove', () => {
+    it('chỉ chủ đánh giá được sửa', async () => {
+      prisma.review.findUnique.mockResolvedValue(ownReview);
+      await expect(
+        service.update('other-user', ownReview.id, { rating: 1 }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      await expect(
+        service.remove('other-user', ownReview.id),
+      ).rejects.toBeInstanceOf(ForbiddenException);
     });
 
-    it('lọc theo bookingId khi có truyền bookingId (VD kiểm tra 1 booking đã được đánh giá chưa)', async () => {
-      prisma.review.findMany.mockResolvedValue([]);
-      prisma.review.count.mockResolvedValue(0);
+    it('sửa → đánh dấu đã chỉnh sửa, tính lại rating', async () => {
+      prisma.review.findUnique.mockResolvedValue(ownReview);
+      await service.update(userId, ownReview.id, { rating: 2 });
+      expect(prisma.review.update).toHaveBeenCalledWith({
+        where: { id: ownReview.id },
+        data: { rating: 2, editedAt: expect.any(Date) },
+      });
+      expect(prisma.device.update).toHaveBeenCalled();
+      expect(devicesCacheService.invalidateAll).toHaveBeenCalled();
+    });
 
-      await service.findAll({ page: 1, limit: 20, bookingId: 'booking-1' });
+    it('xoá → tính lại rating của thiết bị', async () => {
+      prisma.review.findUnique.mockResolvedValue(ownReview);
+      prisma.review.aggregate.mockResolvedValue({
+        _avg: { rating: null },
+        _count: { rating: 0 },
+      });
+      await service.remove(userId, ownReview.id);
+      expect(prisma.review.delete).toHaveBeenCalledWith({
+        where: { id: ownReview.id },
+      });
+      expect(prisma.device.update).toHaveBeenCalledWith({
+        where: { id: deviceId },
+        data: { avgRating: null, reviewCount: 0 },
+      });
+    });
+  });
+
+  describe('setVisibility', () => {
+    it('bắt buộc lý do khi ẩn', async () => {
+      await expect(
+        service.setVisibility('review-1', 'admin-1', { hidden: true }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('ẩn đánh giá kèm lý do + tính lại rating (bỏ đánh giá ẩn)', async () => {
+      prisma.review.findUnique.mockResolvedValue(ownReview);
+      await service.setVisibility('review-1', 'admin-1', {
+        hidden: true,
+        reason: ' Ngôn từ xúc phạm ',
+      });
+      expect(prisma.review.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: {
+            isHidden: true,
+            hiddenReason: 'Ngôn từ xúc phạm',
+            hiddenAt: expect.any(Date),
+            hiddenById: 'admin-1',
+          },
+        }),
+      );
+      expect(prisma.device.update).toHaveBeenCalled();
+      expect(devicesCacheService.invalidateAll).toHaveBeenCalled();
+    });
+  });
+
+  describe('đọc công khai', () => {
+    it('chỉ trả đánh giá đang hiển thị, tên đã che, không lộ userId', async () => {
+      prisma.review.findMany.mockResolvedValue([
+        {
+          ...ownReview,
+          createdAt: new Date(),
+          editedAt: null,
+          user: { name: 'Nguyễn Văn An' },
+          booking: { endTime: new Date('2026-10-01') },
+        },
+      ]);
+      prisma.review.count.mockResolvedValue(1);
+
+      const result = await service.findPublic({
+        page: 1,
+        limit: 10,
+        deviceId,
+        rating: 4,
+        sort: 'lowest',
+      });
 
       expect(prisma.review.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { bookingId: 'booking-1' },
+          where: { isHidden: false, deviceId, rating: 4 },
+          orderBy: [{ rating: 'asc' }, { createdAt: 'desc' }],
         }),
       );
+      expect(result.data[0]).toMatchObject({
+        reviewerName: 'Nguyễn V. A',
+        verifiedRental: true,
+      });
+      expect(result.data[0]).not.toHaveProperty('userId');
+    });
+
+    it('tóm tắt: trung bình + phân bố theo số sao', async () => {
+      prisma.review.groupBy.mockResolvedValue([
+        { rating: 5, _count: { _all: 3 } },
+        { rating: 3, _count: { _all: 1 } },
+      ]);
+      const summary = await service.getSummary(deviceId);
+      expect(summary).toEqual({
+        deviceId,
+        avgRating: 4.5,
+        reviewCount: 4,
+        distribution: { 1: 0, 2: 0, 3: 1, 4: 0, 5: 3 },
+      });
+    });
+
+    it('quyền đánh giá: chưa trả máy → not_rented, kèm đánh giá cũ nếu có', async () => {
+      prisma.booking.findFirst.mockResolvedValue(null);
+      const result = await service.getEligibility(userId, deviceId);
+      expect(result).toEqual({
+        canReview: false,
+        reason: 'not_rented',
+        review: null,
+      });
     });
   });
 });

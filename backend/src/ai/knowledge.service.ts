@@ -45,6 +45,9 @@ export interface DeviceSuggestion {
   status: DeviceStatus;
   /** Thông số công khai rút gọn (VD "gpu: RTX 4070, ram: 32GB") để model không gán nhầm cấu hình giữa các máy. */
   specs: string;
+  /** Điểm đánh giá trung bình + số lượt (chỉ con số tổng hợp, KHÔNG đưa nội dung đánh giá vào prompt). */
+  avgRating: number | null;
+  reviewCount: number;
 }
 
 export interface RetrievalResult {
@@ -322,6 +325,8 @@ export class KnowledgeService implements OnModuleInit {
         pricePerHour: true,
         pricePerDay: true,
         originalPrice: true,
+        avgRating: true,
+        reviewCount: true,
         category: { select: { name: true } },
       },
       orderBy: { name: 'asc' },
@@ -335,6 +340,8 @@ export class KnowledgeService implements OnModuleInit {
       deposit: calculateDeposit(Number(row.originalPrice)),
       status: row.status,
       specs: summarizeSpecSheet(row.specSheet) || summarizeSpecs(row.specs),
+      avgRating: row.avgRating,
+      reviewCount: row.reviewCount,
     }));
     this.deviceCache = { at: Date.now(), devices };
     return devices;
@@ -429,6 +436,11 @@ export function formatDevice(device: DeviceSuggestion): string {
     `  + Giá trị tài sản (dùng để tính cọc): ${formatVnd(device.originalPrice)}`,
   ];
   if (device.specs) lines.splice(1, 0, `  + Thông số: ${device.specs}`);
+  if (device.reviewCount > 0 && device.avgRating !== null) {
+    lines.push(
+      `  + Đánh giá của khách đã thuê: ${device.avgRating.toFixed(1).replace('.', ',')}/5 (${device.reviewCount} lượt)`,
+    );
+  }
   return lines.join('\n');
 }
 

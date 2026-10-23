@@ -6,7 +6,12 @@ import { DeviceGallery } from "@/components/devices/device-gallery";
 import { DeviceReviews } from "@/components/devices/device-reviews";
 import { DeviceSpecs } from "@/components/devices/device-specs";
 import { RelatedDevices } from "@/components/devices/related-devices";
-import { fetchDevice, fetchDevices, fetchReviews } from "@/lib/devices-api";
+import {
+  fetchDevice,
+  fetchDevices,
+  fetchReviews,
+  fetchReviewSummary,
+} from "@/lib/devices-api";
 
 interface PageParams {
   params: Promise<{ id: string }>;
@@ -31,17 +36,14 @@ export default async function DeviceDetailPage({ params }: PageParams) {
     notFound();
   }
 
-  const [{ result: reviewsResult }, { result: relatedResult }] = await Promise.all([
-    fetchReviews(device.id, { limit: 50 }),
+  // Đánh giá tải sẵn ở server (SEO + không nhảy layout); lỗi thì để client tự tải lại.
+  const [reviewSummary, firstReviews, { result: relatedResult }] = await Promise.all([
+    fetchReviewSummary(device.id).catch(() => null),
+    fetchReviews(device.id, { limit: 5 }).catch(() => null),
     fetchDevices({ categoryId: device.categoryId, limit: 5 }),
   ]);
-
-  const reviews = reviewsResult?.data ?? [];
-  const reviewCount = reviews.length;
-  const avgRating =
-    reviewCount > 0
-      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviewCount
-      : 0;
+  const avgRating = reviewSummary?.avgRating ?? device.avgRating ?? 0;
+  const reviewCount = reviewSummary?.reviewCount ?? device.reviewCount;
 
   const relatedDevices = (relatedResult?.data ?? [])
     .filter((item) => item.id !== device.id)
@@ -67,9 +69,10 @@ export default async function DeviceDetailPage({ params }: PageParams) {
             detailedDescription={device.detailedDescription}
           />
           <DeviceReviews
-            reviews={reviews}
-            avgRating={avgRating}
-            reviewCount={reviewCount}
+            deviceId={device.id}
+            deviceName={device.name}
+            initialSummary={reviewSummary}
+            initialReviews={firstReviews}
           />
           <RelatedDevices devices={relatedDevices} />
         </div>

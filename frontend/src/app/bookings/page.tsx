@@ -10,12 +10,10 @@ import { PackageSearch, Package, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CancelBookingDialog } from "@/components/bookings/cancel-booking-dialog";
-import { BookingReviewDisplay } from "@/components/reviews/booking-review-display";
-import { ReviewBookingDialog } from "@/components/reviews/review-booking-dialog";
+import { MyReviewPanel } from "@/components/reviews/my-review-panel";
 import { fetchBookings, type Booking, type BookingStatus } from "@/lib/bookings-api";
 import { BOOKING_STATUS_LABEL } from "@/lib/booking-format";
 import { formatDateTimeVi, formatVnd } from "@/lib/device-format";
-import { fetchReviewByBookingId } from "@/lib/reviews-api";
 import { useAuthStore } from "@/stores/auth-store";
 
 const FILTERS: { value: BookingStatus | "all"; label: string }[] = [
@@ -32,12 +30,6 @@ function BookingCard({ booking, onChanged }: { booking: Booking; onChanged: () =
   const canCancel = booking.status === "pending" || booking.status === "confirmed";
   const isCompleted = booking.status === "completed";
   const image = booking.device?.images?.[0];
-
-  const reviewQuery = useQuery({
-    queryKey: ["review", booking.id],
-    queryFn: () => fetchReviewByBookingId(booking.id),
-    enabled: isCompleted,
-  });
 
   return (
     <div className="rounded-2xl border border-border/60 bg-card/50 p-4">
@@ -81,16 +73,10 @@ function BookingCard({ booking, onChanged }: { booking: Booking; onChanged: () =
 
       {isCompleted && (
         <div className="mt-4 border-t border-border/60 pt-4">
-          {reviewQuery.isPending ? (
-            <Skeleton className="h-14 w-full rounded-lg" />
-          ) : reviewQuery.data ? (
-            <BookingReviewDisplay review={reviewQuery.data} />
-          ) : (
-            <ReviewBookingDialog
-              bookingId={booking.id}
-              onSubmitted={() => reviewQuery.refetch()}
-            />
-          )}
+          <MyReviewPanel
+            deviceId={booking.deviceId}
+            deviceName={booking.device?.name ?? "Thiết bị"}
+          />
         </div>
       )}
     </div>

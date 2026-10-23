@@ -175,11 +175,13 @@ describe('KnowledgeService', () => {
       const select = prisma.device.findMany.mock.calls[0][0].select;
       expect(Object.keys(select).sort()).toEqual(
         [
+          'avgRating',
           'category',
           'name',
           'originalPrice',
           'pricePerDay',
           'pricePerHour',
+          'reviewCount',
           'specs',
           'specSheet',
           'status',

@@ -1,74 +1,51 @@
 "use client";
 
+import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
+import { BadgeCheck, Package } from "lucide-react";
 import { StarRating } from "@/components/devices/star-rating";
+import type { FeaturedReview } from "@/lib/devices-api";
 
-// Chưa đủ dữ liệu review thật để làm social proof (seed data hiện gần như
-// chưa có review nào) — dùng testimonial mẫu hợp lý tạm thời, sẽ thay bằng
-// dữ liệu thật (GET /reviews) khi có đủ số lượng.
-const TESTIMONIALS = [
-  {
-    name: "Minh Anh",
-    role: "Content Creator",
-    quote:
-      "Thuê flycam quay video chỉ trong 5 phút đặt xong, giao nhận đúng hẹn. Chất lượng thiết bị rất tốt, sẽ tiếp tục dùng.",
-    rating: 5,
-  },
-  {
-    name: "Đức Huy",
-    role: "Sinh viên CNTT",
-    quote:
-      "Laptop thuê cho đợt thực tập vừa đủ mạnh, giá hợp lý hơn nhiều so với mua mới. Hoàn cọc nhanh gọn sau khi trả máy.",
-    rating: 5,
-  },
-  {
-    name: "Thu Trang",
-    role: "Nhiếp ảnh gia tự do",
-    quote:
-      "Máy ảnh và ống kính đều được kiểm tra kỹ trước khi giao, đúng như mô tả. Quy trình đặt thuê trên web rất trực quan.",
-    rating: 4,
-  },
-  {
-    name: "Quang Vinh",
-    role: "Chủ studio âm thanh",
-    quote:
-      "Thuê thiết bị âm thanh cho sự kiện gấp, đội ngũ hỗ trợ phản hồi rất nhanh. Chính sách hoàn cọc rõ ràng, minh bạch.",
-    rating: 5,
-  },
-  {
-    name: "Ngọc Bích",
-    role: "Streamer",
-    quote:
-      "Thuê kính VR trải nghiệm thử trước khi quyết định mua — dịch vụ đúng nhu cầu, giao diện web dễ dùng.",
-    rating: 5,
-  },
-];
-
-function TestimonialCard({
-  name,
-  role,
-  quote,
-  rating,
-}: (typeof TESTIMONIALS)[number]) {
+function TestimonialCard({ review }: { review: FeaturedReview }) {
   return (
     <div className="mx-3 flex w-[320px] shrink-0 flex-col gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-xl sm:w-[360px]">
-      <StarRating rating={rating} size={16} />
-      <p className="text-sm text-muted-foreground">&ldquo;{quote}&rdquo;</p>
+      <StarRating rating={review.rating} size={16} />
+      <p className="line-clamp-4 text-sm text-muted-foreground">&ldquo;{review.comment}&rdquo;</p>
       <div className="mt-auto flex items-center gap-3 pt-2">
         <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-          {name.charAt(0)}
+          {review.reviewerName.charAt(0)}
         </div>
-        <div>
-          <p className="text-sm font-medium text-foreground">{name}</p>
-          <p className="text-xs text-muted-foreground">{role}</p>
+        <div className="min-w-0">
+          <p className="flex items-center gap-1 text-sm font-medium text-foreground">
+            {review.reviewerName}
+            <BadgeCheck className="size-3.5 text-emerald-500" aria-label="Đã thuê thiết bị này" />
+          </p>
+          <Link
+            href={`/devices/${review.device.id}`}
+            className="flex items-center gap-1.5 truncate text-xs text-muted-foreground hover:text-primary"
+          >
+            <span className="relative size-5 shrink-0 overflow-hidden rounded bg-muted">
+              {review.device.image ? (
+                <Image src={review.device.image} alt="" fill sizes="20px" className="object-cover" />
+              ) : (
+                <Package className="size-5 p-0.5" />
+              )}
+            </span>
+            <span className="truncate">Đã thuê {review.device.name}</span>
+          </Link>
         </div>
       </div>
     </div>
   );
 }
 
-export function TestimonialsSection() {
-  const loop = [...TESTIMONIALS, ...TESTIMONIALS];
+/** Đánh giá thật 4–5★ mới nhất từ khách đã thuê — không có đánh giá nào thì ẩn cả mục. */
+export function TestimonialsSection({ reviews }: { reviews: FeaturedReview[] }) {
+  if (reviews.length === 0) return null;
+  // Nhân đôi để dải chạy ngang liền mạch; ít đánh giá quá thì nhân thêm cho đủ rộng.
+  const base = reviews.length < 4 ? [...reviews, ...reviews] : reviews;
+  const loop = [...base, ...base];
 
   return (
     <section className="relative py-16 sm:py-24">
@@ -83,15 +60,15 @@ export function TestimonialsSection() {
             Khách hàng nói gì về TechRent
           </h2>
           <p className="mt-3 text-muted-foreground">
-            Trải nghiệm thật từ những khách hàng đã thuê thiết bị.
+            Đánh giá thật từ khách đã thuê và trả thiết bị tại TechRent.
           </p>
         </motion.div>
       </div>
 
       <div className="group relative mt-10 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
         <div className="animate-marquee flex w-max group-hover:[animation-play-state:paused]">
-          {loop.map((testimonial, index) => (
-            <TestimonialCard key={`${testimonial.name}-${index}`} {...testimonial} />
+          {loop.map((review, index) => (
+            <TestimonialCard key={`${review.id}-${index}`} review={review} />
           ))}
         </div>
       </div>

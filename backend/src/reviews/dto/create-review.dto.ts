@@ -1,12 +1,10 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsInt, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
 
 export class CreateReviewDto {
-  @ApiProperty({
-    description: 'ID booking đã hoàn tất (completed) muốn đánh giá',
-  })
+  @ApiProperty({ description: 'Thiết bị muốn đánh giá (phải đã thuê và trả)' })
   @IsUUID()
-  bookingId: string;
+  deviceId: string;
 
   @ApiProperty({ minimum: 1, maximum: 5, example: 5 })
   @IsInt()
@@ -14,8 +12,10 @@ export class CreateReviewDto {
   @Max(5)
   rating: number;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty({ minLength: 10, maxLength: 1000 })
   @IsString()
-  comment?: string;
+  // Giới hạn thô chống payload quá lớn — độ dài thật (sau khi gọn khoảng trắng)
+  // và nội dung spam kiểm tra ở sanitizeReviewComment().
+  @MaxLength(2000)
+  comment: string;
 }

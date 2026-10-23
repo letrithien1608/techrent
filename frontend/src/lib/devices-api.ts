@@ -58,23 +58,35 @@ export interface Category {
   specTemplate?: SpecTemplateGroup[] | null;
 }
 
+/** Đánh giá công khai — tên người viết đã được backend che (VD "Nguyễn V. A"). */
 export interface Review {
   id: string;
-  bookingId: string;
   rating: number;
   comment: string | null;
   createdAt: string;
-  booking: { user: { name: string } };
+  editedAt: string | null;
+  reviewerName: string;
+  /** Luôn true: chỉ người đã thuê và trả thiết bị mới đánh giá được. */
+  verifiedRental: true;
+  rentedAt: string;
 }
+
+export interface FeaturedReview extends Review {
+  device: { id: string; name: string; image: string | null };
+}
+
+export interface ReviewSummary {
+  deviceId: string;
+  avgRating: number | null;
+  reviewCount: number;
+  distribution: Record<1 | 2 | 3 | 4 | 5, number>;
+}
+
+export type ReviewSort = "newest" | "highest" | "lowest";
 
 export interface PaginatedReviews {
   data: Review[];
   meta: { page: number; limit: number; total: number; totalPages: number };
-}
-
-export interface FetchReviewsResult {
-  result: PaginatedReviews | null;
-  hasError: boolean;
 }
 
 export interface FetchDevicesParams {
@@ -145,22 +157,43 @@ export async function fetchCategories(
   }
 }
 
+export interface FetchReviewsParams {
+  page?: number;
+  limit?: number;
+  sort?: ReviewSort;
+  rating?: number;
+}
+
+/** Danh sách đánh giá công khai của 1 thiết bị (dùng ở client, có lọc/sắp xếp/phân trang). */
 export async function fetchReviews(
   deviceId: string,
-  params: { page?: number; limit?: number } = {},
-): Promise<FetchReviewsResult> {
+  params: FetchReviewsParams = {},
+): Promise<PaginatedReviews> {
   const search = new URLSearchParams({ deviceId });
   if (params.page) search.set("page", String(params.page));
   if (params.limit) search.set("limit", String(params.limit));
+  if (params.sort) search.set("sort", params.sort);
+  if (params.rating) search.set("rating", String(params.rating));
+  const res = await fetch(`${API_URL}/reviews?${search.toString()}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return (await res.json()) as PaginatedReviews;
+}
 
+export async function fetchReviewSummary(deviceId: string): Promise<ReviewSummary> {
+  const res = await fetch(`${API_URL}/reviews/summary?deviceId=${deviceId}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return (await res.json()) as ReviewSummary;
+}
+
+/** Đánh giá tốt (4–5★) mới nhất cho trang chủ — lỗi thì trả mảng rỗng (ẩn section). */
+export async function fetchFeaturedReviews(): Promise<FeaturedReview[]> {
   try {
-    const res = await fetch(`${API_URL}/reviews?${search.toString()}`, {
-      next: { revalidate: 60 },
-    });
+    const res = await fetch(`${API_URL}/reviews/featured`, { next: { revalidate: 60 } });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const result = (await res.json()) as PaginatedReviews;
-    return { result, hasError: false };
+    return (await res.json()) as FeaturedReview[];
   } catch {
-    return { result: null, hasError: true };
+    return [];
   }
 }

@@ -7,10 +7,13 @@ import { SectionDivider } from "@/components/home/section-divider";
 import { SiteBackground } from "@/components/home/site-background";
 import { StatsSection } from "@/components/home/stats-section";
 import { TestimonialsSection } from "@/components/home/testimonials-section";
-import { fetchDevices } from "@/lib/devices-api";
+import { fetchDevices, fetchFeaturedReviews } from "@/lib/devices-api";
 
 export default async function Home() {
-  const { result, hasError } = await fetchDevices({ limit: 6 });
+  const [{ result, hasError }, featuredReviews] = await Promise.all([
+    fetchDevices({ limit: 6 }),
+    fetchFeaturedReviews(),
+  ]);
   const devices = result?.data ?? [];
   const totalDevices = result?.meta.total ?? 0;
   const deviceImages = devices
@@ -27,7 +30,7 @@ export default async function Home() {
       <HowItWorksSection />
       <SectionDivider />
       <FeaturedDevicesSection devices={devices} hasError={hasError} />
-      <TestimonialsSection />
+      <TestimonialsSection reviews={featuredReviews} />
       <SectionDivider />
       <CtaSection />
     </div>

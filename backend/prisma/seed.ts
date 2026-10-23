@@ -9,6 +9,7 @@ import {
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { readManifest, slugify, uploadedUrls } from '../scripts/device-images/manifest-store';
+import { seedDemoReviews } from './seed-reviews';
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -847,6 +848,8 @@ async function main() {
     }
     console.log('');
   }
+
+  await seedDemoReviews(prisma);
 
   const totalDevices = await prisma.device.count();
   const totalCategories = await prisma.category.count();
