@@ -26,24 +26,21 @@ import { RequestUser } from '../auth/interfaces/jwt-payload.interface';
 import { CancelBookingDto } from './dto/cancel-booking.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { BOOKING_TTL_JOB, BOOKING_TTL_QUEUE } from './bookings.constants';
+import {
+  calculateDeposit,
+  calculateLateFee,
+  calculateRefundPercentage,
+  calculateRentalPrice,
+  DEFAULT_BOOKING_TTL_MINUTES,
+  HOUR_MS,
+} from '../common/business-policy';
 import { buildContractContent } from './contract-template.util';
 
 export { BOOKING_TTL_QUEUE, BOOKING_TTL_JOB };
 
-// Tiền cọc = % GIÁ GỐC thiết bị (originalPrice — giá trị tài sản), KHÔNG PHẢI
-// % tổng tiền thuê (totalPrice) như cách tính cũ — đổi theo yêu cầu: cọc phải
-// phản ánh đúng giá trị tài sản đang giao cho khách giữ, không phụ thuộc thời
-// lượng thuê (thuê 1 giờ hay 1 tuần thì rủi ro mất/hỏng thiết bị là như nhau).
-const DEPOSIT_RATIO = 0.5;
-const HOUR_MS = 60 * 60 * 1000;
-const DAY_MS = 24 * HOUR_MS;
-// Phí trễ hạn LEO THANG (mục 4.2 mở rộng, 22/10 buổi 6) — tự đề xuất công thức
-// hợp lý: ngày trễ thứ N phạt `LATE_FEE_DAILY_RATIO * N` (lần giá thuê/ngày).
-// VD ngày 1 phạt 20% giá thuê/ngày, ngày 2 phạt THÊM 40% (tổng 2 ngày = 60%),
-// ngày 3 phạt thêm 60% (tổng 3 ngày = 120%)... — mức phạt MỖI NGÀY tăng dần
-// theo số ngày đã trễ, khuyến khích trả sớm càng nhiều càng tốt. Xem
-// `calculateLateFee()`.
-const LATE_FEE_DAILY_RATIO = 0.2;
+// Các con số chính sách (tỷ lệ cọc, phí trễ hạn leo thang, bậc hoàn cọc, cách
+// tính giá) nằm ở common/business-policy.ts — nguồn sự thật dùng chung với mẫu
+// hợp đồng và Trợ lý AI.
 
 const ACTIVE_BOOKING_STATUSES: BookingStatus[] = [
   BookingStatus.pending,
@@ -237,7 +234,7 @@ export class BookingsService {
           startTime,
           endTime,
         );
-        const depositAmount = Number(device.originalPrice) * DEPOSIT_RATIO;
+        const depositAmount = calculateDeposit(Number(device.originalPrice));
 
         return tx.booking.create({
           data: {
@@ -439,9 +436,7 @@ export class BookingsService {
       }),
       this.usersService.findByIdOrThrow(booking.userId),
     ]);
-    const encryptionKey = this.configService.get<string>(
-      'CCCD_ENCRYPTION_KEY',
-    );
+    const encryptionKey = this.configService.get<string>('CCCD_ENCRYPTION_KEY');
     const fullCccd = await this.usersService.revealCccd(
       booking.userId,
       encryptionKey!,
@@ -539,7 +534,7 @@ export class BookingsService {
     const device = await this.prisma.device.findUniqueOrThrow({
       where: { id: booking.deviceId },
     });
-    const lateFeeAmount = this.calculateLateFee(
+    const lateFeeAmount = calculateLateFee(
       new Date(),
       booking.endTime,
       Number(device.pricePerDay),
@@ -563,29 +558,6 @@ export class BookingsService {
     });
     await this.devicesCacheService.invalidateAll();
     return updated;
-  }
-
-  /**
-   * Phí trễ hạn LEO THANG — xem giải thích công thức ở hằng số
-   * `LATE_FEE_DAILY_RATIO` phía trên. Cộng dồn phạt của TẤT CẢ ngày đã trễ
-   * (không chỉ ngày cuối), CHẶN TRÊN ở đúng giá trị thiết bị (`deviceOriginalPrice`)
-   * — không phạt vượt quá giá trị tài sản đang tranh chấp, hợp lý về mặt pháp
-   * lý/kinh doanh (khách late-return cùng lắm chỉ "đáng" đền đúng giá thiết bị).
-   */
-  private calculateLateFee(
-    returnedAt: Date,
-    expectedEndTime: Date,
-    pricePerDay: number,
-    deviceOriginalPrice: number,
-  ): number {
-    const lateMs = returnedAt.getTime() - expectedEndTime.getTime();
-    if (lateMs <= 0) return 0;
-    const daysLate = Math.ceil(lateMs / DAY_MS);
-    let total = 0;
-    for (let day = 1; day <= daysLate; day++) {
-      total += pricePerDay * LATE_FEE_DAILY_RATIO * day;
-    }
-    return Math.min(total, deviceOriginalPrice);
   }
 
   /**
@@ -670,17 +642,15 @@ export class BookingsService {
     };
   }
 
-  /** Chính sách hoàn cọc — mục 4.2 Roadmap. */
+  /** Chính sách hoàn cọc — mục 4.2 Roadmap, bậc % nằm ở business-policy.ts. */
   private calculateRefundPercentage(
     startTime: Date,
     storeFault: boolean,
   ): number {
-    if (storeFault) return 100;
-
-    const hoursUntilStart = (startTime.getTime() - Date.now()) / HOUR_MS;
-    if (hoursUntilStart >= 24) return 100;
-    if (hoursUntilStart >= 6) return 50;
-    return 0;
+    return calculateRefundPercentage(
+      (startTime.getTime() - Date.now()) / HOUR_MS,
+      storeFault,
+    );
   }
 
   private calculatePrice(
@@ -689,13 +659,12 @@ export class BookingsService {
     start: Date,
     end: Date,
   ): number {
-    const durationMs = end.getTime() - start.getTime();
-    if (durationMs <= DAY_MS) {
-      const hours = Math.ceil(durationMs / HOUR_MS);
-      return Number(pricePerHour) * hours;
-    }
-    const days = Math.ceil(durationMs / DAY_MS);
-    return Number(pricePerDay) * days;
+    return calculateRentalPrice(
+      Number(pricePerHour),
+      Number(pricePerDay),
+      start,
+      end,
+    );
   }
 
   private assertOwnerOrStaff(booking: Booking, currentUser: RequestUser): void {
@@ -709,7 +678,8 @@ export class BookingsService {
 
   private async scheduleTtlExpiry(bookingId: string): Promise<void> {
     const ttlMinutes = Number(
-      this.configService.get<string>('BOOKING_TTL_MINUTES') ?? 5,
+      this.configService.get<string>('BOOKING_TTL_MINUTES') ??
+        DEFAULT_BOOKING_TTL_MINUTES,
     );
     await this.ttlQueue.add(
       BOOKING_TTL_JOB,

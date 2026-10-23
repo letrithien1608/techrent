@@ -5,6 +5,13 @@
 // (2) BookingsService.getContractForPrint() — sinh TẠM bản CCCD ĐẦY ĐỦ để in,
 //     KHÔNG BAO GIỜ lưu lại bản này (chỉ admin/staff gọi được, xem mục 7 Roadmap).
 
+import {
+  DEPOSIT_RATIO,
+  formatPercent,
+  LATE_FEE_DAILY_RATIO,
+  REFUND_TIERS,
+} from '../common/business-policy';
+
 const STORE_NAME = 'TechRent';
 const STORE_DESCRIPTION = 'Dịch vụ cho thuê thiết bị điện tử';
 
@@ -41,8 +48,12 @@ function formatDateTime(value: Date): string {
 
 export function buildContractContent(data: ContractTemplateData): string {
   const contractNo = data.bookingId.slice(0, 8).toUpperCase();
-  const lateFeeDay1 = formatVnd(data.devicePricePerDay * 0.2);
-  const lateFeeDay2 = formatVnd(data.devicePricePerDay * 0.2 * 2);
+  const lateFeeDay1 = formatVnd(data.devicePricePerDay * LATE_FEE_DAILY_RATIO);
+  const lateFeeDay2 = formatVnd(
+    data.devicePricePerDay * LATE_FEE_DAILY_RATIO * 2,
+  );
+  const lateStep = formatPercent(LATE_FEE_DAILY_RATIO);
+  const [fullTier, partialTier] = REFUND_TIERS;
 
   return `HỢP ĐỒNG THUÊ THIẾT BỊ
 Số hợp đồng: ${contractNo} (mã booking đầy đủ: ${data.bookingId})
@@ -66,7 +77,7 @@ Bên B (Bên thuê):
 
 ĐIỀU 4 — GIÁ THUÊ VÀ TIỀN CỌC
   - Tổng tiền thuê: ${formatVnd(data.totalPrice)}
-  - Tiền đặt cọc: ${formatVnd(data.depositAmount)} (tương đương 50% giá trị thiết bị, hoàn lại theo chính sách tại Điều 6)
+  - Tiền đặt cọc: ${formatVnd(data.depositAmount)} (tương đương ${formatPercent(DEPOSIT_RATIO)} giá trị thiết bị, hoàn lại theo chính sách tại Điều 6)
 
 ĐIỀU 5 — TRÁCH NHIỆM CỦA BÊN B
   1. Bên B có trách nhiệm bảo quản thiết bị trong tình trạng tốt, sử dụng đúng mục đích, không tự ý sửa chữa, tháo rời hoặc cho bên thứ ba thuê lại.
@@ -74,8 +85,8 @@ Bên B (Bên thuê):
   3. Bên B phải trả lại thiết bị đúng thời hạn nêu tại Điều 3, kèm đầy đủ phụ kiện đã nhận (nếu có).
 
 ĐIỀU 6 — PHẠT TRỄ HẠN VÀ HOÀN TRẢ TIỀN CỌC
-  1. Nếu trả thiết bị trễ hạn, Bên B phải chịu phạt LEO THANG theo từng ngày trễ: ngày trễ thứ 1 phạt ${lateFeeDay1} (20% giá thuê/ngày), ngày trễ thứ 2 phạt THÊM ${lateFeeDay2} (40% giá thuê/ngày), các ngày tiếp theo tiếp tục tăng thêm 20 điểm phần trăm mỗi ngày — tổng phí trễ hạn được cộng dồn qua tất cả các ngày trễ và KHÔNG vượt quá giá trị thiết bị nêu tại Điều 2.
-  2. Tiền cọc được hoàn lại theo chính sách: hoàn 100% nếu huỷ trước giờ nhận thiết bị tối thiểu 24 giờ; hoàn 50% nếu huỷ trong khoảng 6-24 giờ trước giờ nhận; không hoàn cọc nếu huỷ trong vòng 6 giờ trước giờ nhận hoặc sau khi đã nhận thiết bị, trừ trường hợp lỗi thuộc về Bên A.
+  1. Nếu trả thiết bị trễ hạn, Bên B phải chịu phạt LEO THANG theo từng ngày trễ: ngày trễ thứ 1 phạt ${lateFeeDay1} (${lateStep} giá thuê/ngày), ngày trễ thứ 2 phạt THÊM ${lateFeeDay2} (${formatPercent(LATE_FEE_DAILY_RATIO * 2)} giá thuê/ngày), các ngày tiếp theo tiếp tục tăng thêm ${lateStep.replace('%', '')} điểm phần trăm mỗi ngày — tổng phí trễ hạn được cộng dồn qua tất cả các ngày trễ và KHÔNG vượt quá giá trị thiết bị nêu tại Điều 2.
+  2. Tiền cọc được hoàn lại theo chính sách: hoàn ${fullTier.percentage}% nếu huỷ trước giờ nhận thiết bị tối thiểu ${fullTier.minHoursBeforeStart} giờ; hoàn ${partialTier.percentage}% nếu huỷ trong khoảng ${partialTier.minHoursBeforeStart}-${fullTier.minHoursBeforeStart} giờ trước giờ nhận; không hoàn cọc nếu huỷ trong vòng ${partialTier.minHoursBeforeStart} giờ trước giờ nhận hoặc sau khi đã nhận thiết bị, trừ trường hợp lỗi thuộc về Bên A.
   3. Trường hợp thiết bị có hư hỏng/thiếu hụt khi trả lại, Bên A có quyền trừ chi phí khắc phục vào tiền cọc trước khi hoàn trả phần còn lại (nếu có) cho Bên B.
 
 ĐIỀU 7 — XỬ LÝ KHI MẤT HOẶC CHIẾM GIỮ THIẾT BỊ

@@ -127,7 +127,9 @@ describe('BookingsService', () => {
       create: jest.fn().mockResolvedValue(undefined),
       createForRoles: jest.fn().mockResolvedValue(undefined),
     };
-    devicesCacheService = { invalidateAll: jest.fn().mockResolvedValue(undefined) };
+    devicesCacheService = {
+      invalidateAll: jest.fn().mockResolvedValue(undefined),
+    };
 
     service = new BookingsService(
       prisma as unknown as PrismaService,
@@ -206,9 +208,9 @@ describe('BookingsService', () => {
         Promise.resolve({ id: 'b1', ...args.data }),
       );
 
-      await expect(
-        service.create(customer.userId, validDto),
-      ).resolves.toEqual(expect.objectContaining({ id: 'b1' }));
+      await expect(service.create(customer.userId, validDto)).resolves.toEqual(
+        expect.objectContaining({ id: 'b1' }),
+      );
       expect(usersService.findByIdOrThrow).toHaveBeenCalledWith(
         customer.userId,
       );
@@ -358,7 +360,9 @@ describe('BookingsService', () => {
       tx.device.findUnique.mockResolvedValue(baseDevice);
       tx.booking.findFirst.mockResolvedValue(null);
       tx.booking.create.mockResolvedValue(baseBooking);
-      notificationsService.createForRoles.mockRejectedValue(new Error('DB down'));
+      notificationsService.createForRoles.mockRejectedValue(
+        new Error('DB down'),
+      );
 
       await expect(service.create(customer.userId, validDto)).resolves.toEqual(
         baseBooking,
@@ -704,9 +708,9 @@ describe('BookingsService', () => {
     it('ném NotFoundException nếu booking không tồn tại', async () => {
       prisma.booking.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.getContractForPrint('ghost'),
-      ).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.getContractForPrint('ghost')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
   });
 
