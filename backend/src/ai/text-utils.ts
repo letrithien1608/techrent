@@ -128,15 +128,26 @@ export const DEVICE_INTENT_PHRASES = [
 
 /** Nhu cầu → tên danh mục (chuẩn hoá) để gợi ý thiết bị phù hợp. */
 export const NEED_TO_CATEGORY: Record<string, string[]> = {
-  'do hoa': ['laptop', 'may tinh bang', 'pc mini pc'],
-  'dung phim': ['laptop', 'pc mini pc'],
-  'edit video': ['laptop', 'pc mini pc'],
+  'do hoa': ['laptop', 'may tinh bang'],
+  'dung phim': ['laptop'],
+  'edit video': ['laptop'],
   'lap trinh': ['laptop'],
   'van phong': ['laptop'],
-  'choi game': ['may choi game', 'phu kien gaming', 'laptop'],
-  gaming: ['may choi game', 'phu kien gaming'],
+  'choi game': [
+    'may choi game',
+    'may choi game cam tay',
+    'phu kien gaming',
+    'laptop',
+  ],
+  gaming: ['may choi game', 'may choi game cam tay', 'phu kien gaming'],
+  'cam tay': ['may choi game cam tay', 'gimbal chong rung'],
+  'steam deck': ['may choi game cam tay'],
+  'di du lich': ['may choi game cam tay', 'camera hanh dong'],
+  gimbal: ['gimbal chong rung'],
+  'chong rung': ['gimbal chong rung'],
+  'quay vlog': ['gimbal chong rung', 'camera hanh dong'],
   'chup anh': ['may anh', 'camera hanh dong'],
-  'quay phim': ['may anh', 'flycam', 'camera hanh dong'],
+  'quay phim': ['may anh', 'gimbal chong rung', 'flycam', 'camera hanh dong'],
   'quay video': ['may anh', 'camera hanh dong'],
   vlog: ['camera hanh dong', 'may anh'],
   'du lich': ['camera hanh dong', 'flycam'],
@@ -164,8 +175,6 @@ export const NEED_TO_CATEGORY: Record<string, string[]> = {
   ipad: ['may tinh bang'],
   've tranh': ['may tinh bang'],
   'man hinh': ['man hinh di dong'],
-  'may tinh de ban': ['pc mini pc'],
-  pc: ['pc mini pc'],
 };
 
 /** Ước lượng số token cho tiếng Việt (Qwen ~2.5 ký tự/token) — dùng để giữ ngân sách ngữ cảnh. */

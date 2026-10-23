@@ -46,6 +46,7 @@ export class DevicesController {
       status: query.status,
       sort: query.sort,
       search: query.search,
+      includeDiscontinued: query.includeDiscontinued,
     });
   }
 

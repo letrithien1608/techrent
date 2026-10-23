@@ -55,7 +55,7 @@ export default function AdminDevicesPage() {
 
   const categoriesQuery = useQuery({
     queryKey: ["categories"],
-    queryFn: fetchCategories,
+    queryFn: () => fetchCategories(),
   });
 
   const devicesQuery = useQuery({
@@ -67,6 +67,7 @@ export default function AdminDevicesPage() {
         search: search || undefined,
         categoryId: categoryId === "all" ? undefined : categoryId,
         status: status === "all" ? undefined : (status as DeviceStatus),
+        includeDiscontinued: true,
       }),
   });
 
@@ -191,6 +192,14 @@ export default function AdminDevicesPage() {
                           <span className="max-w-[220px] truncate font-medium">
                             {device.name}
                           </span>
+                          {device.isDiscontinued && (
+                            <span
+                              title="Ẩn khỏi trang khách, không nhận đặt mới — giữ lại vì có lịch sử đơn"
+                              className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                            >
+                              Ngừng kinh doanh
+                            </span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground">

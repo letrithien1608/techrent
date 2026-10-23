@@ -38,6 +38,8 @@ describe('DevicesService', () => {
     images: [],
     avgRating: null,
     reviewCount: 0,
+    isDiscontinued: false,
+    discontinuedAt: null,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
   };
 
@@ -59,7 +61,9 @@ describe('DevicesService', () => {
     // đường truy vấn DB thật như trước khi có cache — test riêng cho hành vi
     // cache hit/invalidate nằm trong describe('cache') bên dưới.
     devicesCacheService = {
-      buildKey: jest.fn((filter: any) => `devices:list:${JSON.stringify(filter)}`),
+      buildKey: jest.fn(
+        (filter: any) => `devices:list:${JSON.stringify(filter)}`,
+      ),
       get: jest.fn().mockResolvedValue(null),
       set: jest.fn().mockResolvedValue(undefined),
       invalidateAll: jest.fn().mockResolvedValue(undefined),
@@ -79,7 +83,11 @@ describe('DevicesService', () => {
       const result = await service.findAll({ page: 2, limit: 10 });
 
       expect(prisma.device.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: {}, skip: 10, take: 10 }),
+        expect.objectContaining({
+          where: { isDiscontinued: false },
+          skip: 10,
+          take: 10,
+        }),
       );
       expect(result.meta).toEqual({
         page: 2,
@@ -88,6 +96,17 @@ describe('DevicesService', () => {
         totalPages: 3,
       });
       expect(result.data).toEqual([baseDevice]);
+    });
+
+    it('mặc định ẩn thiết bị ngừng kinh doanh; trang admin truyền includeDiscontinued thì thấy đủ', async () => {
+      prisma.device.findMany.mockResolvedValue([]);
+      prisma.device.count.mockResolvedValue(0);
+
+      await service.findAll({ page: 1, limit: 20, includeDiscontinued: true });
+
+      expect(prisma.device.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: {} }),
+      );
     });
 
     it('lọc theo categoryId và status khi có truyền vào', async () => {
@@ -103,11 +122,19 @@ describe('DevicesService', () => {
 
       expect(prisma.device.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { categoryId: 'cat-1', status: DeviceStatus.maintenance },
+          where: {
+            isDiscontinued: false,
+            categoryId: 'cat-1',
+            status: DeviceStatus.maintenance,
+          },
         }),
       );
       expect(prisma.device.count).toHaveBeenCalledWith({
-        where: { categoryId: 'cat-1', status: DeviceStatus.maintenance },
+        where: {
+          isDiscontinued: false,
+          categoryId: 'cat-1',
+          status: DeviceStatus.maintenance,
+        },
       });
     });
 
@@ -152,7 +179,10 @@ describe('DevicesService', () => {
 
       expect(prisma.device.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { name: { contains: 'macbook', mode: 'insensitive' } },
+          where: {
+            isDiscontinued: false,
+            name: { contains: 'macbook', mode: 'insensitive' },
+          },
         }),
       );
     });
@@ -347,7 +377,10 @@ describe('DevicesService', () => {
     });
 
     it('create() xoá cache danh sách sau khi tạo thiết bị mới', async () => {
-      prisma.category.findUnique.mockResolvedValue({ id: 'cat-1', name: 'Laptop' });
+      prisma.category.findUnique.mockResolvedValue({
+        id: 'cat-1',
+        name: 'Laptop',
+      });
       prisma.device.create.mockResolvedValue(baseDevice);
 
       await service.create({
@@ -363,7 +396,10 @@ describe('DevicesService', () => {
 
     it('update() xoá cache danh sách dù CHỈ sửa tên (không đụng status)', async () => {
       prisma.device.findUnique.mockResolvedValue(baseDevice);
-      prisma.device.update.mockResolvedValue({ ...baseDevice, name: 'Tên mới' });
+      prisma.device.update.mockResolvedValue({
+        ...baseDevice,
+        name: 'Tên mới',
+      });
 
       await service.update(baseDevice.id, { name: 'Tên mới' });
 

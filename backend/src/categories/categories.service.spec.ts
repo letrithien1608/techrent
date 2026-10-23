@@ -45,9 +45,19 @@ describe('CategoriesService', () => {
       const result = await service.findAll();
 
       expect(prisma.category.findMany).toHaveBeenCalledWith({
+        where: undefined,
         orderBy: { name: 'asc' },
       });
       expect(result).toEqual([baseCategory]);
+    });
+
+    it('activeOnly (trang khách): chỉ danh mục còn thiết bị đang kinh doanh', async () => {
+      prisma.category.findMany.mockResolvedValue([]);
+      await service.findAll(true);
+      expect(prisma.category.findMany).toHaveBeenCalledWith({
+        where: { devices: { some: { isDiscontinued: false } } },
+        orderBy: { name: 'asc' },
+      });
     });
   });
 

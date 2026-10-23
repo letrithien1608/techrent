@@ -212,6 +212,11 @@ export class BookingsService {
         if (!device) {
           throw new NotFoundException('Không tìm thấy thiết bị');
         }
+        if (device.isDiscontinued) {
+          throw new BadRequestException(
+            'Thiết bị này đã ngừng cho thuê, vui lòng chọn thiết bị khác',
+          );
+        }
         if (
           device.status === DeviceStatus.broken ||
           device.status === DeviceStatus.maintenance

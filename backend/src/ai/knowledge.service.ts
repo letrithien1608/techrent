@@ -311,6 +311,8 @@ export class KnowledgeService implements OnModuleInit {
     }
     // CHỈ chọn trường công khai của thiết bị — không đụng bảng users/bookings.
     const rows = await this.prisma.device.findMany({
+      // Thiết bị ngừng kinh doanh không được gợi ý cho khách.
+      where: { isDiscontinued: false },
       select: {
         name: true,
         status: true,
@@ -352,8 +354,9 @@ function scoreDevice(device: DeviceSuggestion, paddedQuery: string): number {
   if (paddedQuery.includes(pad(category))) score += 8;
   for (const [need, categories] of Object.entries(NEED_TO_CATEGORY)) {
     if (categories.includes(category) && paddedQuery.includes(pad(need))) {
-      // Danh mục đầu tiên trong danh sách là phù hợp nhất với nhu cầu đó.
-      score += categories[0] === category ? 6 : 3;
+      // Danh mục đầu tiên trong danh sách là phù hợp nhất với nhu cầu đó — nặng
+      // hơn việc chỉ nhắc tên danh mục khác (VD "gimbal cho máy ảnh" → gimbal).
+      score += categories[0] === category ? 9 : 3;
     }
   }
   return score;

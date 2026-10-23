@@ -137,6 +137,11 @@ model Device {
   // tự aggregate mỗi lần GET /devices (tốn kém với danh sách phân trang). Xem
   // quyết định "KHÔNG làm" ban đầu rồi đổi ý ở CLAUDE.md — lý do trước đó là
   // thiếu dữ liệu thật, giờ triển khai đúng hướng denormalize đã ghi nhận.
+  // Ngừng kinh doanh (VD danh mục bị bỏ) nhưng thiết bị ĐÃ có lịch sử đơn/bảo
+  // trì nên không xoá cứng — ẩn khỏi trang khách, chặn đặt mới, giữ nguyên lịch
+  // sử đơn/hợp đồng/doanh thu. Xem backend/scripts/catalog/remove-categories.ts.
+  isDiscontinued Boolean     @default(false) @map("is_discontinued")
+  discontinuedAt DateTime?   @map("discontinued_at")
   avgRating     Float?       @map("avg_rating")
   reviewCount   Int          @default(0) @map("review_count")
 

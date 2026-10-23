@@ -21,6 +21,8 @@ export interface Device {
   /** Denormalize từ Review (backend tính lại mỗi khi có review mới) — `null` nếu chưa có đánh giá nào. */
   avgRating: number | null;
   reviewCount: number;
+  /** Ngừng kinh doanh — ẩn khỏi trang khách, chặn đặt mới (vẫn giữ lịch sử đơn). */
+  isDiscontinued?: boolean;
 }
 
 export interface PaginatedDevices {
@@ -65,6 +67,8 @@ export interface FetchDevicesParams {
   status?: DeviceStatus;
   sort?: DeviceSort;
   search?: string;
+  /** Chỉ trang quản trị: gồm cả thiết bị ngừng kinh doanh (trang khách luôn ẩn). */
+  includeDiscontinued?: boolean;
 }
 
 /**
@@ -81,6 +85,7 @@ export async function fetchDevices(
   if (params.status) search.set("status", params.status);
   if (params.sort) search.set("sort", params.sort);
   if (params.search) search.set("search", params.search);
+  if (params.includeDiscontinued) search.set("includeDiscontinued", "true");
 
   try {
     const res = await fetch(`${API_URL}/devices?${search.toString()}`, {
@@ -108,9 +113,12 @@ export async function fetchDevice(id: string): Promise<Device | null> {
   }
 }
 
-export async function fetchCategories(): Promise<Category[]> {
+/** `activeOnly` (trang khách): chỉ danh mục còn thiết bị đang kinh doanh. */
+export async function fetchCategories(
+  options: { activeOnly?: boolean } = {},
+): Promise<Category[]> {
   try {
-    const res = await fetch(`${API_URL}/categories`, {
+    const res = await fetch(`${API_URL}/categories${options.activeOnly ? "?activeOnly=true" : ""}`, {
       next: { revalidate: 300 },
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);

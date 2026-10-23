@@ -41,6 +41,7 @@ export class DevicesCacheService {
     status?: string;
     search?: string;
     sort?: string;
+    includeDiscontinued?: boolean;
   }): string {
     const parts = [
       filter.page,
@@ -49,6 +50,7 @@ export class DevicesCacheService {
       filter.status ?? '',
       filter.search ?? '',
       filter.sort ?? '',
+      filter.includeDiscontinued ? 'all' : '',
     ];
     return `${DevicesCacheService.KEY_PREFIX}${parts.join(':')}`;
   }

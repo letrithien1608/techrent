@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default async function DevicesPage() {
   const [categories, { result }] = await Promise.all([
-    fetchCategories(),
+    fetchCategories({ activeOnly: true }),
     fetchDevices({ limit: 1 }),
   ]);
   const totalDevices = result?.meta.total ?? 0;

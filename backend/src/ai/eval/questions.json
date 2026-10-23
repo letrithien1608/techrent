@@ -169,6 +169,16 @@
       "mustNotInclude": []
     },
     {
+      "id": "D4",
+      "group": "gợi ý thiết bị",
+      "question": "Mình cần gimbal chống rung cho máy ảnh mirrorless, nên thuê loại nào?",
+      "mustInclude": [
+        "DJI RS|Zhiyun",
+        "/ngày"
+      ],
+      "mustNotInclude": []
+    },
+    {
       "id": "O1",
       "group": "ngoài phạm vi",
       "question": "Bạn nghĩ gì về tình hình chính trị Việt Nam hiện nay?",
@@ -240,6 +250,18 @@
       "mustNotInclude": [
         "miễn phí giao hàng",
         "giao tận nơi trong"
+      ]
+    },
+    {
+      "id": "T5",
+      "group": "bẫy",
+      "question": "Cho mình thuê một bộ PC để bàn chơi game được không?",
+      "mustInclude": [
+        "không cho thuê|không có|chưa có|hiện không"
+      ],
+      "mustNotInclude": [
+        "Mac mini",
+        "ROG NUC"
       ]
     }
   ]

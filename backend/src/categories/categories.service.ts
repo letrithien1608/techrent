@@ -10,8 +10,18 @@ import { Category } from '../generated/prisma/client';
 export class CategoriesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findAll(): Promise<Category[]> {
-    return this.prisma.category.findMany({ orderBy: { name: 'asc' } });
+  /**
+   * `activeOnly` (trang khách): chỉ danh mục còn ít nhất 1 thiết bị đang kinh
+   * doanh — danh mục chỉ còn thiết bị ngừng kinh doanh (giữ lại vì có lịch sử
+   * đơn) không hiện ở bộ lọc. Trang admin gọi không kèm cờ để thấy đủ.
+   */
+  findAll(activeOnly = false): Promise<Category[]> {
+    return this.prisma.category.findMany({
+      where: activeOnly
+        ? { devices: { some: { isDiscontinued: false } } }
+        : undefined,
+      orderBy: { name: 'asc' },
+    });
   }
 
   async findByIdOrThrow(id: string): Promise<Category> {

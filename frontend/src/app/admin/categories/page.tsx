@@ -20,7 +20,7 @@ import { fetchCategories } from "@/lib/devices-api";
 
 export default function AdminCategoriesPage() {
   const queryClient = useQueryClient();
-  const categoriesQuery = useQuery({ queryKey: ["categories"], queryFn: fetchCategories });
+  const categoriesQuery = useQuery({ queryKey: ["categories"], queryFn: () => fetchCategories() });
 
   function handleChanged() {
     queryClient.invalidateQueries({ queryKey: ["categories"] });

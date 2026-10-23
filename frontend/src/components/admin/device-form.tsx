@@ -102,7 +102,7 @@ export function DeviceForm({ device }: { device?: Device }) {
     };
   }, [previews]);
 
-  const categoriesQuery = useQuery({ queryKey: ["categories"], queryFn: fetchCategories });
+  const categoriesQuery = useQuery({ queryKey: ["categories"], queryFn: () => fetchCategories() });
 
   const mutation = useMutation({
     mutationFn: async (payload: DevicePayload): Promise<DeviceFormMutationResult> => {

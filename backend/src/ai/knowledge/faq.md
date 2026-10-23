@@ -54,5 +54,8 @@ Không tự đổi được vì đây là dữ liệu định danh. Nếu nhập
 ## Đánh giá thiết bị thế nào?
 Sau khi đơn "Hoàn tất", vào "Đơn của tôi" bấm đánh giá, chấm 1-5 sao và viết nhận xét. Mỗi đơn đánh giá 1 lần.
 
+## TechRent có cho thuê PC, máy tính để bàn hay mini PC không?
+TechRent hiện KHÔNG cho thuê PC, máy tính để bàn và mini PC (thiết bị cồng kềnh, phải lắp đặt cố định, khó kiểm tra khi giao nhận). Nếu cần máy tính mạnh, bạn có thể thuê laptop cấu hình cao (danh mục Laptop) hoặc máy chơi game cầm tay.
+
 ## Có giao hàng tận nơi không?
 Mình chưa có thông tin về dịch vụ giao hàng; bạn vui lòng liên hệ nhân viên TechRent để được hỗ trợ.

@@ -67,7 +67,7 @@ export default function AdminMaintenancePage() {
   // sách thiết bị để tra tên hiển thị, KHÔNG cần sửa backend cho 1 trang phụ này.
   const devicesQuery = useQuery({
     queryKey: ["admin", "devices", "lookup"],
-    queryFn: () => fetchDevices({ limit: 100 }),
+    queryFn: () => fetchDevices({ limit: 100, includeDiscontinued: true }),
   });
 
   const deviceNameById = useMemo(() => {

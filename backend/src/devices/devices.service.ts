@@ -23,6 +23,7 @@ export interface ListDevicesFilter {
   status?: DeviceStatus;
   sort?: DeviceSort;
   search?: string;
+  includeDiscontinued?: boolean;
 }
 
 const deviceWithCategory = {
@@ -53,8 +54,17 @@ export class DevicesService {
       return cached;
     }
 
-    const { page, limit, categoryId, status, sort, search } = filter;
+    const {
+      page,
+      limit,
+      categoryId,
+      status,
+      sort,
+      search,
+      includeDiscontinued,
+    } = filter;
     const where: Prisma.DeviceWhereInput = {
+      ...(includeDiscontinued ? {} : { isDiscontinued: false }),
       ...(categoryId ? { categoryId } : {}),
       ...(status ? { status } : {}),
       ...(search ? { name: { contains: search, mode: 'insensitive' } } : {}),

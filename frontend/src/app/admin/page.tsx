@@ -155,7 +155,7 @@ function buildTopDevices(bookings: Booking[]) {
 export default function AdminDashboardPage() {
   const devicesQuery = useQuery({
     queryKey: ["admin", "devices", "stats"],
-    queryFn: () => fetchDevices({ limit: STATS_FETCH_LIMIT }),
+    queryFn: () => fetchDevices({ limit: STATS_FETCH_LIMIT, includeDiscontinued: true }),
   });
 
   const bookingsQuery = useQuery({

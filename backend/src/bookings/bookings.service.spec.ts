@@ -265,6 +265,18 @@ describe('BookingsService', () => {
       },
     );
 
+    it('chặn đặt thiết bị đã ngừng kinh doanh, không tạo đơn', async () => {
+      tx.device.findUnique.mockResolvedValue({
+        ...baseDevice,
+        isDiscontinued: true,
+      });
+
+      await expect(service.create(customer.userId, validDto)).rejects.toThrow(
+        'ngừng cho thuê',
+      );
+      expect(tx.booking.create).not.toHaveBeenCalled();
+    });
+
     it('ném ConflictException nếu trùng lịch với booking đang active', async () => {
       tx.device.findUnique.mockResolvedValue(baseDevice);
       tx.booking.findFirst.mockResolvedValue(baseBooking);

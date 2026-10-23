@@ -32,9 +32,10 @@ interface DeviceSeed {
    * Ảnh thật (Unsplash/Pexels, link CDN trực tiếp) khớp đúng model/loại thiết
    * bị — xem CLAUDE.md mục "Đã hoàn thành" buổi mở rộng seed data để biết
    * cách đã chọn ảnh (ưu tiên đúng model, fallback đúng loại nếu không có
-   * ảnh model cụ thể).
+   * ảnh model cụ thể). Tuỳ chọn: thiết bị mới chưa có thì để trống, ảnh bổ
+   * sung bằng backend/scripts/device-images/.
    */
-  imageUrl: string;
+  imageUrl?: string;
 }
 
 /** Format câu mô tả chi tiết đồng nhất cho mọi thiết bị — tránh lặp cấu trúc văn bản tay 45 lần. */
@@ -745,37 +746,109 @@ const CATEGORIES: CategorySeed[] = [
       },
     ],
   },
+  // 2 danh mục MỚI (23/10 buổi 3) thay cho "PC & Mini PC" đã bỏ (máy để bàn
+  // cồng kềnh, phải lắp đặt màn hình/bàn phím, khó kiểm tra khi giao nhận).
+  // Ảnh do backend/scripts/device-images/ bổ sung (Phần 4) — chưa có thì để trống.
   {
-    name: 'PC & Mini PC',
-    description: 'Máy tính để bàn, mini PC, PC workstation cho gaming/dựng phim di động',
+    name: 'Gimbal & chống rung',
+    description: 'Gimbal cầm tay chống rung cho máy ảnh và điện thoại — quay phim, vlog, sự kiện',
     devices: [
       {
-        name: 'Apple Mac mini M4',
-        specs: { chip: 'Apple M4', ram: '16GB', storage: '512GB SSD' },
-        pricePerHour: 50000,
-        pricePerDay: 320000,
-        originalPrice: 16500000,
+        name: 'DJI RS 4',
+        specs: { payload: '3 kg', battery: '12 giờ', weight: '1,066 kg' },
+        pricePerHour: 40000,
+        pricePerDay: 250000,
+        originalPrice: 12990000,
         detailedDescription: desc({
-          condition: 'Máy mới 97%, chạy mát và êm, hiệu năng mạnh cho công việc/dựng phim nhẹ',
-          accessories: 'sạc gốc, cáp nguồn',
-          year: 2024,
-          warrantyMonths: 8,
-        }),
-        imageUrl: 'https://images.unsplash.com/photo-1738834909158-970e8853052c?w=800&q=80&auto=format&fit=crop',
-      },
-      {
-        name: 'ASUS ROG NUC 2024',
-        specs: { cpu: 'Intel Core Ultra 9', gpu: 'RTX 4070', ram: '32GB', storage: '1TB SSD' },
-        pricePerHour: 75000,
-        pricePerDay: 480000,
-        originalPrice: 35000000,
-        detailedDescription: desc({
-          condition: 'Máy mới 95%, hiệu năng gaming/dựng phim mạnh, tản nhiệt tốt dù kích thước nhỏ gọn',
-          accessories: 'sạc gốc, cáp HDMI',
+          condition: 'Máy mới 96%, 3 trục chạy êm, đã cân chỉnh sẵn',
+          accessories: 'tay cầm pin BG30, tấm gắn máy ảnh, chân tripod nhựa, cáp sạc, túi đựng',
           year: 2024,
           warrantyMonths: 9,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1626218174358-7769486c4b79?w=800&q=80&auto=format&fit=crop',
+      },
+      {
+        name: 'DJI RS 3 Mini',
+        specs: { payload: '2 kg', battery: '10 giờ', weight: '795 g' },
+        pricePerHour: 30000,
+        pricePerDay: 180000,
+        originalPrice: 8490000,
+        detailedDescription: desc({
+          condition: 'Máy mới 95%, nhỏ gọn phù hợp máy ảnh mirrorless kèm ống kính gọn nhẹ',
+          accessories: 'tấm gắn máy ảnh, chân tripod nhựa, cáp sạc USB-C, túi đựng',
+          year: 2023,
+          warrantyMonths: 6,
+        }),
+      },
+      {
+        name: 'DJI Osmo Mobile 6',
+        specs: { payload: '290 g', battery: '6 giờ 24 phút', weight: '309 g' },
+        pricePerHour: 15000,
+        pricePerDay: 80000,
+        originalPrice: 3290000,
+        detailedDescription: desc({
+          condition: 'Máy mới 95%, gậy nối dài và kẹp điện thoại nam châm hoạt động tốt',
+          accessories: 'kẹp điện thoại nam châm, chân tripod mini, cáp sạc, túi đựng',
+          year: 2023,
+          warrantyMonths: 6,
+        }),
+      },
+      {
+        name: 'Zhiyun Crane-M3S',
+        specs: { payload: '1,2 kg', battery: '10 giờ', weight: '700 g' },
+        pricePerHour: 25000,
+        pricePerDay: 130000,
+        originalPrice: 5990000,
+        detailedDescription: desc({
+          condition: 'Máy mới 94%, có đèn LED tích hợp, dùng được cho máy ảnh nhỏ, action cam và điện thoại',
+          accessories: 'tấm gắn nhanh, kẹp điện thoại, chân tripod, cáp sạc, túi đựng',
+          year: 2024,
+          warrantyMonths: 8,
+        }),
+      },
+    ],
+  },
+  {
+    name: 'Máy chơi game cầm tay',
+    description: 'Máy chơi game PC cầm tay — chơi game AAA mọi nơi, đi du lịch, giải trí cuối tuần',
+    devices: [
+      {
+        name: 'Steam Deck OLED 512GB',
+        specs: { chip: 'AMD APU 6 nm', ram: '16GB LPDDR5', screen: '7,4" OLED 90Hz' },
+        pricePerHour: 40000,
+        pricePerDay: 250000,
+        originalPrice: 15500000,
+        detailedDescription: desc({
+          condition: 'Máy mới 96%, màn hình OLED không điểm chết, nút và cần analog nhạy',
+          accessories: 'sạc 45W, bao đựng chống sốc',
+          year: 2024,
+          warrantyMonths: 9,
+        }),
+      },
+      {
+        name: 'ASUS ROG Ally X',
+        specs: { chip: 'AMD Ryzen Z1 Extreme', ram: '24GB LPDDR5X', screen: '7" 120Hz' },
+        pricePerHour: 50000,
+        pricePerDay: 320000,
+        originalPrice: 21990000,
+        detailedDescription: desc({
+          condition: 'Máy mới 97%, chạy Windows 11, pin 80Wh dùng lâu',
+          accessories: 'sạc 65W, bao đựng',
+          year: 2024,
+          warrantyMonths: 10,
+        }),
+      },
+      {
+        name: 'Lenovo Legion Go',
+        specs: { chip: 'AMD Ryzen Z1 Extreme', ram: '16GB LPDDR5X', screen: '8,8" QHD+ 144Hz' },
+        pricePerHour: 45000,
+        pricePerDay: 280000,
+        originalPrice: 17990000,
+        detailedDescription: desc({
+          condition: 'Máy mới 95%, tay cầm tháo rời hoạt động tốt, có chế độ chuột FPS',
+          accessories: 'sạc 65W, bao đựng, chân đỡ',
+          year: 2024,
+          warrantyMonths: 8,
+        }),
       },
     ],
   },
@@ -812,7 +885,7 @@ async function seedDevice(categoryId: string, device: DeviceSeed) {
       return;
     }
 
-    if (!alreadyMigrated) {
+    if (!alreadyMigrated && device.imageUrl) {
       console.log(`  🔄 Cập nhật ảnh thật cho thiết bị đã có: ${device.name}...`);
       const imageUrl = await uploadService.uploadFromUrl(device.imageUrl, publicId);
       await prisma.device.update({
@@ -842,7 +915,9 @@ async function seedDevice(categoryId: string, device: DeviceSeed) {
   }
 
   console.log(`  ⬆  Upload ảnh cho: ${device.name}...`);
-  const imageUrl = await uploadService.uploadFromUrl(device.imageUrl, publicId);
+  const imageUrl = device.imageUrl
+    ? await uploadService.uploadFromUrl(device.imageUrl, publicId)
+    : null;
 
   await prisma.device.create({
     data: {
@@ -854,7 +929,7 @@ async function seedDevice(categoryId: string, device: DeviceSeed) {
       originalPrice: device.originalPrice,
       detailedDescription: device.detailedDescription,
       status: device.status ?? DeviceStatus.available,
-      images: [imageUrl],
+      images: imageUrl ? [imageUrl] : [],
     },
   });
   console.log(`  ✅ ${device.name} (${imageUrl})`);

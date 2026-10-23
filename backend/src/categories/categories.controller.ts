@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Public } from '../auth/decorators/public.decorator';
@@ -24,8 +25,9 @@ export class CategoriesController {
 
   @Public()
   @Get()
-  findAll() {
-    return this.categoriesService.findAll();
+  findAll(@Query('activeOnly') activeOnly?: string) {
+    // Query đơn giản 1 cờ — so sánh chuỗi trực tiếp (không dùng @Type(Boolean), xem mục 2 CLAUDE.md).
+    return this.categoriesService.findAll(activeOnly === 'true');
   }
 
   @Public()

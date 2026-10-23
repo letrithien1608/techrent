@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsEnum,
   IsIn,
   IsInt,
@@ -64,4 +65,14 @@ export class ListDevicesQueryDto {
   @IsOptional()
   @IsIn(DEVICE_SORT_VALUES)
   sort?: DeviceSort;
+
+  // Trang khách KHÔNG truyền → ẩn thiết bị ngừng kinh doanh. Trang admin truyền
+  // true để vẫn quản lý được thiết bị cũ còn lịch sử đơn. (Không dùng @Type(Boolean) — xem mục 2 CLAUDE.md.)
+  @ApiPropertyOptional({
+    description: 'Gồm cả thiết bị đã ngừng kinh doanh (trang quản trị)',
+  })
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  includeDiscontinued?: boolean;
 }
