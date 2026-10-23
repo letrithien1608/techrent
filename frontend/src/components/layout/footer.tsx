@@ -13,6 +13,7 @@ const PRODUCT_LINKS = [
 const SUPPORT_LINKS = [
   { label: "Trang chủ", href: "/" },
   { label: "Đơn của tôi", href: "/bookings" },
+  { label: "Chính sách thuê", href: "/policies" },
 ];
 
 // Icon "kết nối" chỉ mang tính trang trí (dự án đồ án chưa có kênh mạng xã

@@ -2,41 +2,23 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { useMutation } from "@tanstack/react-query";
+import { usePathname } from "next/navigation";
 import { useMotionValueEvent, useScroll } from "framer-motion";
-import { LogOut, Settings, Ticket, User as UserIcon } from "lucide-react";
-import { toast } from "sonner";
+import { User as UserIcon } from "lucide-react";
 import { cn } from "cn";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { AccountMenu } from "@/components/account/account-menu";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { NotificationBell } from "@/components/notifications/notification-bell";
-import { logoutRequest } from "@/lib/auth-api";
 import { useAuthStore } from "@/stores/auth-store";
 
-const ROLE_LABEL: Record<string, string> = {
-  customer: "Khách hàng",
-  staff: "Nhân viên",
-  admin: "Quản trị viên",
-};
-
-function initialsOf(name: string): string {
-  return name.trim().charAt(0).toUpperCase() || "?";
-}
+const NAV_LINKS = [
+  { href: "/devices", label: "Thiết bị" },
+  { href: "/policies", label: "Chính sách thuê" },
+];
 
 export function Header() {
-  const router = useRouter();
   const pathname = usePathname();
-  const { user, hasHydrated, clearAuth } = useAuthStore();
+  const { user, hasHydrated } = useAuthStore();
   const [isScrolled, setIsScrolled] = useState(false);
 
   const { scrollY } = useScroll();
@@ -44,18 +26,8 @@ export function Header() {
     setIsScrolled(latest > 8);
   });
 
-  const logoutMutation = useMutation({
-    mutationFn: logoutRequest,
-    onSettled: () => {
-      clearAuth();
-      toast.success("Đã đăng xuất");
-      router.push("/");
-    },
-  });
-
   // Trang Admin có chrome riêng (sidebar + topbar) — không cần Header khách hàng.
-  // Đặt SAU mọi hook (useMutation ở trên) để không phá vỡ quy tắc "hook cùng thứ
-  // tự mỗi lần render" — early return trước khi gọi hook sẽ lỗi rules-of-hooks.
+  // Đặt SAU mọi hook để không phá vỡ quy tắc "hook cùng thứ tự mỗi lần render".
   if (pathname?.startsWith("/admin")) {
     return null;
   }
@@ -70,7 +42,7 @@ export function Header() {
       )}
     >
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-6">
           <Link
             href="/"
             className="flex items-center gap-2 font-heading text-lg font-semibold tracking-tight"
@@ -81,13 +53,25 @@ export function Header() {
             Tech<span className="text-primary">Rent</span>
           </Link>
 
-          <nav className="hidden items-center gap-6 text-sm font-medium sm:flex">
-            <Link
-              href="/devices"
-              className="text-foreground/80 transition-colors hover:text-foreground"
-            >
-              Thiết bị
-            </Link>
+          <nav className="hidden items-center gap-1 text-[15px] font-medium sm:flex">
+            {NAV_LINKS.map((link) => {
+              const active = pathname === link.href || pathname?.startsWith(`${link.href}/`);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "rounded-lg px-3 py-1.5 outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50",
+                    active
+                      ? "bg-primary/10 text-primary"
+                      : "text-foreground/75 hover:bg-muted/60 hover:text-foreground",
+                  )}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
           </nav>
         </div>
 
@@ -95,43 +79,7 @@ export function Header() {
           {!hasHydrated ? null : user ? (
             <>
               <NotificationBell />
-              <DropdownMenu>
-                <DropdownMenuTrigger className="rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
-                  <Avatar>
-                    <AvatarFallback>{initialsOf(user.name)}</AvatarFallback>
-                  </Avatar>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" sideOffset={8}>
-                  <DropdownMenuGroup>
-                    <DropdownMenuLabel className="flex flex-col gap-0.5 px-2 py-1.5">
-                      <span className="text-sm font-medium text-foreground">
-                        {user.name}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {ROLE_LABEL[user.role] ?? user.role}
-                      </span>
-                    </DropdownMenuLabel>
-                  </DropdownMenuGroup>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem render={<Link href="/profile" />}>
-                    <Settings />
-                    Tài khoản của tôi
-                  </DropdownMenuItem>
-                  <DropdownMenuItem render={<Link href="/bookings" />}>
-                    <Ticket />
-                    Đơn của tôi
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    variant="destructive"
-                    disabled={logoutMutation.isPending}
-                    onClick={() => logoutMutation.mutate()}
-                  >
-                    <LogOut />
-                    Đăng xuất
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <AccountMenu user={user} />
             </>
           ) : (
             <>

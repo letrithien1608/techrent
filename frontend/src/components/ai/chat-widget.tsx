@@ -211,7 +211,7 @@ export function ChatWidget() {
               </Button>
             </header>
 
-            <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4 text-sm">
+            <div ref={scrollRef} className="scrollbar-thin flex-1 space-y-3 overflow-y-auto px-4 py-4 text-sm">
               <div className="rounded-2xl rounded-tl-sm bg-muted/60 px-3.5 py-2.5">
                 Chào bạn 👋 Mình là trợ lý AI của TechRent. Mình có thể giải đáp về tiền cọc, phí trễ hạn,
                 quy trình thuê, xử lý sự cố và gợi ý thiết bị phù hợp.

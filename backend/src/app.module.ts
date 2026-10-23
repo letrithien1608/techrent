@@ -12,6 +12,7 @@ import { DevicesModule } from './devices/devices.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { PaymentsModule } from './payments/payments.module';
+import { PoliciesModule } from './policies/policies.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { RedisModule } from './redis/redis.module';
@@ -53,6 +54,7 @@ import { UsersModule } from './users/users.module';
     MaintenanceModule,
     ReviewsModule,
     AiModule,
+    PoliciesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
