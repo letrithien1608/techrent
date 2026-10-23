@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { ChatWidget } from "@/components/ai/chat-widget";
 import { ScrollProgressBar } from "@/components/layout/scroll-progress-bar";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { QueryProvider } from "@/providers/query-provider";
@@ -37,6 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <Header />
             <main className="flex flex-1 flex-col">{children}</main>
             <Footer />
+            <ChatWidget />
             <Toaster richColors position="top-center" />
           </QueryProvider>
         </ThemeProvider>
