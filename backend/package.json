@@ -17,7 +17,9 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json --forceExit"
+    "test:e2e": "jest --config ./test/jest-e2e.json --forceExit",
+    "ai:eval": "ts-node --transpile-only src/ai/eval/run-eval.ts",
+    "ai:bench": "ts-node --transpile-only src/ai/eval/run-bench.ts"
   },
   "dependencies": {
     "@nestjs/bullmq": "^11.0.5",

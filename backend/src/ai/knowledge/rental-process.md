@@ -1,5 +1,15 @@
 # Quy trình thuê thiết bị TechRent
 
+## Tóm tắt các bước thuê thiết bị
+1. Đăng ký tài khoản (email, số điện thoại, số CCCD).
+2. Xác thực danh tính: nộp ảnh CCCD mặt trước, mặt sau và ảnh chân dung ở trang "Tài khoản của tôi".
+3. Chọn thiết bị ở trang "Thiết bị".
+4. Chọn ngày giờ nhận/trả và bấm "Đặt thuê ngay" (đơn được giữ chỗ {{BOOKING_TTL_MINUTES}} phút).
+5. Thanh toán tiền cọc ({{DEPOSIT_RATE}} giá trị thiết bị) qua VNPay.
+6. Đến nhận máy: nhân viên đối chiếu CCCD, bạn ký hợp đồng và kiểm tra máy.
+7. Trả máy đúng hạn kèm đủ phụ kiện.
+8. Nhận hoàn cọc và đánh giá thiết bị.
+
 ## Bước 1: Đăng ký tài khoản
 - Đăng ký ở trang "Đăng ký" với họ tên, email, mật khẩu (tối thiểu 8 ký tự), số điện thoại (10 số, bắt đầu bằng 0) và số CCCD (12 số).
 - Mỗi số CCCD và mỗi số điện thoại chỉ dùng được cho 1 tài khoản.

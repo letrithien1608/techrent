@@ -20,6 +20,13 @@ import {
   OllamaClient,
   OllamaUnavailableError,
 } from './ollama.client';
+import {
+  findUnsafeOutput,
+  type Guardrail,
+  INJECTION_REPLY,
+  isPromptInjection,
+  OUTPUT_HOLDBACK_CHARS,
+} from './guardrails';
 import { buildMessages } from './prompts';
 
 export const AI_UNAVAILABLE_MESSAGE =
@@ -35,9 +42,6 @@ const GENERATION_OPTIONS = {
 /** Chừa thêm vài trăm token cho định dạng chat template của model. */
 const PROMPT_SAFETY_MARGIN = 200;
 const HEALTH_CACHE_MS = 10_000;
-/** Hán tự, kana Nhật, Hangul Hàn. */
-const CJK_PATTERN = /[぀-ヿ㐀-鿿가-힯＀-￯]/;
-
 export interface ChatStats {
   ttftMs: number | null;
   totalMs: number;
@@ -46,8 +50,8 @@ export interface ChatStats {
   promptTokens: number | null;
   knowledgeChunks: number;
   devices: number;
-  /** true nếu câu trả lời bị cắt vì model chuyển sang ngôn ngữ khác. */
-  truncated: boolean;
+  /** Lớp chặn phía server đã can thiệp (null = câu trả lời đi thẳng từ model). */
+  guardrail: Guardrail | null;
 }
 
 export type ChatStreamEvent =
@@ -122,6 +126,13 @@ export class AiService implements OnApplicationBootstrap {
       throw new ServiceUnavailableException(AI_UNAVAILABLE_MESSAGE);
     }
     const startedAt = Date.now();
+    const who = user ? 'member' : 'guest';
+    if (isPromptInjection(dto.message)) {
+      this.logger.warn(
+        `AI chat ${who}: chặn yêu cầu đổi vai trò/xem prompt (msgLen=${dto.message.length})`,
+      );
+      return this.cannedReply(INJECTION_REPLY, startedAt);
+    }
     const { references, knowledgeChunks, devices } = await this.buildReferences(
       dto.message,
     );
@@ -155,7 +166,7 @@ export class AiService implements OnApplicationBootstrap {
       startedAt,
       knowledgeChunks,
       devices,
-      who: user ? 'member' : 'guest',
+      who,
       messageLength: dto.message.length,
       historyLength: dto.history?.length ?? 0,
     });
@@ -195,12 +206,38 @@ export class AiService implements OnApplicationBootstrap {
       );
     }
     return {
-      references: parts.join('\n\n'),
+      references: [...parts, ...chunks.map(formatChunk)].join('\n\n'),
       knowledgeChunks: 1 + chunks.length,
       devices: devices?.length ?? 0,
     };
   }
 
+  private async *cannedReply(
+    text: string,
+    startedAt: number,
+  ): AsyncGenerator<ChatStreamEvent> {
+    yield { type: 'token', content: text };
+    yield {
+      type: 'done',
+      stats: {
+        ttftMs: Date.now() - startedAt,
+        totalMs: Date.now() - startedAt,
+        evalCount: 0,
+        tokensPerSecond: null,
+        promptTokens: null,
+        knowledgeChunks: 0,
+        devices: 0,
+        guardrail: 'prompt-injection',
+      },
+    };
+  }
+
+  /**
+   * Chuyển chunk Ollama thành event cho client. Giữ lại vài ký tự cuối
+   * (OUTPUT_HOLDBACK_CHARS) trước khi gửi để kịp phát hiện dấu hiệu lộ prompt
+   * nằm vắt qua 2 chunk; gặp nội dung không an toàn thì cắt tại đó và huỷ
+   * luôn request Ollama (qua `stream.return()`).
+   */
   private async *relay(
     stream: AsyncGenerator<OllamaChatChunk>,
     meta: {
@@ -213,59 +250,71 @@ export class AiService implements OnApplicationBootstrap {
     },
   ): AsyncGenerator<ChatStreamEvent> {
     let ttftMs: number | null = null;
-    let outputChars = 0;
+    let text = '';
+    let sent = 0;
+    const flush = (until: number): ChatStreamEvent | null => {
+      if (until <= sent) return null;
+      const content = text.slice(sent, until);
+      sent = until;
+      ttftMs ??= Date.now() - meta.startedAt;
+      return { type: 'token', content };
+    };
+    const baseStats = () => ({
+      ttftMs,
+      totalMs: Date.now() - meta.startedAt,
+      knowledgeChunks: meta.knowledgeChunks,
+      devices: meta.devices,
+    });
+
     try {
       for await (const chunk of stream) {
-        let content = chunk.message?.content ?? '';
-        // Qwen thỉnh thoảng "trôi" sang tiếng Trung giữa câu — cắt tại ký tự
-        // CJK đầu tiên, dừng sinh tiếp (huỷ luôn request Ollama qua return()).
-        const cjkIndex = content.search(CJK_PATTERN);
-        if (cjkIndex >= 0) content = content.slice(0, cjkIndex);
-        if (content) {
-          ttftMs ??= Date.now() - meta.startedAt;
-          outputChars += content.length;
-          yield { type: 'token', content };
-        }
-        if (cjkIndex >= 0) {
+        text += chunk.message?.content ?? '';
+        const unsafe = findUnsafeOutput(text);
+        if (unsafe) {
+          const head = flush(unsafe.index);
+          if (head) yield head;
           await stream.return(undefined);
+          if (unsafe.reason === 'internal-leak') {
+            const separator = sent > 0 ? '\n\n' : '';
+            yield { type: 'token', content: separator + INJECTION_REPLY };
+          }
           this.logger.warn(
-            `AI chat ${meta.who}: cắt câu trả lời do lẫn ký tự không phải tiếng Việt (outChars=${outputChars})`,
+            `AI chat ${meta.who}: cắt câu trả lời (${unsafe.reason}) sau ${sent} ký tự`,
           );
           yield {
             type: 'done',
             stats: {
-              ttftMs,
-              totalMs: Date.now() - meta.startedAt,
+              ...baseStats(),
               evalCount: 0,
               tokensPerSecond: null,
               promptTokens: null,
-              knowledgeChunks: meta.knowledgeChunks,
-              devices: meta.devices,
-              truncated: true,
+              guardrail: unsafe.reason,
             },
           };
           return;
         }
+        const event = flush(
+          chunk.done ? text.length : text.length - OUTPUT_HOLDBACK_CHARS,
+        );
+        if (event) yield event;
+
         if (chunk.done) {
           const evalCount = chunk.eval_count ?? 0;
           const stats: ChatStats = {
-            ttftMs,
-            totalMs: Date.now() - meta.startedAt,
+            ...baseStats(),
             evalCount,
             tokensPerSecond: chunk.eval_duration
               ? Number((evalCount / (chunk.eval_duration / 1e9)).toFixed(2))
               : null,
             promptTokens: chunk.prompt_eval_count ?? null,
-            knowledgeChunks: meta.knowledgeChunks,
-            devices: meta.devices,
-            truncated: false,
+            guardrail: null,
           };
           // KHÔNG log nội dung tin nhắn — chỉ độ dài và số liệu hiệu năng.
           this.logger.log(
             `AI chat ${meta.who}: msgLen=${meta.messageLength} history=${meta.historyLength} ` +
               `chunks=${meta.knowledgeChunks} devices=${meta.devices} ttft=${ttftMs}ms ` +
               `total=${stats.totalMs}ms promptTokens=${stats.promptTokens} ` +
-              `evalTokens=${evalCount} tok/s=${stats.tokensPerSecond} outChars=${outputChars}`,
+              `evalTokens=${evalCount} tok/s=${stats.tokensPerSecond} outChars=${text.length}`,
           );
           yield { type: 'done', stats };
           return;
@@ -277,7 +326,7 @@ export class AiService implements OnApplicationBootstrap {
     } catch (error) {
       if (error instanceof ChatAbortedError) {
         this.logger.log(
-          `AI chat ${meta.who}: client huỷ sau ${Date.now() - meta.startedAt}ms (outChars=${outputChars})`,
+          `AI chat ${meta.who}: client huỷ sau ${Date.now() - meta.startedAt}ms (outChars=${sent})`,
         );
         return;
       }

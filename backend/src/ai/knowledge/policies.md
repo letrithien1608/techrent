@@ -37,6 +37,7 @@
   - Từ {{REFUND_FULL_HOURS}} giờ trở lên: hoàn {{REFUND_FULL_PERCENT}} tiền cọc.
   - Từ {{REFUND_PARTIAL_HOURS}} giờ đến dưới {{REFUND_FULL_HOURS}} giờ: hoàn {{REFUND_PARTIAL_PERCENT}} tiền cọc.
   - Dưới {{REFUND_PARTIAL_HOURS}} giờ hoặc sau khi đã nhận thiết bị: không hoàn cọc.
+- Ví dụ: {{REFUND_EXAMPLES}}.
 - Nếu đơn bị huỷ do lỗi từ phía cửa hàng (ví dụ thiết bị không giao được), bạn được hoàn {{REFUND_FULL_PERCENT}} tiền cọc bất kể thời điểm.
 - Đơn "Chờ thanh toán" chưa trả cọc thì huỷ không phát sinh tiền.
 - Hộp thoại huỷ đơn hiển thị trước mức hoàn cọc ước tính để bạn xem trước khi xác nhận.

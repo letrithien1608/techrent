@@ -5,6 +5,7 @@ import { join, relative } from 'path';
 import {
   calculateDeposit,
   calculateLateFeeForDays,
+  calculateRefundPercentage,
   DEFAULT_BOOKING_TTL_MINUTES,
   DEPOSIT_RATIO,
   formatPercent,
@@ -41,6 +42,8 @@ export interface DeviceSuggestion {
   originalPrice: number;
   deposit: number;
   status: DeviceStatus;
+  /** Thông số công khai rút gọn (VD "gpu: RTX 4070, ram: 32GB") để model không gán nhầm cấu hình giữa các máy. */
+  specs: string;
 }
 
 export interface RetrievalResult {
@@ -83,10 +86,16 @@ export function buildPolicyValues(ttlMinutes: number): Record<string, string> {
     REFUND_PARTIAL_HOURS: String(partialTier.minHoursBeforeStart),
     REFUND_PARTIAL_PERCENT: `${partialTier.percentage}%`,
     LATE_FEE_RULE:
-      `ngày trễ thứ 1 phạt ${step} giá thuê/ngày, ngày thứ 2 phạt thêm ` +
-      `${formatPercent(LATE_FEE_DAILY_RATIO * 2)}, ngày thứ 3 phạt thêm ` +
-      `${formatPercent(LATE_FEE_DAILY_RATIO * 3)}... (mỗi ngày tăng thêm ${step}), ` +
-      'cộng dồn tất cả các ngày trễ và tối đa bằng giá trị thiết bị.',
+      `ngày trễ thứ N phạt N × ${step} giá thuê/ngày (ngày thứ 1 phạt ${step}, ` +
+      `ngày thứ 2 phạt ${formatPercent(LATE_FEE_DAILY_RATIO * 2)}, ngày thứ 3 phạt ` +
+      `${formatPercent(LATE_FEE_DAILY_RATIO * 3)}...); tổng phí trễ hạn là cộng dồn ` +
+      'mức phạt của tất cả các ngày trễ, tối đa bằng giá trị thiết bị.',
+    REFUND_EXAMPLES: [30, 10, 3]
+      .map((hours) => {
+        const percent = calculateRefundPercentage(hours, false);
+        return `còn ${hours} giờ (${hours} tiếng) tới giờ nhận máy thì ${percent > 0 ? `hoàn ${percent}% tiền cọc` : 'không được hoàn cọc'}`;
+      })
+      .join('; '),
     LATE_FEE_EXAMPLE_PRICE_PER_DAY: formatVnd(examplePrice),
     LATE_FEE_EXAMPLE_1DAY: lateFee(1),
     LATE_FEE_EXAMPLE_2DAYS: lateFee(2),
@@ -305,6 +314,7 @@ export class KnowledgeService implements OnModuleInit {
       select: {
         name: true,
         status: true,
+        specs: true,
         pricePerHour: true,
         pricePerDay: true,
         originalPrice: true,
@@ -320,6 +330,7 @@ export class KnowledgeService implements OnModuleInit {
       originalPrice: Number(row.originalPrice),
       deposit: calculateDeposit(Number(row.originalPrice)),
       status: row.status,
+      specs: summarizeSpecs(row.specs),
     }));
     this.deviceCache = { at: Date.now(), devices };
     return devices;
@@ -359,13 +370,40 @@ const DEVICE_STATUS_TEXT: Record<DeviceStatus, string> = {
   broken: 'đang hỏng, tạm không đặt được',
 };
 
+const MAX_SPEC_ENTRIES = 4;
+/** Thông số quyết định "máy nào mạnh hơn" đưa lên trước, phần còn lại giữ thứ tự gốc. */
+const PRIORITY_SPECS = ['cpu', 'chip', 'gpu', 'ram', 'sensor', 'video'];
+const specPriority = (key: string) => {
+  const index = PRIORITY_SPECS.indexOf(key);
+  return index < 0 ? PRIORITY_SPECS.length : index;
+};
+
+function summarizeSpecs(specs: unknown): string {
+  if (!specs || typeof specs !== 'object' || Array.isArray(specs)) return '';
+  return Object.entries(specs as Record<string, unknown>)
+    .filter(
+      ([, value]) => typeof value === 'string' || typeof value === 'number',
+    )
+    .sort(([a], [b]) => specPriority(a) - specPriority(b))
+    .slice(0, MAX_SPEC_ENTRIES)
+    .map(([key, value]) => `${key}: ${String(value)}`)
+    .join(', ');
+}
+
+/**
+ * Mỗi thiết bị 1 khối nhiều dòng có nhãn rõ ràng — khi dồn hết lên 1 dòng,
+ * model 7B từng lấy nhầm "45.000" của giá trị tài sản 45.000.000đ làm giá/giờ.
+ */
 export function formatDevice(device: DeviceSuggestion): string {
-  return (
-    `- ${device.name} (danh mục ${device.category}): ` +
-    `${formatVnd(device.pricePerDay)}/ngày hoặc ${formatVnd(device.pricePerHour)}/giờ; ` +
-    `giá trị tài sản ${formatVnd(device.originalPrice)}; ` +
-    `tiền cọc ${formatVnd(device.deposit)}; tình trạng: ${DEVICE_STATUS_TEXT[device.status]}`
-  );
+  const lines = [
+    `- ${device.name} (danh mục ${device.category})`,
+    `  + Giá thuê: ${formatVnd(device.pricePerDay)}/ngày; ${formatVnd(device.pricePerHour)}/giờ`,
+    `  + Tiền cọc: ${formatVnd(device.deposit)}`,
+    `  + Tình trạng: ${DEVICE_STATUS_TEXT[device.status]}`,
+    `  + Giá trị tài sản (dùng để tính cọc): ${formatVnd(device.originalPrice)}`,
+  ];
+  if (device.specs) lines.splice(1, 0, `  + Thông số: ${device.specs}`);
+  return lines.join('\n');
 }
 
 function listMarkdownFiles(directory: string): string[] {

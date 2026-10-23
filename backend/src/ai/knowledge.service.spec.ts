@@ -27,6 +27,13 @@ const DEVICE_ROWS = [
     pricePerDay: 400000,
     originalPrice: 52000000,
     category: { name: 'Laptop' },
+    specs: {
+      cpu: 'Apple M3 Pro',
+      ram: '18GB',
+      storage: '512GB SSD',
+      screen: '14.2"',
+      battery: '70Wh',
+    },
   },
   {
     name: 'DJI Mini 4 Pro',
@@ -167,6 +174,7 @@ describe('KnowledgeService', () => {
           'originalPrice',
           'pricePerDay',
           'pricePerHour',
+          'specs',
           'status',
         ].sort(),
       );
@@ -187,9 +195,17 @@ describe('KnowledgeService', () => {
     it('formatDevice ghi rõ giá, cọc và tình trạng', async () => {
       const [device] = (await service.findDevices('flycam DJI Mini 4 Pro'))!;
       const line = formatDevice(device);
-      expect(line).toContain('350.000đ/ngày');
-      expect(line).toContain('tiền cọc 10.000.000đ');
+      expect(line).toContain('Giá thuê: 350.000đ/ngày; 50.000đ/giờ');
+      expect(line).toContain('Tiền cọc: 10.000.000đ');
       expect(line).toContain('đang có khách thuê');
+    });
+
+    it('formatDevice kèm tối đa 4 thông số công khai', async () => {
+      const [device] = (await service.findDevices('MacBook Pro'))!;
+      expect(formatDevice(device)).toContain(
+        'Thông số: cpu: Apple M3 Pro, ram: 18GB, storage: 512GB SSD, screen: 14.2"',
+      );
+      expect(formatDevice(device)).not.toContain('battery');
     });
   });
 });

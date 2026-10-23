@@ -7,7 +7,7 @@ Bạn cần tài khoản TechRent có số điện thoại, số CCCD và hoàn 
 Tiền cọc bằng {{DEPOSIT_RATE}} giá trị tài sản của thiết bị (xem dòng "Giá trị tài sản" ở trang chi tiết). Ví dụ thiết bị giá trị {{DEPOSIT_EXAMPLE_PRICE}} thì cọc {{DEPOSIT_EXAMPLE_AMOUNT}}. Cọc không thay đổi theo số giờ/ngày thuê.
 
 ## Cọc được hoàn lại thế nào?
-Huỷ trước giờ nhận máy từ {{REFUND_FULL_HOURS}} giờ trở lên hoàn {{REFUND_FULL_PERCENT}}; từ {{REFUND_PARTIAL_HOURS}} đến dưới {{REFUND_FULL_HOURS}} giờ hoàn {{REFUND_PARTIAL_PERCENT}}; dưới {{REFUND_PARTIAL_HOURS}} giờ không hoàn (trừ lỗi từ cửa hàng). Sau khi trả máy, nhân viên kiểm tra thiết bị rồi xử lý hoàn cọc, có thể trừ chi phí khắc phục hư hỏng do bên thuê.
+Huỷ trước giờ nhận máy từ {{REFUND_FULL_HOURS}} giờ trở lên hoàn {{REFUND_FULL_PERCENT}}; từ {{REFUND_PARTIAL_HOURS}} đến dưới {{REFUND_FULL_HOURS}} giờ hoàn {{REFUND_PARTIAL_PERCENT}}; dưới {{REFUND_PARTIAL_HOURS}} giờ không hoàn (trừ lỗi từ cửa hàng). Ví dụ: {{REFUND_EXAMPLES}}. Sau khi trả máy, nhân viên kiểm tra thiết bị rồi xử lý hoàn cọc, có thể trừ chi phí khắc phục hư hỏng do bên thuê.
 
 ## Trả máy trễ bị phạt bao nhiêu?
 Phạt leo thang theo ngày: {{LATE_FEE_RULE}} Ví dụ giá thuê {{LATE_FEE_EXAMPLE_PRICE_PER_DAY}}/ngày: trễ 1 ngày phạt {{LATE_FEE_EXAMPLE_1DAY}}, trễ 2 ngày tổng {{LATE_FEE_EXAMPLE_2DAYS}}, trễ 3 ngày tổng {{LATE_FEE_EXAMPLE_3DAYS}}.

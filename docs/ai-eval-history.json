@@ -1,0 +1,78 @@
+[
+  {
+    "at": "2026-10-23T08:58:27.172Z",
+    "label": "Lần 1 — baseline",
+    "passed": 15,
+    "total": 22,
+    "failedIds": [
+      "Q3",
+      "Q4",
+      "S1",
+      "S2",
+      "S3",
+      "S4",
+      "T2"
+    ]
+  },
+  {
+    "at": "2026-10-23T09:02:09.533Z",
+    "label": "Lần 2 — sửa lỗi bỏ sót đoạn kiến thức khi dựng prompt, viết lại câu phí trễ hạn",
+    "passed": 20,
+    "total": 22,
+    "failedIds": [
+      "D1",
+      "T2"
+    ]
+  },
+  {
+    "at": "2026-10-23T09:06:11.772Z",
+    "label": "Lần 3 — thêm thông số thiết bị, ví dụ gợi ý thiết bị, quy tắc từ chối rõ hơn",
+    "passed": 19,
+    "total": 22,
+    "failedIds": [
+      "Q2",
+      "O1",
+      "T2"
+    ]
+  },
+  {
+    "at": "2026-10-23T09:10:03.909Z",
+    "label": "Lần 4 — thêm đoạn tóm tắt quy trình; nới tiêu chí O1/O2/T2 (chấp nhận mọi lời từ chối không lộ prompt)",
+    "passed": 19,
+    "total": 22,
+    "failedIds": [
+      "P2",
+      "D1",
+      "T2"
+    ]
+  },
+  {
+    "at": "2026-10-23T09:16:20.795Z",
+    "label": "Lần 5 — thêm lớp chặn server (prompt injection đầu vào, lộ nhãn nội bộ/tiếng nước ngoài đầu ra), ví dụ hoàn cọc theo giờ, ưu tiên thông số cpu/gpu/ram; T2 về lại tiêu chí chặt",
+    "passed": 21,
+    "total": 22,
+    "failedIds": [
+      "O1"
+    ]
+  },
+  {
+    "at": "2026-10-23T09:20:02.296Z",
+    "label": "Lần 6 — tách thông tin thiết bị thành nhiều dòng có nhãn (tránh lẫn giá trị tài sản với giá/giờ), thêm chỉ số số tiền ngoài dữ liệu",
+    "passed": 20,
+    "total": 22,
+    "failedIds": [
+      "D1",
+      "O1"
+    ]
+  },
+  {
+    "at": "2026-10-23T09:28:51.163Z",
+    "label": "Lần 7 — 3 lượt/câu; siết quy tắc nêu giá/cọc và chỉ nêu thông số có trong danh sách",
+    "passed": 63,
+    "total": 66,
+    "repeat": 3,
+    "failedIds": [
+      "O1 (0/3)"
+    ]
+  }
+]

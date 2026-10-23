@@ -6,6 +6,7 @@ import {
   SYSTEM_PROMPT,
   type ChatTurn,
 } from './prompts';
+import { estimateTokens } from './text-utils';
 
 const base = {
   message: 'Cọc bao nhiêu?',
@@ -65,9 +66,10 @@ describe('buildMessages', () => {
     const tight = buildMessages({
       ...base,
       history: history(6, 1000),
-      promptTokenBudget: 1500,
+      // Đủ chỗ cho system prompt + câu hỏi + đúng 1 lượt lịch sử 1000 ký tự.
+      promptTokenBudget: estimateTokens(SYSTEM_PROMPT) + 600,
     });
-    expect(tight.length).toBeLessThan(8);
+    expect(tight).toHaveLength(3);
     // Lượt mới nhất luôn được ưu tiên giữ lại.
     expect(tight[tight.length - 2].content.startsWith('5:')).toBe(true);
   });
