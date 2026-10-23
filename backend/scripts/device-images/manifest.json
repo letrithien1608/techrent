@@ -1,0 +1,2237 @@
+{
+  "devices": {
+    "macbook-pro-14-m3-pro-18gb-512gb": {
+      "name": "MacBook Pro 14\" M3 Pro 18GB/512GB",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://www.apple.com/newsroom/images/2023/10/apple-unveils-new-macbook-pro-featuring-m3-chips/article/Apple-MacBook-Pro-M3-Pro-Photoshop-231030_big.jpg.large_2x.jpg",
+          "page": "https://www.apple.com/newsroom/2023/10/apple-unveils-new-macbook-pro-featuring-m3-chips/",
+          "credit": "© Apple Inc., ảnh báo chí Apple Newsroom — nguồn: www.apple.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769824/techrent/devices/macbook-pro-14-m3-pro-18gb-512gb/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.jpg",
+          "source": "https://www.apple.com/newsroom/images/2023/10/apple-unveils-new-macbook-pro-featuring-m3-chips/article/Apple-MacBook-Pro-top-view-231030_big.jpg.large_2x.jpg",
+          "page": "https://www.apple.com/newsroom/2023/10/apple-unveils-new-macbook-pro-featuring-m3-chips/",
+          "credit": "© Apple Inc., ảnh báo chí Apple Newsroom — nguồn: www.apple.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769825/techrent/devices/macbook-pro-14-m3-pro-18gb-512gb/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://www.apple.com/newsroom/images/2023/10/apple-unveils-new-macbook-pro-featuring-m3-chips/article/Apple-MacBook-Pro-2up-231030_Full-Bleed-Image.jpg.large_2x.jpg",
+          "page": "https://www.apple.com/newsroom/2023/10/apple-unveils-new-macbook-pro-featuring-m3-chips/",
+          "credit": "© Apple Inc., ảnh báo chí Apple Newsroom — nguồn: www.apple.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769827/techrent/devices/macbook-pro-14-m3-pro-18gb-512gb/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://www.apple.com/newsroom/images/2023/10/apple-unveils-new-macbook-pro-featuring-m3-chips/article/Apple-MacBook-Pro-keyboard-231030_big.jpg.large_2x.jpg",
+          "page": "https://www.apple.com/newsroom/2023/10/apple-unveils-new-macbook-pro-featuring-m3-chips/",
+          "credit": "© Apple Inc., ảnh báo chí Apple Newsroom — nguồn: www.apple.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769828/techrent/devices/macbook-pro-14-m3-pro-18gb-512gb/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://www.apple.com/newsroom/images/2023/10/apple-unveils-new-macbook-pro-featuring-m3-chips/article/Apple-MacBook-Pro-lifestyle-231030_big.jpg.large_2x.jpg",
+          "page": "https://www.apple.com/newsroom/2023/10/apple-unveils-new-macbook-pro-featuring-m3-chips/",
+          "credit": "© Apple Inc., ảnh báo chí Apple Newsroom — nguồn: www.apple.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769829/techrent/devices/macbook-pro-14-m3-pro-18gb-512gb/5-use.jpg"
+        }
+      ]
+    },
+    "asus-rog-zephyrus-g14-2024-r9-8945hs-rtx-4070": {
+      "name": "ASUS ROG Zephyrus G14 (2024) R9 8945HS/RTX 4070",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://www.notebookcheck.com/fileadmin/_processed_/b/6/csm_IMG_2176_ece8d3bd9f.jpg",
+          "page": "https://www.notebookcheck.com/Asus-ROG-Zephyrus-G14-2024-im-Test-Gaming-Multimedia-Laptop-mit-Ryzen-8000-und-G-Sync-OLED.800153.0.html",
+          "credit": "© Notebookcheck — ảnh chụp trong bài đánh giá, nguồn: www.notebookcheck.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769831/techrent/devices/asus-rog-zephyrus-g14-2024-r9-8945hs-rtx-4070/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.jpg",
+          "source": "https://www.notebookcheck.com/fileadmin/Notebooks/Asus/ROG_Zephyrus_G14_2024_GA403U/AKA05410.jpg",
+          "page": "https://www.notebookcheck.com/Asus-ROG-Zephyrus-G14-2024-im-Test-Gaming-Multimedia-Laptop-mit-Ryzen-8000-und-G-Sync-OLED.800153.0.html",
+          "credit": "© Notebookcheck — ảnh chụp trong bài đánh giá, nguồn: www.notebookcheck.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769831/techrent/devices/asus-rog-zephyrus-g14-2024-r9-8945hs-rtx-4070/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://www.notebookcheck.com/fileadmin/_processed_/e/6/csm_IMG_2169_07295b7961.jpg",
+          "page": "https://www.notebookcheck.com/Asus-ROG-Zephyrus-G14-2024-im-Test-Gaming-Multimedia-Laptop-mit-Ryzen-8000-und-G-Sync-OLED.800153.0.html",
+          "credit": "© Notebookcheck — ảnh chụp trong bài đánh giá, nguồn: www.notebookcheck.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769833/techrent/devices/asus-rog-zephyrus-g14-2024-r9-8945hs-rtx-4070/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://www.notebookcheck.com/fileadmin/_processed_/6/e/csm_IMG_2166_360ff3d012.jpg",
+          "page": "https://www.notebookcheck.com/Asus-ROG-Zephyrus-G14-2024-im-Test-Gaming-Multimedia-Laptop-mit-Ryzen-8000-und-G-Sync-OLED.800153.0.html",
+          "credit": "© Notebookcheck — ảnh chụp trong bài đánh giá, nguồn: www.notebookcheck.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769834/techrent/devices/asus-rog-zephyrus-g14-2024-r9-8945hs-rtx-4070/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://www.notebookcheck.com/fileadmin/Notebooks/Asus/ROG_Zephyrus_G14_2024_GA403U/AKA05359.jpg",
+          "page": "https://www.notebookcheck.com/Asus-ROG-Zephyrus-G14-2024-im-Test-Gaming-Multimedia-Laptop-mit-Ryzen-8000-und-G-Sync-OLED.800153.0.html",
+          "credit": "© Notebookcheck — ảnh chụp trong bài đánh giá, nguồn: www.notebookcheck.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769836/techrent/devices/asus-rog-zephyrus-g14-2024-r9-8945hs-rtx-4070/5-use.jpg"
+        }
+      ]
+    },
+    "dell-xps-15-9530-i7-13700h-rtx-4070-oled": {
+      "name": "Dell XPS 15 9530 i7-13700H/RTX 4070 OLED",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.png",
+          "source": "https://www.notebookcheck.net/fileadmin/_processed_/8/b/csm_9530_52bcfeedb1.png",
+          "page": "https://www.notebookcheck.net/Dell-XPS-15-9530-RTX-4070-laptop-review-Both-impressive-and-underwhelming.709129.0.html",
+          "credit": "© Notebookcheck — ảnh chụp trong bài đánh giá, nguồn: www.notebookcheck.net",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769838/techrent/devices/dell-xps-15-9530-i7-13700h-rtx-4070-oled/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.jpg",
+          "source": "https://www.notebookcheck.net/fileadmin/Notebooks/Dell/XPS_15_9530_RTX_4070/AKA0648.jpg",
+          "page": "https://www.notebookcheck.net/Dell-XPS-15-9530-RTX-4070-laptop-review-Both-impressive-and-underwhelming.709129.0.html",
+          "credit": "© Notebookcheck — ảnh chụp trong bài đánh giá, nguồn: www.notebookcheck.net",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769839/techrent/devices/dell-xps-15-9530-i7-13700h-rtx-4070-oled/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://www.notebookcheck.net/fileadmin/_processed_/7/9/csm_AKA0641_a80e4dfedf.jpg",
+          "page": "https://www.notebookcheck.net/Dell-XPS-15-9530-RTX-4070-laptop-review-Both-impressive-and-underwhelming.709129.0.html",
+          "credit": "© Notebookcheck — ảnh chụp trong bài đánh giá, nguồn: www.notebookcheck.net",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769840/techrent/devices/dell-xps-15-9530-i7-13700h-rtx-4070-oled/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://www.notebookcheck.net/fileadmin/Notebooks/Dell/XPS_15_9530_RTX_4070/AKA0638.jpg",
+          "page": "https://www.notebookcheck.net/Dell-XPS-15-9530-RTX-4070-laptop-review-Both-impressive-and-underwhelming.709129.0.html",
+          "credit": "© Notebookcheck — ảnh chụp trong bài đánh giá, nguồn: www.notebookcheck.net",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769841/techrent/devices/dell-xps-15-9530-i7-13700h-rtx-4070-oled/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://www.notebookcheck.net/fileadmin/_processed_/2/a/csm_PXL_20230421_202527354_9b9660332e.jpg",
+          "page": "https://www.notebookcheck.net/Dell-XPS-15-9530-RTX-4070-laptop-review-Both-impressive-and-underwhelming.709129.0.html",
+          "credit": "© Notebookcheck — ảnh chụp trong bài đánh giá, nguồn: www.notebookcheck.net",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769843/techrent/devices/dell-xps-15-9530-i7-13700h-rtx-4070-oled/5-use.jpg"
+        }
+      ]
+    },
+    "lenovo-thinkpad-x1-carbon-gen-12-ultra-7-16gb-512gb": {
+      "name": "Lenovo ThinkPad X1 Carbon Gen 12 Ultra 7/16GB/512GB",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://www.notebookcheck.net/fileadmin/Notebooks/Lenovo/ThinkPad_X1_Carbon_G12/x1carbon12.jpg",
+          "page": "https://www.notebookcheck.net/Lenovo-ThinkPad-X1-Carbon-G12-laptop-review-First-major-refresh-in-three-years.803321.0.html",
+          "credit": "© Notebookcheck — ảnh chụp trong bài đánh giá, nguồn: www.notebookcheck.net",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769844/techrent/devices/lenovo-thinkpad-x1-carbon-gen-12-ultra-7-16gb-512gb/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.jpg",
+          "source": "https://www.notebookcheck.net/fileadmin/_processed_/0/7/csm_PXL_20240224_234607769_ecb251f8cb.jpg",
+          "page": "https://www.notebookcheck.net/Lenovo-ThinkPad-X1-Carbon-G12-laptop-review-First-major-refresh-in-three-years.803321.0.html",
+          "credit": "© Notebookcheck — ảnh chụp trong bài đánh giá, nguồn: www.notebookcheck.net",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769845/techrent/devices/lenovo-thinkpad-x1-carbon-gen-12-ultra-7-16gb-512gb/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://www.notebookcheck.net/fileadmin/_processed_/b/c/csm__MG_9510_0826609bc0.jpg",
+          "page": "https://www.notebookcheck.net/Lenovo-ThinkPad-X1-Carbon-G12-laptop-review-First-major-refresh-in-three-years.803321.0.html",
+          "credit": "© Notebookcheck — ảnh chụp trong bài đánh giá, nguồn: www.notebookcheck.net",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769846/techrent/devices/lenovo-thinkpad-x1-carbon-gen-12-ultra-7-16gb-512gb/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://www.notebookcheck.net/fileadmin/_processed_/7/b/csm__MG_9509_43eb8199bd.jpg",
+          "page": "https://www.notebookcheck.net/Lenovo-ThinkPad-X1-Carbon-G12-laptop-review-First-major-refresh-in-three-years.803321.0.html",
+          "credit": "© Notebookcheck — ảnh chụp trong bài đánh giá, nguồn: www.notebookcheck.net",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769847/techrent/devices/lenovo-thinkpad-x1-carbon-gen-12-ultra-7-16gb-512gb/4-detail.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "05-detail.jpg",
+          "source": "https://www.notebookcheck.net/fileadmin/_processed_/3/f/csm__MG_9523_cee3c65c78.jpg",
+          "page": "https://www.notebookcheck.net/Lenovo-ThinkPad-X1-Carbon-G12-laptop-review-First-major-refresh-in-three-years.803321.0.html",
+          "credit": "© Notebookcheck — ảnh chụp trong bài đánh giá, nguồn: www.notebookcheck.net",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769848/techrent/devices/lenovo-thinkpad-x1-carbon-gen-12-ultra-7-16gb-512gb/5-detail.jpg"
+        }
+      ]
+    },
+    "sony-alpha-a7-iv-body": {
+      "name": "Sony Alpha A7 IV (body)",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/8/8b/Sony_A7_IV_%28ILCE-7M4%29_-_by_Henry_S%C3%B6derlund_%2851739988735%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Sony_A7_IV_(ILCE-7M4)_-_by_Henry_S%C3%B6derlund_(51739988735).jpg",
+          "credit": "Henry Söderlund from Helsinki, Finland, Finland — CC BY 2.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793237/techrent/devices/sony-alpha-a7-iv-body/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/e/ed/Sony.alpha.7IV.memory.card.slots.DSC00148.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Sony.alpha.7IV.memory.card.slots.DSC00148.jpg",
+          "credit": "Bautsch — CC0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793238/techrent/devices/sony-alpha-a7-iv-body/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/f/ff/Sony.alpha.7IV.G-Master.24-105mm.DSC00141.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Sony.alpha.7IV.G-Master.24-105mm.DSC00141.jpg",
+          "credit": "Bautsch — CC0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793239/techrent/devices/sony-alpha-a7-iv-body/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.png",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/f/f8/Back_right_of_Sony.alpha.7IV.G.24-105mm_with_pictograms.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Back_right_of_Sony.alpha.7IV.G.24-105mm_with_pictograms.png",
+          "credit": "Bautsch — CC0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793240/techrent/devices/sony-alpha-a7-iv-body/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/a/ac/Man_using_DJI_RS2_and_Sony_a7IV_20240922180042.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Man_using_DJI_RS2_and_Sony_a7IV_20240922180042.jpg",
+          "credit": "TurnOnTheNight — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793241/techrent/devices/sony-alpha-a7-iv-body/5-use.jpg"
+        }
+      ]
+    },
+    "canon-eos-r6-mark-ii-body": {
+      "name": "Canon EOS R6 Mark II (body)",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/0/0d/Canon_EOS_R6_Mark_II_9_jan_2023d.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Canon_EOS_R6_Mark_II_9_jan_2023d.jpg",
+          "credit": "昼落ち — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769849/techrent/devices/canon-eos-r6-mark-ii-body/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/f/f2/Canon_EOS_R6_Mark_II_9_jan_2023f.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Canon_EOS_R6_Mark_II_9_jan_2023f.jpg",
+          "credit": "昼落ち — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769851/techrent/devices/canon-eos-r6-mark-ii-body/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/f/f8/Canon_EOS_R6_Mark_II_-_by_Henry_S%C3%B6derlund_%2852546794891%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Canon_EOS_R6_Mark_II_-_by_Henry_S%C3%B6derlund_(52546794891).jpg",
+          "credit": "Henry Söderlund from Helsinki, Finland — CC BY 2.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769852/techrent/devices/canon-eos-r6-mark-ii-body/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/5/53/Canon_EOS_R6_Mark_II_9_jan_2023e.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Canon_EOS_R6_Mark_II_9_jan_2023e.jpg",
+          "credit": "昼落ち — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769853/techrent/devices/canon-eos-r6-mark-ii-body/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/d/db/Man_using_Canon_EOS_R6_Mark_II_20250406152411.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Man_using_Canon_EOS_R6_Mark_II_20250406152411.jpg",
+          "credit": "TurnOnTheNight — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769854/techrent/devices/canon-eos-r6-mark-ii-body/5-use.jpg"
+        }
+      ]
+    },
+    "fujifilm-x-t5-body": {
+      "name": "Fujifilm X-T5 (body)",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/3/31/Fujifilm_X-T5_4_nov_2022d.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Fujifilm_X-T5_4_nov_2022d.jpg",
+          "credit": "昼落ち — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769855/techrent/devices/fujifilm-x-t5-body/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/d/dd/Fujifilm_X-T5_4_nov_2022f.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Fujifilm_X-T5_4_nov_2022f.jpg",
+          "credit": "昼落ち — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769856/techrent/devices/fujifilm-x-t5-body/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/6/6c/Fujifilm_X-T5.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Fujifilm_X-T5.jpg",
+          "credit": "Müllowitsch — CC0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769858/techrent/devices/fujifilm-x-t5-body/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/b/b5/Fujifilm_X-T5_4_nov_2022e.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Fujifilm_X-T5_4_nov_2022e.jpg",
+          "credit": "昼落ち — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769859/techrent/devices/fujifilm-x-t5-body/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/3/31/Fujifilm_X-T5_4_nov_2022a.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Fujifilm_X-T5_4_nov_2022a.jpg",
+          "credit": "昼落ち — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769861/techrent/devices/fujifilm-x-t5-body/5-use.jpg"
+        }
+      ]
+    },
+    "dji-mavic-3-pro": {
+      "name": "DJI Mavic 3 Pro",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/c/c0/2024-10-_DJI_Mavic_3_Pro_-_08.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:2024-10-_DJI_Mavic_3_Pro_-_08.jpg",
+          "credit": "A.BourgeoisP — CC BY 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769863/techrent/devices/dji-mavic-3-pro/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/1/1c/2024-10-_DJI_Mavic_3_Pro_-_23.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:2024-10-_DJI_Mavic_3_Pro_-_23.jpg",
+          "credit": "A.BourgeoisP — CC BY 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769865/techrent/devices/dji-mavic-3-pro/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/e/ed/2024-10-_DJI_Mavic_3_Pro_-_01.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:2024-10-_DJI_Mavic_3_Pro_-_01.jpg",
+          "credit": "A.BourgeoisP — CC BY 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769866/techrent/devices/dji-mavic-3-pro/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/6/6b/2024-10-_DJI_Mavic_3_Pro_-_07.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:2024-10-_DJI_Mavic_3_Pro_-_07.jpg",
+          "credit": "A.BourgeoisP — CC BY 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769867/techrent/devices/dji-mavic-3-pro/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/0/0c/DJI_Mavic_3_Pro_20240525.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:DJI_Mavic_3_Pro_20240525.jpg",
+          "credit": "Pangalau — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769868/techrent/devices/dji-mavic-3-pro/5-use.jpg"
+        }
+      ]
+    },
+    "dji-mini-4-pro": {
+      "name": "DJI Mini 4 Pro",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/8/8f/2024_Dron_DJI_Mini_4_Pro_%2803%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:2024_Dron_DJI_Mini_4_Pro_(03).jpg",
+          "credit": "Jacek Halicki — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769869/techrent/devices/dji-mini-4-pro/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/b/b1/2024_Dron_DJI_Mini_4_Pro_%2802%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:2024_Dron_DJI_Mini_4_Pro_(02).jpg",
+          "credit": "Jacek Halicki — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769870/techrent/devices/dji-mini-4-pro/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/9/94/2024_Dron_DJI_Mini_4_Pro_%2801%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:2024_Dron_DJI_Mini_4_Pro_(01).jpg",
+          "credit": "Jacek Halicki — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769871/techrent/devices/dji-mini-4-pro/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/9/95/2024_Dron_DJI_Mini_4_Pro_%2804%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:2024_Dron_DJI_Mini_4_Pro_(04).jpg",
+          "credit": "Jacek Halicki — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769872/techrent/devices/dji-mini-4-pro/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Dr%C3%B6nare_-_Drone_-_DJI_Mini_4_pro_-_2026.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Dr%C3%B6nare_-_Drone_-_DJI_Mini_4_pro_-_2026.jpg",
+          "credit": "Foto: Jonn Leffmann — CC BY 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769873/techrent/devices/dji-mini-4-pro/5-use.jpg"
+        }
+      ]
+    },
+    "dji-air-3": {
+      "name": "DJI Air 3",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/7/76/2024_Dron_DJI_Air_3_%2804%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:2024_Dron_DJI_Air_3_(04).jpg",
+          "credit": "Jacek Halicki — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769874/techrent/devices/dji-air-3/1-front.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "02-angle.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/6/60/2024_Dron_DJI_Air_3_%2801%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:2024_Dron_DJI_Air_3_(01).jpg",
+          "credit": "Jacek Halicki — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769875/techrent/devices/dji-air-3/2-angle.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/c/ce/2024_Dron_DJI_Air_3_%2803%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:2024_Dron_DJI_Air_3_(03).jpg",
+          "credit": "Jacek Halicki — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769876/techrent/devices/dji-air-3/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/6/6e/Temporaerhaus_dji_air_3.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Temporaerhaus_dji_air_3.jpg",
+          "credit": "-stk — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769877/techrent/devices/dji-air-3/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/2/29/DJI_EB3WBC_Air_3_%287-29-2023%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:DJI_EB3WBC_Air_3_(7-29-2023).jpg",
+          "credit": "ZLEA — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769878/techrent/devices/dji-air-3/5-use.jpg"
+        }
+      ]
+    },
+    "gopro-hero12-black": {
+      "name": "GoPro HERO12 Black",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.png",
+          "source": "https://static.gopro.com/assets/blta2b8522e5372af40/blt1d2192998726c92c/64d0e285cfbe640dc79ddcd0/02-pdp-h12b-gallery-1024.png?width=8192&quality=80&auto=webp&disable=upscale",
+          "page": "https://gopro.com/en/us/shop/cameras/hero12-black/CHDHX-121-master.html",
+          "credit": "© GoPro, ảnh giới thiệu sản phẩm — nguồn: gopro.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793242/techrent/devices/gopro-hero12-black/1-front.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "02-angle.webp",
+          "source": "https://static.gopro.com/assets/blta2b8522e5372af40/blt4dd15f185d74e10b/64d4d12a284b774b722b987f/09-pdp-H12B-1920.jpg?width=1536&quality=80&auto=webp&disable=upscale",
+          "page": "https://gopro.com/en/us/shop/cameras/hero12-black/CHDHX-121-master.html",
+          "credit": "© GoPro, ảnh giới thiệu sản phẩm — nguồn: gopro.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793244/techrent/devices/gopro-hero12-black/2-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "03-detail.jpg",
+          "source": "https://static.gopro.com/assets/blta2b8522e5372af40/blt8f2e9c2953032ce2/64d4d12b284b7724912b9887/12-pdp-H12B-1920.jpg?width=1536&quality=80&auto=webp&disable=upscale",
+          "page": "https://gopro.com/en/us/shop/cameras/hero12-black/CHDHX-121-master.html",
+          "credit": "© GoPro, ảnh giới thiệu sản phẩm — nguồn: gopro.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793245/techrent/devices/gopro-hero12-black/3-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "04-use.jpg",
+          "source": "https://static.gopro.com/assets/blta2b8522e5372af40/blt0e5fde9bf9b78f50/6659dac64619216a7640a672/01-pdp-h12b-gallery-v2-1024.jpg?width=8192&quality=80&auto=webp&disable=upscale",
+          "page": "https://gopro.com/en/us/shop/cameras/hero12-black/CHDHX-121-master.html",
+          "credit": "© GoPro, ảnh giới thiệu sản phẩm — nguồn: gopro.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793246/techrent/devices/gopro-hero12-black/4-use.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://static.gopro.com/assets/blta2b8522e5372af40/blt5c20a674277be2aa/6659dac74619219c3840a676/09-pdp-h12b-gallery-v2-1024.jpg?width=8192&quality=80&auto=webp&disable=upscale",
+          "page": "https://gopro.com/en/us/shop/cameras/hero12-black/CHDHX-121-master.html",
+          "credit": "© GoPro, ảnh giới thiệu sản phẩm — nguồn: gopro.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793248/techrent/devices/gopro-hero12-black/5-use.jpg"
+        }
+      ]
+    },
+    "dji-osmo-action-4": {
+      "name": "DJI Osmo Action 4",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://se-cdn.djiits.com/tpc/uploads/carousel/image/825aa75c6b202217402d09a6f7bd3dde@ultra.jpg",
+          "page": "https://store.dji.com/product/osmo-action-4",
+          "credit": "© DJI, ảnh giới thiệu sản phẩm — nguồn: store.dji.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793249/techrent/devices/dji-osmo-action-4/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.jpg",
+          "source": "https://www-cdn.djiits.com/dps/db4010dbdad53a3a7f65a301ba7a32a7.jpg",
+          "page": "https://www.dji.com/osmo-action-4",
+          "credit": "© DJI, ảnh giới thiệu sản phẩm — nguồn: www.dji.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793250/techrent/devices/dji-osmo-action-4/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://www-cdn.djiits.com/dps/3028447453bfc518d746357f7effe67f.jpg",
+          "page": "https://www.dji.com/osmo-action-4",
+          "credit": "© DJI, ảnh giới thiệu sản phẩm — nguồn: www.dji.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793251/techrent/devices/dji-osmo-action-4/3-angle.jpg"
+        },
+        {
+          "role": "use",
+          "file": "04-use.webp",
+          "source": "https://se-cdn.djiits.com/tpc/uploads/core_selling_point/image/7210a924ae94b61840bcaa40fd9e5657.webp",
+          "page": "https://store.dji.com/product/osmo-action-4",
+          "credit": "© DJI, ảnh giới thiệu sản phẩm — nguồn: store.dji.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793252/techrent/devices/dji-osmo-action-4/4-use.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.webp",
+          "source": "https://se-cdn.djiits.com/tpc/uploads/carousel/image/5d6f65b6499e2665ee67ac772b4718e5@ultra.webp",
+          "page": "https://store.dji.com/product/osmo-action-4",
+          "credit": "© DJI, ảnh giới thiệu sản phẩm — nguồn: store.dji.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793253/techrent/devices/dji-osmo-action-4/5-use.jpg"
+        }
+      ]
+    },
+    "insta360-x4": {
+      "name": "Insta360 X4",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://res.insta360.com/static/338a8405bc5d902f0089a4d7f0773e22/%E6%97%8B%E8%BD%AC%E5%8A%A8%E7%94%BB%203480-2270_00000.jpg?x-oss-process=image%2Fauto-orient%2C1%2Fresize%2Cm_lfit%2Cw_1736%2Ch_1135%2Fquality%2Cq_80",
+          "page": "https://store.insta360.com/product/x4",
+          "credit": "© Insta360, ảnh giới thiệu sản phẩm — nguồn: store.insta360.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793254/techrent/devices/insta360-x4/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.jpg",
+          "source": "https://res.insta360.com/static/f2e7cb4d27ad45d1043449d2b8871ed4/%E6%97%8B%E8%BD%AC%E5%8A%A8%E7%94%BB%203480-2270_00018.jpg?x-oss-process=image%2Fauto-orient%2C1%2Fresize%2Cm_lfit%2Cw_1736%2Ch_1135%2Fquality%2Cq_80",
+          "page": "https://store.insta360.com/product/x4",
+          "credit": "© Insta360, ảnh giới thiệu sản phẩm — nguồn: store.insta360.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793255/techrent/devices/insta360-x4/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://res.insta360.com/static/63aeac54435d1334d2a8794deaeb91ac/%E6%97%8B%E8%BD%AC%E5%8A%A8%E7%94%BB%203480-2270_00006.jpg?x-oss-process=image%2Fauto-orient%2C1%2Fresize%2Cm_lfit%2Cw_1736%2Ch_1135%2Fquality%2Cq_80",
+          "page": "https://store.insta360.com/product/x4",
+          "credit": "© Insta360, ảnh giới thiệu sản phẩm — nguồn: store.insta360.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793256/techrent/devices/insta360-x4/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://res.insta360.com/static/3b6013e3ea48462c2b51bebfde3f2121/%E6%97%8B%E8%BD%AC%E5%8A%A8%E7%94%BB%203480-2270_00012.jpg?x-oss-process=image%2Fauto-orient%2C1%2Fresize%2Cm_lfit%2Cw_1736%2Ch_1135%2Fquality%2Cq_80",
+          "page": "https://store.insta360.com/product/x4",
+          "credit": "© Insta360, ảnh giới thiệu sản phẩm — nguồn: store.insta360.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793257/techrent/devices/insta360-x4/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://res.insta360.com/static/ce3bc8a1eb0845e0e3582ee00203222a/ShaunWhite.jpg",
+          "page": "https://www.insta360.com/product/insta360-x4",
+          "credit": "© Insta360, ảnh giới thiệu sản phẩm — nguồn: www.insta360.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793258/techrent/devices/insta360-x4/5-use.jpg"
+        }
+      ]
+    },
+    "epson-eb-x06": {
+      "name": "Epson EB-X06",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.png",
+          "source": "https://mediaserver.goepson.com/adaptivemedia/rendition?id=33949844c27eebbe6f34f5bad5879d9d90ff2612&vid=33949844c27eebbe6f34f5bad5879d9d90ff2612&prid=1200Wx1200H&clid=SAPDAM&prclid=banner&assetDescr=X06_b_No.3",
+          "page": "https://epson.com.vn/Projectors/Business/EB-X06-XGA-3LCD-Projector/p/V11H972052",
+          "credit": "© Seiko Epson Corporation, ảnh giới thiệu sản phẩm — nguồn: epson.com.vn",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793259/techrent/devices/epson-eb-x06/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.png",
+          "source": "https://mediaserver.goepson.com/adaptivemedia/rendition?id=47c6448c8977e3904df3d5e24051fb20c0ade435&vid=47c6448c8977e3904df3d5e24051fb20c0ade435&prid=1200Wx1200H&clid=SAPDAM&prclid=banner&assetDescr=X06_b_No.6",
+          "page": "https://epson.com.vn/Projectors/Business/EB-X06-XGA-3LCD-Projector/p/V11H972052",
+          "credit": "© Seiko Epson Corporation, ảnh giới thiệu sản phẩm — nguồn: epson.com.vn",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793260/techrent/devices/epson-eb-x06/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.png",
+          "source": "https://mediaserver.goepson.com/adaptivemedia/rendition?id=339fef02198aa8689aa509f0eb9bdfcecf90be84&vid=339fef02198aa8689aa509f0eb9bdfcecf90be84&prid=1200Wx1200H&clid=SAPDAM&prclid=banner&assetDescr=X06_b_No.1",
+          "page": "https://epson.com.vn/Projectors/Business/EB-X06-XGA-3LCD-Projector/p/V11H972052",
+          "credit": "© Seiko Epson Corporation, ảnh giới thiệu sản phẩm — nguồn: epson.com.vn",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793261/techrent/devices/epson-eb-x06/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.png",
+          "source": "https://mediaserver.goepson.com/adaptivemedia/rendition?id=4234e1d767686987fe02c050af0d55bbb0095a66&vid=4234e1d767686987fe02c050af0d55bbb0095a66&prid=1200Wx1200H&clid=SAPDAM&prclid=banner&assetDescr=X06_b_No.5",
+          "page": "https://epson.com.vn/Projectors/Business/EB-X06-XGA-3LCD-Projector/p/V11H972052",
+          "credit": "© Seiko Epson Corporation, ảnh giới thiệu sản phẩm — nguồn: epson.com.vn",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793263/techrent/devices/epson-eb-x06/5-detail.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "05-angle.png",
+          "source": "https://mediaserver.goepson.com/adaptivemedia/rendition?id=22f61c831075da974017ccc4cefadc1b89cef9db&vid=22f61c831075da974017ccc4cefadc1b89cef9db&prid=1200Wx1200H&clid=SAPDAM&prclid=banner&assetDescr=X06_b_No.2",
+          "page": "https://epson.com.vn/Projectors/Business/EB-X06-XGA-3LCD-Projector/p/V11H972052",
+          "credit": "© Seiko Epson Corporation, ảnh giới thiệu sản phẩm — nguồn: epson.com.vn",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793262/techrent/devices/epson-eb-x06/4-angle.jpg"
+        }
+      ]
+    },
+    "benq-tk850": {
+      "name": "BenQ TK850",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://cdn.mos.cms.futurecdn.net/6DjG8UYjkpfose4X4rDwtH-1200-80.jpg",
+          "page": "https://digitalcameraworld.com/reviews/benq-tk850-projector-review",
+          "credit": "© BenQ, ảnh giới thiệu sản phẩm — nguồn: digitalcameraworld.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793264/techrent/devices/benq-tk850/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.jpg",
+          "source": "https://media.ldlc.com/r1600/ld/products/00/05/64/16/LD0005641688_2.jpg",
+          "page": "https://www.ldlc.com/en/product/PB00325080.html",
+          "credit": "© BenQ, ảnh giới thiệu sản phẩm — nguồn: www.ldlc.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793265/techrent/devices/benq-tk850/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://media.ldlc.com/r1600/ld/products/00/05/64/17/LD0005641703_2.jpg",
+          "page": "https://www.ldlc.com/en/product/PB00325080.html",
+          "credit": "© BenQ, ảnh giới thiệu sản phẩm — nguồn: www.ldlc.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793266/techrent/devices/benq-tk850/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://media.ldlc.com/r1600/ld/products/00/05/64/16/LD0005641693_2.jpg",
+          "page": "https://www.ldlc.com/en/product/PB00325080.html",
+          "credit": "© BenQ, ảnh giới thiệu sản phẩm — nguồn: www.ldlc.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793267/techrent/devices/benq-tk850/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://media.ldlc.com/bo/images/fiches/videoprojecteur/BenQ/TK850/home_cinema.jpg",
+          "page": "https://www.ldlc.com/en/product/PB00325080.html",
+          "credit": "© BenQ, ảnh giới thiệu sản phẩm — nguồn: www.ldlc.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793268/techrent/devices/benq-tk850/5-use.jpg"
+        }
+      ]
+    },
+    "xiaomi-mi-smart-projector-2": {
+      "name": "Xiaomi Mi Smart Projector 2",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.png",
+          "source": "https://i01.appmifile.com/v1/MI_18455B3E4DA706226CF7535A58E875F0267/pms_1666839132.32216485.png",
+          "page": "https://www.mi.com/global/product/mi-smart-projector-2/",
+          "credit": "© Xiaomi, ảnh giới thiệu sản phẩm — nguồn: www.mi.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793269/techrent/devices/xiaomi-mi-smart-projector-2/1-front.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "02-angle.webp",
+          "source": "https://i02.appmifile.com/356_operator_sg/01/09/2021/554135d56fa5e4cb644d89df74609ecd.jpg?f=webp",
+          "page": "https://www.mi.com/global/product/mi-smart-projector-2/",
+          "credit": "© Xiaomi, ảnh giới thiệu sản phẩm — nguồn: www.mi.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793269/techrent/devices/xiaomi-mi-smart-projector-2/2-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "03-detail.jpg",
+          "source": "https://i02.appmifile.com/248_operator_sg/01/09/2021/e289b78e1ab74194ff99d300b519b113.jpg",
+          "page": "https://www.mi.com/global/product/mi-smart-projector-2/",
+          "credit": "© Xiaomi, ảnh giới thiệu sản phẩm — nguồn: www.mi.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793270/techrent/devices/xiaomi-mi-smart-projector-2/3-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "04-use.webp",
+          "source": "https://i02.appmifile.com/256_operator_sg/01/09/2021/6e8d92aee2504b3dd934bfa6b169a044.jpg?f=webp",
+          "page": "https://www.mi.com/global/product/mi-smart-projector-2/",
+          "credit": "© Xiaomi, ảnh giới thiệu sản phẩm — nguồn: www.mi.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793271/techrent/devices/xiaomi-mi-smart-projector-2/4-use.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.webp",
+          "source": "https://i02.appmifile.com/928_operator_sg/01/09/2021/3ac36650fdc7834312241e86c2d92dcd.jpg?f=webp",
+          "page": "https://www.mi.com/global/product/mi-smart-projector-2/",
+          "credit": "© Xiaomi, ảnh giới thiệu sản phẩm — nguồn: www.mi.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793272/techrent/devices/xiaomi-mi-smart-projector-2/5-use.jpg"
+        }
+      ]
+    },
+    "jbl-partybox-310": {
+      "name": "JBL PartyBox 310",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://hanoicomputercdn.com/media/product/77944_loa_di_dong_jbl_partybox_310_mau_den.jpg",
+          "page": "https://hacom.vn/loa-di-dong-jbl-partybox-310-mau-den",
+          "credit": "© Harman International (JBL), ảnh giới thiệu sản phẩm — nguồn: hacom.vn",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793273/techrent/devices/jbl-partybox-310/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.webp",
+          "source": "https://cdn-transformations.hacom.vn/insecure/f:webp/q:85/rt:fit/w:1080/aHR0cHM6Ly9oYW5vaWNvbXB1dGVyY2RuLmNvbS9tZWRpYS9wcm9kdWN0Lzc3OTQ0X2xvYV9kaV9kb25nX2pibF9wYXJ0eWJveF8zMTBfbWF1X2Rlbl8zLmpwZw.webp",
+          "page": "https://hacom.vn/loa-di-dong-jbl-partybox-310-mau-den",
+          "credit": "© Harman International (JBL), ảnh giới thiệu sản phẩm — nguồn: hacom.vn",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793274/techrent/devices/jbl-partybox-310/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.webp",
+          "source": "https://cdn-transformations.hacom.vn/insecure/f:webp/q:85/rt:fit/w:1080/aHR0cHM6Ly9oYW5vaWNvbXB1dGVyY2RuLmNvbS9tZWRpYS9wcm9kdWN0Lzc3OTQ0X2xvYV9kaV9kb25nX2pibF9wYXJ0eWJveF8zMTBfbWF1X2Rlbl8yLmpwZw.webp",
+          "page": "https://hacom.vn/loa-di-dong-jbl-partybox-310-mau-den",
+          "credit": "© Harman International (JBL), ảnh giới thiệu sản phẩm — nguồn: hacom.vn",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793275/techrent/devices/jbl-partybox-310/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.webp",
+          "source": "https://cdn-transformations.hacom.vn/insecure/f:webp/q:75/rt:fit/w:1080/aHR0cHM6Ly9oYW5vaWNvbXB1dGVyY2RuLmNvbS9tZWRpYS9wcm9kdWN0Lzc3OTQ0X2xvYV9kaV9kb25nX2pibF9wYXJ0eWJveF8zMTBfbWF1X2Rlbl82LmpwZw.webp",
+          "page": "https://hacom.vn/loa-di-dong-jbl-partybox-310-mau-den",
+          "credit": "© Harman International (JBL), ảnh giới thiệu sản phẩm — nguồn: hacom.vn",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793276/techrent/devices/jbl-partybox-310/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.webp",
+          "source": "https://cdn.hoanghamobile.vn/Uploads/2022/12/26/33.jpg;format=webp",
+          "page": "https://hoanghamobile.com/loa/loa-bluetooth-jbl-partybox-310-chinh-hang",
+          "credit": "© Harman International (JBL), ảnh giới thiệu sản phẩm — nguồn: hoanghamobile.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793277/techrent/devices/jbl-partybox-310/5-use.jpg"
+        }
+      ]
+    },
+    "bose-soundlink-max": {
+      "name": "Bose SoundLink Max",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.png",
+          "source": "https://assets.bosecreative.com/transform/4460a5bb-35b7-4530-9713-aef64b9cc48e/sf_pdp_SLMPS_gallery_blue_600x450_x2-1?quality=90&io=width:816,height:667,transform:fit",
+          "page": "https://www.bose.com/p/speakers/bose-soundlink-max-portable-speaker/SLMAX-SPEAKERWIRELESS.html",
+          "credit": "© Bose Corporation, ảnh giới thiệu sản phẩm — nguồn: www.bose.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793278/techrent/devices/bose-soundlink-max/1-front.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "02-angle.png",
+          "source": "https://assets.bosecreative.com/transform/e175a471-88b0-4599-b453-696fcf77bdcc/sf_pdp_SLMPS_silo_576x1152_x2-1?io=transform:crop,height:900,width:900,path:square,gravity:center&quality=95",
+          "page": "https://www.bose.com/p/speakers/bose-soundlink-max-portable-speaker/SLMAX-SPEAKERWIRELESS.html",
+          "credit": "© Bose Corporation, ảnh giới thiệu sản phẩm — nguồn: www.bose.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793279/techrent/devices/bose-soundlink-max/2-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "03-detail.png",
+          "source": "https://assets.bosecreative.com/transform/a477a92c-36ff-41ed-a623-46a575ab79e3/sf_pdp_SLMPS_battery_576x432_x2?io=transform:crop,height:1920,width:1920,path:square&quality=95",
+          "page": "https://www.bose.com/p/speakers/bose-soundlink-max-portable-speaker/SLMAX-SPEAKERWIRELESS.html",
+          "credit": "© Bose Corporation, ảnh giới thiệu sản phẩm — nguồn: www.bose.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793280/techrent/devices/bose-soundlink-max/3-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "04-use.png",
+          "source": "https://assets.bosecreative.com/transform/879a4697-703a-43cd-bb1f-84e6e319e3e9/sf_pdp_SLMPS_portability_carousel_1176x968_x2-1?io=transform:crop,height:1920,width:1920,path:square&quality=95",
+          "page": "https://www.bose.com/p/speakers/bose-soundlink-max-portable-speaker/SLMAX-SPEAKERWIRELESS.html",
+          "credit": "© Bose Corporation, ảnh giới thiệu sản phẩm — nguồn: www.bose.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793281/techrent/devices/bose-soundlink-max/4-use.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://cf-images.us-east-1.prod.boltdns.net/v1/static/1239686373001/90d964d8-6461-460d-8ea2-a25fdcc73b30/18d8235b-0d71-4664-b3e6-1212aa0b98e0/1280x720/match/image.jpg",
+          "page": "https://www.bose.com/p/speakers/bose-soundlink-max-portable-speaker/SLMAX-SPEAKERWIRELESS.html",
+          "credit": "© Bose Corporation, ảnh giới thiệu sản phẩm — nguồn: www.bose.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793282/techrent/devices/bose-soundlink-max/5-use.jpg"
+        }
+      ]
+    },
+    "marshall-stanmore-iii": {
+      "name": "Marshall Stanmore III",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://images.ctfassets.net/javen7msabdh/5LOAFWVpiW6lzYx5Kva89z/16046df6b06376f322bc253117ad4977/stanmore_iii-front-desktop-1.jpeg?w=2880&fm=jpg&q=85",
+          "page": "https://www.marshall.com/us/en/product/stanmore-iii",
+          "credit": "© Marshall Group, ảnh giới thiệu sản phẩm — nguồn: www.marshall.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793283/techrent/devices/marshall-stanmore-iii/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.jpg",
+          "source": "https://images.ctfassets.net/javen7msabdh/3oivmuItVMeIPjf90LuqVd/528aee334634fe3fdd5a5cd59a7e05b0/stanmore_iii-back-desktop-6.jpeg?w=2880&fm=jpg&q=85",
+          "page": "https://www.marshall.com/us/en/product/stanmore-iii",
+          "credit": "© Marshall Group, ảnh giới thiệu sản phẩm — nguồn: www.marshall.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793284/techrent/devices/marshall-stanmore-iii/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://images.ctfassets.net/javen7msabdh/1pZltfaifNQkONvBiY1Rtz/c0b93a5beb2cb7f73c947894cabb21f1/stanmore_iii-above-desktop-3.jpeg?w=2880&fm=jpg&q=85",
+          "page": "https://www.marshall.com/us/en/product/stanmore-iii",
+          "credit": "© Marshall Group, ảnh giới thiệu sản phẩm — nguồn: www.marshall.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793286/techrent/devices/marshall-stanmore-iii/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://images.ctfassets.net/javen7msabdh/1BCuWXfC6veihBBoF22G6N/81434d3df0a3beea99ee59d048002c4f/stanmore_iii-zoom-desktop-4.jpeg?w=2880&fm=jpg&q=85",
+          "page": "https://www.marshall.com/us/en/product/stanmore-iii",
+          "credit": "© Marshall Group, ảnh giới thiệu sản phẩm — nguồn: www.marshall.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793288/techrent/devices/marshall-stanmore-iii/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://images.ctfassets.net/javen7msabdh/1mP0viaFfdGPSlo0JZl9FT/7c4d19c3c36a215fc3ec17da03caa683/stanmore_iii-lifestyle-desktop-8.jpeg?w=2880&fm=jpg&q=85",
+          "page": "https://www.marshall.com/us/en/product/stanmore-iii",
+          "credit": "© Marshall Group, ảnh giới thiệu sản phẩm — nguồn: www.marshall.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793289/techrent/devices/marshall-stanmore-iii/5-use.jpg"
+        }
+      ]
+    },
+    "playstation-5-slim-b-n-c-a-1tb": {
+      "name": "PlayStation 5 Slim (bản có ổ đĩa) 1TB",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.webp",
+          "source": "https://gmedia.playstation.com/is/image/SIEPDC/ps5-slim-edition-left-image-block-01-en-24jun24?$1600px--t$",
+          "page": "https://www.playstation.com/en-us/ps5/",
+          "credit": "© Sony Interactive Entertainment, ảnh giới thiệu sản phẩm — nguồn: www.playstation.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793291/techrent/devices/playstation-5-slim-b-n-c-a-1tb/1-front.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "02-angle.jpg",
+          "source": "https://image.vnreview.vn/img.php?src=524288_70849781292933_2351297026064384?wt=3d0ebba244fb099e1529e89d2938a93a&rt=525bd11a17d3b226b780d53c9622a0ea&width=1080",
+          "page": "https://vnreview.vn/threads/sony-ps5-slim-chinh-hang-da-co-tai-viet-nam-gon-nhe-hon-30-hieu-nang-manh-me-gia-chi-hon-13-trieu-dong.976/post-1117",
+          "credit": "© Sony Interactive Entertainment, ảnh giới thiệu sản phẩm — nguồn: vnreview.vn",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793293/techrent/devices/playstation-5-slim-b-n-c-a-1tb/3-angle.jpg"
+        },
+        {
+          "role": "back",
+          "file": "03-back.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/0/0c/PS5_Stand.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:PS5_Stand.jpg",
+          "credit": "Toukai1017 — CC BY 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793292/techrent/devices/playstation-5-slim-b-n-c-a-1tb/2-back.jpg"
+        },
+        {
+          "role": "use",
+          "file": "04-use.jpg",
+          "source": "https://image.vnreview.vn/img.php?src=786432_70849781292932_2351292731097088?wt=2903ae5579abb9c2d9abf32cd9269415&rt=ced4f136630053058edba83b63c283c2&width=1080",
+          "page": "https://vnreview.vn/threads/sony-ps5-slim-chinh-hang-da-co-tai-viet-nam-gon-nhe-hon-30-hieu-nang-manh-me-gia-chi-hon-13-trieu-dong.976/post-1117",
+          "credit": "© Sony Interactive Entertainment, ảnh giới thiệu sản phẩm — nguồn: vnreview.vn",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793294/techrent/devices/playstation-5-slim-b-n-c-a-1tb/4-use.jpg"
+        }
+      ],
+      "note": "Chỉ tìm được 4 ảnh đúng bản Slim có ổ đĩa (Commons chủ yếu là PS5 đời đầu, ảnh bản Digital bị loại)"
+    },
+    "xbox-series-x-1tb": {
+      "name": "Xbox Series X 1TB",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.png",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/2/25/Xbox_Series_X_2_%28transparent_background%29.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Xbox_Series_X_2_(transparent_background).png",
+          "credit": "Der. Bellemer — CC BY 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793294/techrent/devices/xbox-series-x-1tb/1-front.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "02-angle.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/7/7d/Xbox_series_X_%2850648118708%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Xbox_series_X_(50648118708).jpg",
+          "credit": "Ian Hughes — CC BY 2.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793296/techrent/devices/xbox-series-x-1tb/2-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "03-detail.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/5/5c/Xbox_Series_%28X%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Xbox_Series_(X).jpg",
+          "credit": "Der. Bellemer — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793297/techrent/devices/xbox-series-x-1tb/3-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "04-use.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/2/2c/Xbox_Series_X_mit_Controller.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Xbox_Series_X_mit_Controller.jpg",
+          "credit": "Der. Bellemer — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793298/techrent/devices/xbox-series-x-1tb/4-use.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/9/94/Xbox_series_X_%2850648958937%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Xbox_series_X_(50648958937).jpg",
+          "credit": "Ian Hughes — CC BY 2.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793299/techrent/devices/xbox-series-x-1tb/5-use.jpg"
+        }
+      ]
+    },
+    "nintendo-switch-oled-64gb": {
+      "name": "Nintendo Switch OLED 64GB",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/c/c1/Nintendo_Switch_OLED_Model_-_6.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Nintendo_Switch_OLED_Model_-_6.jpg",
+          "credit": "Kyu3a — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793301/techrent/devices/nintendo-switch-oled-64gb/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/0/02/Nintendo_Switch_OLED_Model_-_4.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Nintendo_Switch_OLED_Model_-_4.jpg",
+          "credit": "Kyu3a — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793302/techrent/devices/nintendo-switch-oled-64gb/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.png",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/7/79/Nintendo_Switch_OLED_Model_3-18-2025.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Nintendo_Switch_OLED_Model_3-18-2025.png",
+          "credit": "One-Winged Devil — Public domain, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793303/techrent/devices/nintendo-switch-oled-64gb/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/2/29/Nintendo_Switch_OLED_Model_Dock_-_4.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Nintendo_Switch_OLED_Model_Dock_-_4.jpg",
+          "credit": "Kyu3a — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793305/techrent/devices/nintendo-switch-oled-64gb/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/4/40/Nintendo_Switch_OLED_Model_-_1.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Nintendo_Switch_OLED_Model_-_1.jpg",
+          "credit": "Kyu3a — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793306/techrent/devices/nintendo-switch-oled-64gb/5-use.jpg"
+        }
+      ]
+    },
+    "ubiquiti-unifi-dream-machine-pro-udm-pro": {
+      "name": "Ubiquiti UniFi Dream Machine Pro (UDM-Pro)",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.png",
+          "source": "https://cdn.ecomm.ui.com/products/9df27ed4-c4ae-471a-8982-f5b0650da76a/2ede4300-385f-4043-8d96-e0400a22465f.png",
+          "page": "https://store.ui.com/us/en/category/all-cloud-gateways/products/udm-pro",
+          "credit": "© Ubiquiti Inc., ảnh giới thiệu sản phẩm — nguồn: store.ui.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793307/techrent/devices/ubiquiti-unifi-dream-machine-pro-udm-pro/1-front.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "02-angle.png",
+          "source": "https://images.svc.ui.com/?u=https%3A%2F%2Fcdn.ecomm.ui.com%2Fproducts%2F9df27ed4-c4ae-471a-8982-f5b0650da76a%2F41ffa922-08a4-4b2d-99e9-a409f65632ef.png&q=75&w=1920",
+          "page": "https://store.ui.com/us/en/category/all-cloud-gateways/products/udm-pro",
+          "credit": "© Ubiquiti Inc., ảnh giới thiệu sản phẩm — nguồn: store.ui.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793308/techrent/devices/ubiquiti-unifi-dream-machine-pro-udm-pro/2-angle.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.png",
+          "source": "https://images.svc.ui.com/?u=https%3A%2F%2Fcdn.ecomm.ui.com%2Fproducts%2F9df27ed4-c4ae-471a-8982-f5b0650da76a%2F41ffa922-08a4-4b2d-99e9-a409f65632ef.png&q=75&w=3840",
+          "page": "https://store.ui.com/us/en/category/all-cloud-gateways/products/udm-pro",
+          "credit": "© Ubiquiti Inc., ảnh giới thiệu sản phẩm — nguồn: store.ui.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793309/techrent/devices/ubiquiti-unifi-dream-machine-pro-udm-pro/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.png",
+          "source": "https://images.svc.ui.com/?u=https%3A%2F%2Fcdn.ecomm.ui.com%2Fproducts%2F9df27ed4-c4ae-471a-8982-f5b0650da76a%2F7997cc11-b8c5-48e0-8b7e-bed4ded30898.png&q=75&w=3840",
+          "page": "https://store.ui.com/us/en/category/all-cloud-gateways/products/udm-pro",
+          "credit": "© Ubiquiti Inc., ảnh giới thiệu sản phẩm — nguồn: store.ui.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793310/techrent/devices/ubiquiti-unifi-dream-machine-pro-udm-pro/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.png",
+          "source": "https://images.svc.ui.com/?u=https%3A%2F%2Fcdn.ecomm.ui.com%2Fproducts%2F9df27ed4-c4ae-471a-8982-f5b0650da76a%2F45abf6a4-c44f-4e50-9081-977b006545e2.png&q=75&w=3840",
+          "page": "https://store.ui.com/us/en/category/all-cloud-gateways/products/udm-pro",
+          "credit": "© Ubiquiti Inc., ảnh giới thiệu sản phẩm — nguồn: store.ui.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793311/techrent/devices/ubiquiti-unifi-dream-machine-pro-udm-pro/5-use.jpg"
+        }
+      ]
+    },
+    "tp-link-archer-ax90-ax6600": {
+      "name": "TP-Link Archer AX90 (AX6600)",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://static.tp-link.com/Archer-AX90-Spotlight_2007_English-1_large_1595469604853c.jpg",
+          "page": "https://www.tp-link.com/us/home-networking/wifi-router/archer-ax90/",
+          "credit": "© TP-Link, ảnh giới thiệu sản phẩm — nguồn: www.tp-link.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793312/techrent/devices/tp-link-archer-ax90-ax6600/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.jpg",
+          "source": "https://static.tp-link.com/Archer-AX90-Spotlight_2007_English-3_large_1595469791525g.jpg",
+          "page": "https://www.tp-link.com/us/home-networking/wifi-router/archer-ax90/",
+          "credit": "© TP-Link, ảnh giới thiệu sản phẩm — nguồn: www.tp-link.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793313/techrent/devices/tp-link-archer-ax90-ax6600/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://static.tp-link.com/Archer-AX90-Spotlight_2007_English-2_large_1595498354396y.jpg",
+          "page": "https://www.tp-link.com/us/home-networking/wifi-router/archer-ax90/",
+          "credit": "© TP-Link, ảnh giới thiệu sản phẩm — nguồn: www.tp-link.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793315/techrent/devices/tp-link-archer-ax90-ax6600/3-angle.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "04-angle.jpg",
+          "source": "https://static.tp-link.com/upload/image-line/Archer_AX95_Tri-Band_AX7800_WiFi_6_VPN_Router_2.5_large_20230419061805v.jpg",
+          "page": "https://www.tp-link.com/us/home-networking/wifi-router/archer-ax90/",
+          "credit": "© TP-Link, ảnh giới thiệu sản phẩm — nguồn: www.tp-link.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793316/techrent/devices/tp-link-archer-ax90-ax6600/4-angle.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://static.tp-link.com/Archer-AX90-Spotlight_2007_English-4_large_1595498364643q.jpg",
+          "page": "https://www.tp-link.com/us/home-networking/wifi-router/archer-ax90/",
+          "credit": "© TP-Link, ảnh giới thiệu sản phẩm — nguồn: www.tp-link.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793317/techrent/devices/tp-link-archer-ax90-ax6600/5-use.jpg"
+        }
+      ]
+    },
+    "cisco-meraki-mx67": {
+      "name": "Cisco Meraki MX67",
+      "status": "chưa làm",
+      "images": [],
+      "note": "Không tìm được ảnh đúng model đạt ≥800px: trang Meraki/nhà bán lẻ chặn bot hoặc chỉ có ảnh MX68/MX67W, Commons không có — chưa có ảnh nào"
+    },
+    "meta-quest-3-128gb": {
+      "name": "Meta Quest 3 128GB",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/8/85/Meta_Quest_3_-_3.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Meta_Quest_3_-_3.jpg",
+          "credit": "Kyu3a — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793318/techrent/devices/meta-quest-3-128gb/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/d/d4/Lens_inside_Meta_Quest_3_-_2.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Lens_inside_Meta_Quest_3_-_2.jpg",
+          "credit": "Kyu3a — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793319/techrent/devices/meta-quest-3-128gb/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/b/bb/Meta_Quest_3_-_4.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Meta_Quest_3_-_4.jpg",
+          "credit": "Kyu3a — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793320/techrent/devices/meta-quest-3-128gb/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/f/f5/Controller_of_Meta_Quest_3_%28right%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Controller_of_Meta_Quest_3_(right).jpg",
+          "credit": "Kyu3a — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793321/techrent/devices/meta-quest-3-128gb/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/5/52/Man_wearing_Oculus_Meta_Quest_3_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Man_wearing_Oculus_Meta_Quest_3_(cropped).jpg",
+          "credit": "Assembleia Legislativa do Paraná — Public domain, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793322/techrent/devices/meta-quest-3-128gb/5-use.jpg"
+        }
+      ]
+    },
+    "apple-vision-pro-256gb": {
+      "name": "Apple Vision Pro 256GB",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://www.apple.com/newsroom/images/media/introducing-apple-vision-pro/Apple-WWDC23-Vision-Pro-glass-230605_big.jpg.large_2x.jpg",
+          "page": "https://www.apple.com/newsroom/2023/06/introducing-apple-vision-pro/",
+          "credit": "© Apple Inc., ảnh báo chí Apple Newsroom — nguồn: www.apple.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769880/techrent/devices/apple-vision-pro-256gb/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.jpg",
+          "source": "https://www.apple.com/newsroom/images/2024/01/apple-vision-pro-available-in-the-us-on-february-2/article/Apple-Vision-Pro-availability-profile_big.jpg.large_2x.jpg",
+          "page": "https://www.apple.com/newsroom/2024/01/apple-vision-pro-available-in-the-us-on-february-2/",
+          "credit": "© Apple Inc., ảnh báo chí Apple Newsroom — nguồn: www.apple.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769881/techrent/devices/apple-vision-pro-256gb/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://www.apple.com/newsroom/images/2024/01/apple-vision-pro-available-in-the-us-on-february-2/article/Apple-Vision-Pro-availability-back-angle_big.jpg.large_2x.jpg",
+          "page": "https://www.apple.com/newsroom/2024/01/apple-vision-pro-available-in-the-us-on-february-2/",
+          "credit": "© Apple Inc., ảnh báo chí Apple Newsroom — nguồn: www.apple.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769882/techrent/devices/apple-vision-pro-256gb/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://www.apple.com/newsroom/images/media/introducing-apple-vision-pro/Apple-WWDC23-Vision-Pro-Light-Seal-and-Digital-Crown-230605_photogrid.jpg.xlarge_2x.jpg",
+          "page": "https://www.apple.com/newsroom/2023/06/introducing-apple-vision-pro/",
+          "credit": "© Apple Inc., ảnh báo chí Apple Newsroom — nguồn: www.apple.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769883/techrent/devices/apple-vision-pro-256gb/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://www.apple.com/newsroom/images/media/introducing-apple-vision-pro/Apple-WWDC23-Vision-Pro-lifestyle-working-230605_big.jpg.large_2x.jpg",
+          "page": "https://www.apple.com/newsroom/2023/06/introducing-apple-vision-pro/",
+          "credit": "© Apple Inc., ảnh báo chí Apple Newsroom — nguồn: www.apple.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769885/techrent/devices/apple-vision-pro-256gb/5-use.jpg"
+        }
+      ]
+    },
+    "pico-4-128gb": {
+      "name": "PICO 4 128GB",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/8/8c/Pico_4_-_2.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Pico_4_-_2.jpg",
+          "credit": "KKPCW（Kyu3） — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793323/techrent/devices/pico-4-128gb/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/4/4a/Pico_4_top_view.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Pico_4_top_view.jpg",
+          "credit": "Roy.wonder.cohen — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793324/techrent/devices/pico-4-128gb/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Pico_4_-_1.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Pico_4_-_1.jpg",
+          "credit": "KKPCW（Kyu3） — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793325/techrent/devices/pico-4-128gb/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/3/33/Controller_of_Pico_4.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Controller_of_Pico_4.jpg",
+          "credit": "KKPCW（Kyu3） — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793326/techrent/devices/pico-4-128gb/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/1/13/Pico_4.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Pico_4.jpg",
+          "credit": "Radom1967 — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793328/techrent/devices/pico-4-128gb/5-use.jpg"
+        }
+      ]
+    },
+    "elgato-stream-deck-mk-2": {
+      "name": "Elgato Stream Deck MK.2",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://elgato-assets.imgix.net/image/upload/pg_name:10GBA9901;10GBA9901/f_auto/q_auto/w_1920,c_limit/v1756981926/2025/Stream%20Deck%20Classic/01_ATF/01_ATFs_static_003.psd",
+          "page": "https://www.elgato.com/us/en/p/stream-deck-mk2-black",
+          "credit": "© Corsair (Elgato), ảnh giới thiệu sản phẩm — nguồn: www.elgato.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793329/techrent/devices/elgato-stream-deck-mk-2/1-front.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "02-angle.jpg",
+          "source": "https://elgato-assets.imgix.net/image/upload/f_auto/q_auto:best/v1746722929/2025/Stream%20Deck%20Classic/07_sustainability/07_01_choose-original.jpg",
+          "page": "https://www.elgato.com/us/en/p/stream-deck-mk2-black",
+          "credit": "© Corsair (Elgato), ảnh giới thiệu sản phẩm — nguồn: www.elgato.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793330/techrent/devices/elgato-stream-deck-mk-2/2-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "03-detail.jpg",
+          "source": "https://elgato-assets.imgix.net/image/upload/q_auto,f_auto/w_1920,c_limit/v1748943464/Products/10GBA9901/above-the-fold/New/01_ATF_Animation_alternative.jpg",
+          "page": "https://www.elgato.com/us/en/p/stream-deck-mk2-black",
+          "credit": "© Corsair (Elgato), ảnh giới thiệu sản phẩm — nguồn: www.elgato.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793331/techrent/devices/elgato-stream-deck-mk-2/3-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "04-use.jpg",
+          "source": "https://elgato-assets.imgix.net/image/upload/f_auto/q_auto/w_1920,c_limit/v1747487049/Products/10GBA9901/above-the-fold/New/SD-ATF-04.jpg",
+          "page": "https://www.elgato.com/us/en/p/stream-deck-mk2-black",
+          "credit": "© Corsair (Elgato), ảnh giới thiệu sản phẩm — nguồn: www.elgato.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793332/techrent/devices/elgato-stream-deck-mk-2/4-use.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://elgato-assets.imgix.net/image/upload/f_auto/q_auto/w_1920,c_limit/v1747487049/Products/10GBA9901/above-the-fold/New/SD-ATF-03.jpg",
+          "page": "https://www.elgato.com/us/en/p/stream-deck-mk2-black",
+          "credit": "© Corsair (Elgato), ảnh giới thiệu sản phẩm — nguồn: www.elgato.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793333/techrent/devices/elgato-stream-deck-mk-2/5-use.jpg"
+        }
+      ]
+    },
+    "logitech-streamcam": {
+      "name": "Logitech StreamCam",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/0/0c/Logicool_StreamCam_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Logicool_StreamCam_(cropped).jpg",
+          "credit": "Masahiko OHKUBO from Kobe, Japan — CC BY 2.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793334/techrent/devices/logitech-streamcam/1-front.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "02-angle.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/b/b8/Logicool_StreamCam_C980OW_%2850201304083%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Logicool_StreamCam_C980OW_(50201304083).jpg",
+          "credit": "Masahiko OHKUBO from Kobe, Japan — CC BY 2.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793335/techrent/devices/logitech-streamcam/2-angle.jpg"
+        },
+        {
+          "role": "use",
+          "file": "03-use.jpg",
+          "source": "https://press-start.com.au/wp-content/uploads/2020/05/Logitech-StreamCam.jpg",
+          "page": "https://press-start.com.au/?p=109364",
+          "credit": "© Logitech, ảnh giới thiệu sản phẩm — nguồn: press-start.com.au",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793336/techrent/devices/logitech-streamcam/3-use.jpg"
+        },
+        {
+          "role": "use",
+          "file": "04-use.jpg",
+          "source": "https://resource.logitech.com/w_952,h_560,c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/logitech/en/products/webcams/streamcam/streamcam-feature-4.png",
+          "page": "https://www.logitech.com/en-us/shop/p/streamcam",
+          "credit": "© Logitech, ảnh giới thiệu sản phẩm — nguồn: www.logitech.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793337/techrent/devices/logitech-streamcam/4-use.jpg"
+        }
+      ],
+      "note": "Chỉ tìm được 4 ảnh đúng model (trang Logitech chủ yếu là ảnh bộ sản phẩm chung)"
+    },
+    "elgato-key-light-air": {
+      "name": "Elgato Key Light Air",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://www.kitguru.net/wp-content/uploads/2020/04/147A4010.jpg",
+          "page": "https://www.kitguru.net/channel/generaltech/andrew-munro/elgato-key-light-air-review/",
+          "credit": "© KitGuru — ảnh chụp trong bài đánh giá — nguồn: www.kitguru.net",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793339/techrent/devices/elgato-key-light-air/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.jpg",
+          "source": "https://www.kitguru.net/wp-content/uploads/2020/04/147A4015.jpg",
+          "page": "https://www.kitguru.net/channel/generaltech/andrew-munro/elgato-key-light-air-review/",
+          "credit": "© KitGuru — ảnh chụp trong bài đánh giá — nguồn: www.kitguru.net",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793340/techrent/devices/elgato-key-light-air/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://www.kitguru.net/wp-content/uploads/2020/04/147A4013.jpg",
+          "page": "https://www.kitguru.net/channel/generaltech/andrew-munro/elgato-key-light-air-review/",
+          "credit": "© KitGuru — ảnh chụp trong bài đánh giá — nguồn: www.kitguru.net",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793341/techrent/devices/elgato-key-light-air/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://www.kitguru.net/wp-content/uploads/2020/04/147A4014.jpg",
+          "page": "https://www.kitguru.net/channel/generaltech/andrew-munro/elgato-key-light-air-review/",
+          "credit": "© KitGuru — ảnh chụp trong bài đánh giá — nguồn: www.kitguru.net",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793342/techrent/devices/elgato-key-light-air/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://www.kitguru.net/wp-content/uploads/2020/04/147A4017.jpg",
+          "page": "https://www.kitguru.net/channel/generaltech/andrew-munro/elgato-key-light-air-review/",
+          "credit": "© KitGuru — ảnh chụp trong bài đánh giá — nguồn: www.kitguru.net",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793343/techrent/devices/elgato-key-light-air/5-use.jpg"
+        }
+      ],
+      "note": "Trang Elgato hiện chỉ có Key Light Air MK.2 nên dùng ảnh bài đánh giá KitGuru (bản gốc); không có ảnh mặt trước đã lắp ráp, ảnh bìa là hộp sản phẩm"
+    },
+    "logitech-g-pro-x-superlight-2": {
+      "name": "Logitech G Pro X Superlight 2",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://product.hstatic.net/200000722513/product/3_7c1bf2ff4e504450a42de78e6cc48087.jpg",
+          "page": "https://gearvn.com/products/chuot-logitech-g-pro-x-superlight-2-black",
+          "credit": "© Logitech, ảnh giới thiệu sản phẩm — nguồn: gearvn.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793344/techrent/devices/logitech-g-pro-x-superlight-2/1-front.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "02-angle.jpg",
+          "source": "https://product.hstatic.net/200000722513/product/gearvn-chuot-logitech-g-pro-x-superlight-2-black-6_c7d3e7d8488145e6a10e5d143b3ec64a.jpg",
+          "page": "https://gearvn.com/products/chuot-logitech-g-pro-x-superlight-2-black",
+          "credit": "© Logitech, ảnh giới thiệu sản phẩm — nguồn: gearvn.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793345/techrent/devices/logitech-g-pro-x-superlight-2/2-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "03-detail.jpg",
+          "source": "https://file.hstatic.net/200000722513/file/gearvn-chuot-logitech-g-pro-x-superlight-2-black-__4__1024x1024.jpg",
+          "page": "https://gearvn.com/products/chuot-logitech-g-pro-x-superlight-2-black",
+          "credit": "© Logitech, ảnh giới thiệu sản phẩm — nguồn: gearvn.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793346/techrent/devices/logitech-g-pro-x-superlight-2/3-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "04-use.jpg",
+          "source": "https://file.hstatic.net/200000722513/file/gearvn-chuot-logitech-g-pro-x-superlight-2-black-__8__1024x1024.jpg",
+          "page": "https://gearvn.com/products/chuot-logitech-g-pro-x-superlight-2-black",
+          "credit": "© Logitech, ảnh giới thiệu sản phẩm — nguồn: gearvn.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793347/techrent/devices/logitech-g-pro-x-superlight-2/4-use.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://product.hstatic.net/200000722513/product/gearvn-chuot-logitech-g-pro-x-superlight-2-black-9_2770457b32984b10a6462c4c3eb2b717.jpg",
+          "page": "https://gearvn.com/products/chuot-logitech-g-pro-x-superlight-2-black",
+          "credit": "© Logitech, ảnh giới thiệu sản phẩm — nguồn: gearvn.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793348/techrent/devices/logitech-g-pro-x-superlight-2/5-use.jpg"
+        }
+      ]
+    },
+    "razer-blackwidow-v4-pro-green-switch": {
+      "name": "Razer BlackWidow V4 Pro (Green Switch)",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.png",
+          "source": "https://product.hstatic.net/200000722513/product/phim_6c19f3491c624a93acecf707c68a9cd8_137391e150d54883a044e69479533a20_84db1b13d01a4a5887432c33da001df9.png",
+          "page": "https://gearvn.com/products/ban-phim-co-razer-blackwidow-v4-pro-green-switch",
+          "credit": "© Razer Inc., ảnh giới thiệu sản phẩm — nguồn: gearvn.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793349/techrent/devices/razer-blackwidow-v4-pro-green-switch/1-front.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "02-angle.png",
+          "source": "https://product.hstatic.net/200000722513/product/him3_f8cd096307164186ac4d5c624c125d17_7464fd77c32a423b9dbc1be85601f67c_e5893a433a1b4c9b9ad48102ce3affb0.png",
+          "page": "https://gearvn.com/products/ban-phim-co-razer-blackwidow-v4-pro-green-switch",
+          "credit": "© Razer Inc., ảnh giới thiệu sản phẩm — nguồn: gearvn.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793350/techrent/devices/razer-blackwidow-v4-pro-green-switch/2-angle.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.png",
+          "source": "https://product.hstatic.net/200000722513/product/him1_98807862c0594d25b700664a58766fba_c56c540899d44b7180f04be41e628296_3e87dfb1791c45b9afb84ebddff14282.png",
+          "page": "https://gearvn.com/products/ban-phim-co-razer-blackwidow-v4-pro-green-switch",
+          "credit": "© Razer Inc., ảnh giới thiệu sản phẩm — nguồn: gearvn.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793351/techrent/devices/razer-blackwidow-v4-pro-green-switch/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://www.rtings.com/assets/products/8Nxz4EsX/razer-blackwidow-v4-pro/label-large.jpg",
+          "page": "https://www.rtings.com/keyboard/reviews/razer/blackwidow-v4-pro",
+          "credit": "© RTINGS.com — ảnh chụp trong bài đánh giá, nguồn: www.rtings.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793352/techrent/devices/razer-blackwidow-v4-pro-green-switch/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://i.rtings.com/assets/products/MMgt3UYQ/razer-blackwidow-v4-pro/design-medium.jpg?format=auto",
+          "page": "https://www.rtings.com/keyboard/reviews/razer/blackwidow-v4-pro",
+          "credit": "© RTINGS.com — ảnh chụp trong bài đánh giá, nguồn: www.rtings.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793353/techrent/devices/razer-blackwidow-v4-pro-green-switch/5-use.jpg"
+        }
+      ]
+    },
+    "steelseries-arctis-nova-pro-wireless": {
+      "name": "SteelSeries Arctis Nova Pro Wireless",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://anphat.com.vn/media/product/53389_steelseries_arctis_nova_pro_black__3_.jpg",
+          "page": "https://www.anphatpc.com.vn/tai-nghe-steelseries-arctis-nova-pro-wireless-infinity-power-system-black-61520.html",
+          "credit": "© SteelSeries, ảnh giới thiệu sản phẩm — nguồn: www.anphatpc.com.vn",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793354/techrent/devices/steelseries-arctis-nova-pro-wireless/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.jpg",
+          "source": "https://anphat.com.vn/media/product/53389_steelseries_arctis_nova_pro__2_.jpg",
+          "page": "https://www.anphatpc.com.vn/tai-nghe-steelseries-arctis-nova-pro-wireless-infinity-power-system-black-61520.html",
+          "credit": "© SteelSeries, ảnh giới thiệu sản phẩm — nguồn: www.anphatpc.com.vn",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793355/techrent/devices/steelseries-arctis-nova-pro-wireless/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://anphat.com.vn/media/product/53389_steelseries_arctis_nova_pro_black__2_.jpg",
+          "page": "https://www.anphatpc.com.vn/tai-nghe-steelseries-arctis-nova-pro-wireless-infinity-power-system-black-61520.html",
+          "credit": "© SteelSeries, ảnh giới thiệu sản phẩm — nguồn: www.anphatpc.com.vn",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793356/techrent/devices/steelseries-arctis-nova-pro-wireless/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://anphat.com.vn/media/product/53389_steelseries_arctis_nova_pro__1_.jpg",
+          "page": "https://www.anphatpc.com.vn/tai-nghe-steelseries-arctis-nova-pro-wireless-infinity-power-system-black-61520.html",
+          "credit": "© SteelSeries, ảnh giới thiệu sản phẩm — nguồn: www.anphatpc.com.vn",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793357/techrent/devices/steelseries-arctis-nova-pro-wireless/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://i.rtings.com/assets/products/KDUQUrYp/steelseries-arctis-nova-pro-wireless-pc-ps-xbox/design-medium.jpg?format=auto",
+          "page": "https://www.rtings.com/headphones/reviews/steelseries/arctis-nova-pro-wireless",
+          "credit": "© RTINGS.com — ảnh chụp trong bài đánh giá, nguồn: www.rtings.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792793358/techrent/devices/steelseries-arctis-nova-pro-wireless/5-use.jpg"
+        }
+      ]
+    },
+    "ipad-pro-13-m4-256gb-wi-fi": {
+      "name": "iPad Pro 13\" M4 256GB Wi-Fi",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://www.apple.com/newsroom/images/2024/05/apple-unveils-stunning-new-ipad-pro-with-m4-chip-and-apple-pencil-pro/article/Apple-iPad-Pro-Ultra-Retina-XDR-with-OLED-240507_big.jpg.large_2x.jpg",
+          "page": "https://www.apple.com/newsroom/2024/05/apple-unveils-stunning-new-ipad-pro-with-m4-chip-and-apple-pencil-pro/",
+          "credit": "© Apple Inc., ảnh báo chí Apple Newsroom — nguồn: www.apple.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769886/techrent/devices/ipad-pro-13-m4-256gb-wi-fi/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.jpg",
+          "source": "https://www.apple.com/newsroom/images/2024/05/apple-unveils-stunning-new-ipad-pro-with-m4-chip-and-apple-pencil-pro/article/Apple-iPad-Pro-camera-close-up-240507_big.jpg.large_2x.jpg",
+          "page": "https://www.apple.com/newsroom/2024/05/apple-unveils-stunning-new-ipad-pro-with-m4-chip-and-apple-pencil-pro/",
+          "credit": "© Apple Inc., ảnh báo chí Apple Newsroom — nguồn: www.apple.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769888/techrent/devices/ipad-pro-13-m4-256gb-wi-fi/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://www.apple.com/newsroom/images/2024/05/apple-unveils-stunning-new-ipad-pro-with-m4-chip-and-apple-pencil-pro/article/Apple-iPad-Pro-thin-profile-240507_big.jpg.large_2x.jpg",
+          "page": "https://www.apple.com/newsroom/2024/05/apple-unveils-stunning-new-ipad-pro-with-m4-chip-and-apple-pencil-pro/",
+          "credit": "© Apple Inc., ảnh báo chí Apple Newsroom — nguồn: www.apple.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769890/techrent/devices/ipad-pro-13-m4-256gb-wi-fi/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://www.apple.com/newsroom/images/2024/05/apple-unveils-stunning-new-ipad-pro-with-m4-chip-and-apple-pencil-pro/article/Apple-iPad-Pro-cameras-240507_big.jpg.large_2x.jpg",
+          "page": "https://www.apple.com/newsroom/2024/05/apple-unveils-stunning-new-ipad-pro-with-m4-chip-and-apple-pencil-pro/",
+          "credit": "© Apple Inc., ảnh báo chí Apple Newsroom — nguồn: www.apple.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769892/techrent/devices/ipad-pro-13-m4-256gb-wi-fi/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://www.apple.com/newsroom/videos/apple-ipad-pro-center-stage/posters/Apple-iPad-Pro-Center-Stage-240507.jpg.large_2x.jpg",
+          "page": "https://www.apple.com/newsroom/2024/05/apple-unveils-stunning-new-ipad-pro-with-m4-chip-and-apple-pencil-pro/",
+          "credit": "© Apple Inc., ảnh báo chí Apple Newsroom — nguồn: www.apple.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769893/techrent/devices/ipad-pro-13-m4-256gb-wi-fi/5-use.jpg"
+        }
+      ]
+    },
+    "samsung-galaxy-tab-s9-ultra-12gb-256gb": {
+      "name": "Samsung Galaxy Tab S9 Ultra 12GB/256GB",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.png",
+          "source": "https://cdn2.cellphones.com.vn/x/media/catalog/product/t/a/tab-s9-ultra-xam-7.png",
+          "page": "https://cellphones.com.vn/samsung-galaxy-tab-s9-ultra.html",
+          "credit": "© Samsung Electronics, ảnh giới thiệu sản phẩm — nguồn: cellphones.com.vn",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769895/techrent/devices/samsung-galaxy-tab-s9-ultra-12gb-256gb/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.png",
+          "source": "https://cdn2.cellphones.com.vn/x/media/catalog/product/t/a/tab-s9-ultra-xam-1.png",
+          "page": "https://cellphones.com.vn/samsung-galaxy-tab-s9-ultra.html",
+          "credit": "© Samsung Electronics, ảnh giới thiệu sản phẩm — nguồn: cellphones.com.vn",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769896/techrent/devices/samsung-galaxy-tab-s9-ultra-12gb-256gb/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://fdn.gsmarena.com/imgroot/reviews/23/samsung-galaxy-tab-s9-ultra/lifestyle/-1024w2/gsmarena_007.jpg",
+          "page": "https://www.gsmarena.com/samsung_galaxy_tab_s9_ultra-pictures-12217.php",
+          "credit": "© GSMArena.com — ảnh chụp trong bài đánh giá, nguồn: www.gsmarena.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769897/techrent/devices/samsung-galaxy-tab-s9-ultra-12gb-256gb/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://fdn.gsmarena.com/imgroot/reviews/23/samsung-galaxy-tab-s9-ultra/lifestyle/-1024w2/gsmarena_013.jpg",
+          "page": "https://www.gsmarena.com/samsung_galaxy_tab_s9_ultra-pictures-12217.php",
+          "credit": "© GSMArena.com — ảnh chụp trong bài đánh giá, nguồn: www.gsmarena.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769898/techrent/devices/samsung-galaxy-tab-s9-ultra-12gb-256gb/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://fdn.gsmarena.com/imgroot/reviews/23/samsung-galaxy-tab-s9-ultra/lifestyle/-1024w2/gsmarena_023.jpg",
+          "page": "https://www.gsmarena.com/samsung_galaxy_tab_s9_ultra-pictures-12217.php",
+          "credit": "© GSMArena.com — ảnh chụp trong bài đánh giá, nguồn: www.gsmarena.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769899/techrent/devices/samsung-galaxy-tab-s9-ultra-12gb-256gb/5-use.jpg"
+        }
+      ]
+    },
+    "microsoft-surface-pro-9-i7-16gb-256gb": {
+      "name": "Microsoft Surface Pro 9 i7/16GB/256GB",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://www.notebookcheck.net/uploads/tx_nbc2/Microsoft_Surface_Pro_9__2__01.jpg",
+          "page": "https://www.notebookcheck.net/Microsoft-Surface-Pro-9-i7-1255U.676857.0.html",
+          "credit": "© Notebookcheck — ảnh chụp trong bài đánh giá, nguồn: www.notebookcheck.net",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769900/techrent/devices/microsoft-surface-pro-9-i7-16gb-256gb/1-front.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "02-angle.jpg",
+          "source": "https://hanoicomputercdn.com/media/product/72998_microsoft_surface_surface_pro_9___2_.jpg",
+          "page": "https://hacom.vn/microsoft-surface-surface-pro-9-i7-1255u-16gb-ram-256gb-ssd-13-win11-bac-bao-hanh-tai-hacom",
+          "credit": "© Microsoft, ảnh giới thiệu sản phẩm — nguồn: hacom.vn",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769901/techrent/devices/microsoft-surface-pro-9-i7-16gb-256gb/2-angle.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://www.notebookcheck.net/uploads/tx_nbc2/Microsoft_Surface_Pro_9__1__01.jpg",
+          "page": "https://www.notebookcheck.net/Microsoft-Surface-Pro-9-i7-1255U.676857.0.html",
+          "credit": "© Notebookcheck — ảnh chụp trong bài đánh giá, nguồn: www.notebookcheck.net",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769902/techrent/devices/microsoft-surface-pro-9-i7-16gb-256gb/3-angle.jpg"
+        },
+        {
+          "role": "use",
+          "file": "04-use.jpg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/7/7c/Surface_Pro_9_in_Sapphire_colour.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "page": "https://commons.wikimedia.org/wiki/File:Surface_Pro_9_in_Sapphire_colour.jpg",
+          "credit": "Kyler Chin — CC BY-SA 4.0, Wikimedia Commons",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792769903/techrent/devices/microsoft-surface-pro-9-i7-16gb-256gb/4-use.jpg"
+        }
+      ],
+      "note": "Chỉ tìm được 4 ảnh đúng model (thiếu ảnh mặt sau/cổng kết nối không có chữ quảng cáo đè lên)"
+    },
+    "shure-sm7b": {
+      "name": "Shure SM7B",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.png",
+          "source": "https://products.shureweb.eu/cdn-cgi/image/width=1380,height=1380,format=auto/shure_product_db/product_main_images/files/3ac/40e/15-/original/cb0c8564fc691fe2ff3d2b67889ab1c2.webp",
+          "page": "https://www.shure.com/en-US/products/microphones/sm7b",
+          "credit": "© Shure Incorporated, ảnh giới thiệu sản phẩm — nguồn: www.shure.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794743/techrent/devices/shure-sm7b/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.png",
+          "source": "https://products.shureweb.eu/cdn-cgi/image/width=1380,height=1380,format=auto/shure_product_db/product_images/files/4bd/7e2/c7-/original/e757bbf5e47f20e33fb988f3a6db2952.webp",
+          "page": "https://www.shure.com/en-US/products/microphones/sm7b",
+          "credit": "© Shure Incorporated, ảnh giới thiệu sản phẩm — nguồn: www.shure.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794744/techrent/devices/shure-sm7b/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.png",
+          "source": "https://products.shureweb.eu/cdn-cgi/image/width=1380,height=1380,format=auto/shure_product_db/product_images/files/c7c/c69/83-/original/f43b832853f438173844b1feab08932f.webp",
+          "page": "https://www.shure.com/en-US/products/microphones/sm7b",
+          "credit": "© Shure Incorporated, ảnh giới thiệu sản phẩm — nguồn: www.shure.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794744/techrent/devices/shure-sm7b/3-angle.jpg"
+        },
+        {
+          "role": "use",
+          "file": "04-use.jpg",
+          "source": "https://products.shureweb.eu/cdn-cgi/image/width=1380,height=1380,format=auto/shure_product_db/product_images/files/cf9/d48/27-/original/69c92686a01d8fe2bc183606ced6dfb0.webp",
+          "page": "https://www.shure.com/en-US/products/microphones/sm7b",
+          "credit": "© Shure Incorporated, ảnh giới thiệu sản phẩm — nguồn: www.shure.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794745/techrent/devices/shure-sm7b/4-use.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://products.shureweb.eu/cdn-cgi/image/width=1380,height=1380,format=auto/shure_product_db/product_images/files/46d/642/1a-/original/44f0376ee3f60a467004e527107d58a2.webp",
+          "page": "https://www.shure.com/en-US/products/microphones/sm7b",
+          "credit": "© Shure Incorporated, ảnh giới thiệu sản phẩm — nguồn: www.shure.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794746/techrent/devices/shure-sm7b/5-use.jpg"
+        }
+      ]
+    },
+    "rode-nt-usb": {
+      "name": "Rode NT-USB+",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.png",
+          "source": "https://edge.rode.com/images/page/2072/modules/6597/rode-nt-usb-plus-front-on-1080x1080-rgb.png",
+          "page": "https://rode.com/en/microphones/usb/nt-usb-plus",
+          "credit": "© RØDE Microphones, ảnh giới thiệu sản phẩm — nguồn: rode.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794748/techrent/devices/rode-nt-usb/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.png",
+          "source": "https://edge.rode.com/images/page/2072/modules/6597/rode-nt-usb-plus-rear-2000x2000-rgb-1080x1080-6aeddd8.png",
+          "page": "https://rode.com/en/microphones/usb/nt-usb-plus",
+          "credit": "© RØDE Microphones, ảnh giới thiệu sản phẩm — nguồn: rode.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794748/techrent/devices/rode-nt-usb/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.png",
+          "source": "https://edge.rode.com//images/page/2072/modules/6597/rode-nt-usb-plus-three-quater-hero-1080x1080-rgb.png",
+          "page": "https://rode.com/en/microphones/usb/nt-usb-plus",
+          "credit": "© RØDE Microphones, ảnh giới thiệu sản phẩm — nguồn: rode.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794749/techrent/devices/rode-nt-usb/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://edge.rode.com/images/page/2072/modules/6675/rode-nt-usb-plus-user-guide-side-controls-1000x1000-rgb-1080x1080-d2cbfff.jpg",
+          "page": "https://rode.com/en/microphones/usb/nt-usb-plus",
+          "credit": "© RØDE Microphones, ảnh giới thiệu sản phẩm — nguồn: rode.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794750/techrent/devices/rode-nt-usb/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://edge.rode.com/images/page/2072/modules/6671/rode-nt-usb-plus-insitu-girl-livingroom-musician-guitar-5000x3335-rgb-1080x1080-1c7064a.jpg",
+          "page": "https://rode.com/en/microphones/usb/nt-usb-plus",
+          "credit": "© RØDE Microphones, ảnh giới thiệu sản phẩm — nguồn: rode.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794751/techrent/devices/rode-nt-usb/5-use.jpg"
+        }
+      ]
+    },
+    "focusrite-scarlett-2i2-4th-gen": {
+      "name": "Focusrite Scarlett 2i2 (4th Gen)",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.webp",
+          "source": "https://cdn11.bigcommerce.com/s-7exlzlf13h/images/stencil/2560w/products/307/785/scarlett-2i2-top-image-2400-2400__78159.1693324453.png?c=3",
+          "page": "https://focusrite.com/products/scarlett-2i2",
+          "credit": "© Focusrite Audio Engineering, ảnh giới thiệu sản phẩm — nguồn: focusrite.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794752/techrent/devices/focusrite-scarlett-2i2-4th-gen/1-front.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "02-angle.webp",
+          "source": "https://cdn11.bigcommerce.com/s-7exlzlf13h/images/stencil/1920w/image-manager/scarlett-2i2-top-image-2400-2400.png?t=1692805194",
+          "page": "https://focusrite.com/products/scarlett-2i2",
+          "credit": "© Focusrite Audio Engineering, ảnh giới thiệu sản phẩm — nguồn: focusrite.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794754/techrent/devices/focusrite-scarlett-2i2-4th-gen/2-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "03-detail.webp",
+          "source": "https://cdn11.bigcommerce.com/s-7exlzlf13h/images/stencil/1920w/image-manager/s4ghaloautogain-product-page-animation-2400x2400-2i25secs-gif-12fps.gif?t=1714389761",
+          "page": "https://focusrite.com/products/scarlett-2i2",
+          "credit": "© Focusrite Audio Engineering, ảnh giới thiệu sản phẩm — nguồn: focusrite.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794754/techrent/devices/focusrite-scarlett-2i2-4th-gen/3-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "04-use.jpg",
+          "source": "https://cdn11.bigcommerce.com/s-7exlzlf13h/images/stencil/1920w/image-manager/scarlett-2i2-4g-lifestyle-2.jpg?t=1692879379",
+          "page": "https://focusrite.com/products/scarlett-2i2",
+          "credit": "© Focusrite Audio Engineering, ảnh giới thiệu sản phẩm — nguồn: focusrite.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794756/techrent/devices/focusrite-scarlett-2i2-4th-gen/4-use.jpg"
+        }
+      ],
+      "note": "Chỉ có 4 ảnh đúng 2i2 thế hệ 4 (ảnh mặt sau trên trang hãng là của Solo/4i4/8i6, đã loại)"
+    },
+    "asus-zenscreen-go-mb16ahp": {
+      "name": "ASUS ZenScreen Go MB16AHP",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.png",
+          "source": "https://dlcdnwebimgs.asus.com/gain/176361b6-48b8-45d4-9ec2-322c418ef5ce/",
+          "page": "https://www.asus.com/displays-desktops/monitors/zenscreen/zenscreen-go-mb16ahp/",
+          "credit": "© ASUSTeK Computer Inc., ảnh giới thiệu sản phẩm — nguồn: www.asus.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794757/techrent/devices/asus-zenscreen-go-mb16ahp/1-front.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "02-angle.jpg",
+          "source": "https://dlcdnwebimgs.asus.com/files/media/60459c3e-a31b-4fec-aa5c-ef19db4b65b9/WqHO2Fehx6MLwQsl/images/youtube_bg.jpg",
+          "page": "https://www.asus.com/displays-desktops/monitors/zenscreen/zenscreen-go-mb16ahp/",
+          "credit": "© ASUSTeK Computer Inc., ảnh giới thiệu sản phẩm — nguồn: www.asus.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794758/techrent/devices/asus-zenscreen-go-mb16ahp/2-angle.jpg"
+        },
+        {
+          "role": "use",
+          "file": "03-use.jpg",
+          "source": "https://dlcdnwebimgs.asus.com/files/media/60459c3e-a31b-4fec-aa5c-ef19db4b65b9/WqHO2Fehx6MLwQsl/images/MB16AP-scenario_B_1920x950.jpg",
+          "page": "https://www.asus.com/displays-desktops/monitors/zenscreen/zenscreen-go-mb16ahp/",
+          "credit": "© ASUSTeK Computer Inc., ảnh giới thiệu sản phẩm — nguồn: www.asus.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794759/techrent/devices/asus-zenscreen-go-mb16ahp/3-use.jpg"
+        },
+        {
+          "role": "use",
+          "file": "04-use.jpg",
+          "source": "https://dlcdnwebimgs.asus.com/files/media/60459c3e-a31b-4fec-aa5c-ef19db4b65b9/WqHO2Fehx6MLwQsl/images/ZenScreen-MB16AC-Smart-Pen-Hole.jpg",
+          "page": "https://www.asus.com/displays-desktops/monitors/zenscreen/zenscreen-go-mb16ahp/",
+          "credit": "© ASUSTeK Computer Inc., ảnh giới thiệu sản phẩm — nguồn: www.asus.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794761/techrent/devices/asus-zenscreen-go-mb16ahp/4-use.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://dlcdnwebimgs.asus.com/files/media/60459c3e-a31b-4fec-aa5c-ef19db4b65b9/WqHO2Fehx6MLwQsl/images/ZenScreen-MB16AC-on-the-move.jpg",
+          "page": "https://www.asus.com/displays-desktops/monitors/zenscreen/zenscreen-go-mb16ahp/",
+          "credit": "© ASUSTeK Computer Inc., ảnh giới thiệu sản phẩm — nguồn: www.asus.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794762/techrent/devices/asus-zenscreen-go-mb16ahp/5-use.jpg"
+        }
+      ]
+    },
+    "samsung-smart-monitor-m8-32-ls32bm80": {
+      "name": "Samsung Smart Monitor M8 32\" (LS32BM80)",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://images.samsung.com/is/image/samsung/p6pim/es/ls32bm801uuxen/gallery/es-smart-m8-32m80b-ls32bm801uuxen-531890997?$Q90_2052_1641_JPG$",
+          "page": "https://www.samsung.com/es/monitors/high-resolution/smart-m8-32-inch-uhd-4k-ls32bm801uuxen",
+          "credit": "© Samsung Electronics, ảnh giới thiệu sản phẩm — nguồn: www.samsung.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794763/techrent/devices/samsung-smart-monitor-m8-32-ls32bm80/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.jpg",
+          "source": "https://images.samsung.com/is/image/samsung/p6pim/es/ls32bm801uuxen/gallery/es-smart-m8-32m80b-ls32bm801uuxen-531367153?$Q90_2052_1641_JPG$",
+          "page": "https://www.samsung.com/es/monitors/high-resolution/smart-m8-32-inch-uhd-4k-ls32bm801uuxen",
+          "credit": "© Samsung Electronics, ảnh giới thiệu sản phẩm — nguồn: www.samsung.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794764/techrent/devices/samsung-smart-monitor-m8-32-ls32bm80/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://images.samsung.com/is/image/samsung/p6pim/es/ls32bm801uuxen/gallery/es-smart-m8-32m80b-ls32bm801uuxen-531367137?$Q90_2052_1641_JPG$",
+          "page": "https://www.samsung.com/es/monitors/high-resolution/smart-m8-32-inch-uhd-4k-ls32bm801uuxen",
+          "credit": "© Samsung Electronics, ảnh giới thiệu sản phẩm — nguồn: www.samsung.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794765/techrent/devices/samsung-smart-monitor-m8-32-ls32bm80/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://images.samsung.com/is/image/samsung/p6pim/es/ls32bm801uuxen/gallery/es-smart-m8-32m80b-ls32bm801uuxen-531367157?$Q90_2052_1641_JPG$",
+          "page": "https://www.samsung.com/es/monitors/high-resolution/smart-m8-32-inch-uhd-4k-ls32bm801uuxen",
+          "credit": "© Samsung Electronics, ảnh giới thiệu sản phẩm — nguồn: www.samsung.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794767/techrent/devices/samsung-smart-monitor-m8-32-ls32bm80/5-detail.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "05-angle.jpg",
+          "source": "https://images.samsung.com/is/image/samsung/p6pim/es/ls32bm801uuxen/gallery/es-smart-m8-32m80b-ls32bm801uuxen-531367160?$Q90_2052_1641_JPG$",
+          "page": "https://www.samsung.com/es/monitors/high-resolution/smart-m8-32-inch-uhd-4k-ls32bm801uuxen",
+          "credit": "© Samsung Electronics, ảnh giới thiệu sản phẩm — nguồn: www.samsung.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794766/techrent/devices/samsung-smart-monitor-m8-32-ls32bm80/4-angle.jpg"
+        }
+      ]
+    },
+    "lg-gram-view-16mq70": {
+      "name": "LG gram +view 16MQ70",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://monitornerds.com/wp-content/uploads/2023/03/LG-Gram-View-16MQ70-Review.jpg",
+          "page": "https://monitornerds.com/lg-gram-view-16mq70-review/",
+          "credit": "© LG Electronics, ảnh giới thiệu sản phẩm — nguồn: monitornerds.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794768/techrent/devices/lg-gram-view-16mq70/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.jpg",
+          "source": "https://media.ldlc.com/r1600/ld/products/00/05/96/73/LD0005967355.jpg",
+          "page": "https://ldlc.com/en/product/PB00505137.html",
+          "credit": "© LG Electronics, ảnh giới thiệu sản phẩm — nguồn: ldlc.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794769/techrent/devices/lg-gram-view-16mq70/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://media.ldlc.com/r1600/ld/products/00/05/96/73/LD0005967353.jpg",
+          "page": "https://ldlc.com/en/product/PB00505137.html",
+          "credit": "© LG Electronics, ảnh giới thiệu sản phẩm — nguồn: ldlc.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794770/techrent/devices/lg-gram-view-16mq70/3-angle.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "04-angle.jpg",
+          "source": "https://media.ldlc.com/r1600/ld/products/00/05/96/73/LD0005967354.jpg",
+          "page": "https://ldlc.com/en/product/PB00505137.html",
+          "credit": "© LG Electronics, ảnh giới thiệu sản phẩm — nguồn: ldlc.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794771/techrent/devices/lg-gram-view-16mq70/4-angle.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://media.ldlc.com/bo/images/fiches/moniteur%20LED/lg/16MQ70/portable.jpg",
+          "page": "https://ldlc.com/en/product/PB00505137.html",
+          "credit": "© LG Electronics, ảnh giới thiệu sản phẩm — nguồn: ldlc.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794772/techrent/devices/lg-gram-view-16mq70/5-use.jpg"
+        }
+      ]
+    },
+    "dji-rs-4": {
+      "name": "DJI RS 4",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.png",
+          "source": "https://se-cdn.djiits.com/tpc/uploads/spu/cover/f369dd11b8af89e1e2c80b990280323b@ultra.png",
+          "page": "https://store.dji.com/product/dji-rs-4",
+          "credit": "© DJI, ảnh giới thiệu sản phẩm — nguồn: store.dji.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794773/techrent/devices/dji-rs-4/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.jpg",
+          "source": "https://se-cdn.djiits.com/tpc/uploads/carousel/image/4b242cc807cf292db63827f10cb2687e@ultra.jpg",
+          "page": "https://store.dji.com/product/dji-rs-4",
+          "credit": "© DJI, ảnh giới thiệu sản phẩm — nguồn: store.dji.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794774/techrent/devices/dji-rs-4/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.png",
+          "source": "https://www-cdn.djiits.com/dps/ed92222b7fcae3d5bebec6dd6db7d2d2.png",
+          "page": "https://www.dji.com/rs-4",
+          "credit": "© DJI, ảnh giới thiệu sản phẩm — nguồn: www.dji.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794775/techrent/devices/dji-rs-4/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://se-cdn.djiits.com/tpc/uploads/core_selling_point/image/47d9cce3965bd03491701a9247c3a46f@origin.jpg",
+          "page": "https://store.dji.com/product/dji-rs-4",
+          "credit": "© DJI, ảnh giới thiệu sản phẩm — nguồn: store.dji.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794776/techrent/devices/dji-rs-4/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://se-cdn.djiits.com/tpc/uploads/carousel/image/441193b5bda111b297eb53390a4a748d@ultra.jpg",
+          "page": "https://store.dji.com/product/dji-rs-4",
+          "credit": "© DJI, ảnh giới thiệu sản phẩm — nguồn: store.dji.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794777/techrent/devices/dji-rs-4/5-use.jpg"
+        }
+      ]
+    },
+    "dji-rs-3-mini": {
+      "name": "DJI RS 3 Mini",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.png",
+          "source": "https://se-cdn.djiits.com/tpc/uploads/spu/cover/b05ce88a6d4e89bc5f9a67ca4a5df7d0@ultra.png",
+          "page": "https://store.dji.com/product/dji-rs-3-mini",
+          "credit": "© DJI, ảnh giới thiệu sản phẩm — nguồn: store.dji.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794778/techrent/devices/dji-rs-3-mini/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.png",
+          "source": "https://www-cdn.djiits.com/cms/uploads/fc108eb596103f42e68a51d465c859a3.png",
+          "page": "https://www.dji.com/rs-3-mini",
+          "credit": "© DJI, ảnh giới thiệu sản phẩm — nguồn: www.dji.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794779/techrent/devices/dji-rs-3-mini/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://se-cdn.djiits.com/tpc/uploads/carousel/image/dc0971eeb06dab0f7202f91fd321f137@ultra.jpg",
+          "page": "https://store.dji.com/product/dji-rs-3-mini",
+          "credit": "© DJI, ảnh giới thiệu sản phẩm — nguồn: store.dji.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794780/techrent/devices/dji-rs-3-mini/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://se-cdn.djiits.com/tpc/uploads/core_selling_point/image/5aab28aff023a3eceb688ce87ce960c1@origin.jpg",
+          "page": "https://store.dji.com/product/dji-rs-3-mini",
+          "credit": "© DJI, ảnh giới thiệu sản phẩm — nguồn: store.dji.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794781/techrent/devices/dji-rs-3-mini/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://se-cdn.djiits.com/tpc/uploads/carousel/image/442bd222e585da8c45a605b2fb785b1a@ultra.jpg",
+          "page": "https://store.dji.com/product/dji-rs-3-mini",
+          "credit": "© DJI, ảnh giới thiệu sản phẩm — nguồn: store.dji.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794782/techrent/devices/dji-rs-3-mini/5-use.jpg"
+        }
+      ]
+    },
+    "dji-osmo-mobile-6": {
+      "name": "DJI Osmo Mobile 6",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://se-cdn.djiits.com/tpc/uploads/carousel/image/c46f11e17852b48e0598c1ad1e93db12@ultra.jpg",
+          "page": "https://store.dji.com/product/osmo-mobile-6",
+          "credit": "© DJI, ảnh giới thiệu sản phẩm — nguồn: store.dji.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794782/techrent/devices/dji-osmo-mobile-6/1-front.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "02-angle.jpg",
+          "source": "https://se-cdn.djiits.com/tpc/uploads/carousel/image/2b6c7422d8dafc17eb74f967114208b8@ultra.jpg",
+          "page": "https://store.dji.com/product/osmo-mobile-6",
+          "credit": "© DJI, ảnh giới thiệu sản phẩm — nguồn: store.dji.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794784/techrent/devices/dji-osmo-mobile-6/2-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "03-detail.jpg",
+          "source": "https://www-cdn.djiits.com/assets/uploads/p/0f2f98de-7a80-4946-8d8b-6a07d43561a7/Part1-PC/250.jpg",
+          "page": "https://www.dji.com/osmo-mobile-6",
+          "credit": "© DJI, ảnh giới thiệu sản phẩm — nguồn: www.dji.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794785/techrent/devices/dji-osmo-mobile-6/3-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "04-use.webp",
+          "source": "https://se-cdn.djiits.com/tpc/uploads/carousel/image/7b718ab73be6949bdce63c5a1111197d@ultra.webp",
+          "page": "https://store.dji.com/product/osmo-mobile-6",
+          "credit": "© DJI, ảnh giới thiệu sản phẩm — nguồn: store.dji.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794786/techrent/devices/dji-osmo-mobile-6/4-use.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.webp",
+          "source": "https://se-cdn.djiits.com/tpc/uploads/core_selling_point/image/72d1d61fa5fb25cfd45000d9c81a28d7.webp",
+          "page": "https://store.dji.com/product/osmo-mobile-6",
+          "credit": "© DJI, ảnh giới thiệu sản phẩm — nguồn: store.dji.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794787/techrent/devices/dji-osmo-mobile-6/5-use.jpg"
+        }
+      ]
+    },
+    "zhiyun-crane-m3s": {
+      "name": "Zhiyun Crane-M3S",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "http://eu.zhiyun-tech.com/cdn/shop/files/M3S_d789323c-a6d0-46ba-8804-f6fc23a814e4.jpg?v=1685692015",
+          "page": "https://eu.zhiyun-tech.com/products/crane-m3s",
+          "credit": "© ZHIYUN, ảnh giới thiệu sản phẩm — nguồn: eu.zhiyun-tech.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794788/techrent/devices/zhiyun-crane-m3s/1-front.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "02-angle.jpg",
+          "source": "https://store.zhiyun-tech.com/cdn/shop/files/WB3E.jpg?v=1783408955&width=1280",
+          "page": "https://store.zhiyun-tech.com/it/products/crane-m3s",
+          "credit": "© ZHIYUN, ảnh giới thiệu sản phẩm — nguồn: store.zhiyun-tech.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794789/techrent/devices/zhiyun-crane-m3s/2-angle.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://store.zhiyun-tech.com/cdn/shop/files/2_c78a77de-f28c-4a6c-88b9-b54e9c075be7.jpg?v=1785499004&width=1280",
+          "page": "https://store.zhiyun-tech.com/it/products/crane-m3s",
+          "credit": "© ZHIYUN, ảnh giới thiệu sản phẩm — nguồn: store.zhiyun-tech.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794790/techrent/devices/zhiyun-crane-m3s/3-angle.jpg"
+        },
+        {
+          "role": "use",
+          "file": "04-use.jpg",
+          "source": "https://eu.zhiyun-tech.com/cdn/shop/files/a2bf903d4ea48ecfb4471448e3975dbc.jpg?v=1708587220&width=1600",
+          "page": "https://eu.zhiyun-tech.com/products/crane-m3s",
+          "credit": "© ZHIYUN, ảnh giới thiệu sản phẩm — nguồn: eu.zhiyun-tech.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794791/techrent/devices/zhiyun-crane-m3s/4-use.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "http://eu.zhiyun-tech.com/cdn/shop/files/M3S.jpg?v=1708587249",
+          "page": "https://eu.zhiyun-tech.com/products/crane-m3s",
+          "credit": "© ZHIYUN, ảnh giới thiệu sản phẩm — nguồn: eu.zhiyun-tech.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794792/techrent/devices/zhiyun-crane-m3s/5-use.jpg"
+        }
+      ]
+    },
+    "steam-deck-oled-512gb": {
+      "name": "Steam Deck OLED 512GB",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://d28jzcg6y4v9j1.cloudfront.net/media/social/articles/2023/11/10/steam-deck-oled-screen-thinkpro.jpeg",
+          "page": "https://thinkpro.vn/noi-dung/steam-deck-oled-ra-mat-man-sang-hon-pin-lau-hon-gia-tu-133-trieu",
+          "credit": "© Valve Corporation, ảnh giới thiệu sản phẩm — nguồn: thinkpro.vn",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792768941/techrent/devices/steam-deck-oled-512gb/1-front.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "02-angle.jpg",
+          "source": "https://cdn.fastly.steamstatic.com/steamdeck/images/oled/social_media_image.jpg",
+          "page": "https://www.steamdeck.com/en/oled",
+          "credit": "© Valve Corporation, ảnh giới thiệu sản phẩm — nguồn: www.steamdeck.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792768942/techrent/devices/steam-deck-oled-512gb/2-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "03-detail.png",
+          "source": "https://cdn.fastly.steamstatic.com/steamdeck/images/oled/oled_deck_top.png",
+          "page": "https://www.steamdeck.com/en/oled",
+          "credit": "© Valve Corporation, ảnh giới thiệu sản phẩm — nguồn: www.steamdeck.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792768944/techrent/devices/steam-deck-oled-512gb/3-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "04-use.png",
+          "source": "https://cdn.fastly.steamstatic.com/steamdeck/images/oled/oled_hands.png",
+          "page": "https://www.steamdeck.com/en/oled",
+          "credit": "© Valve Corporation, ảnh giới thiệu sản phẩm — nguồn: www.steamdeck.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792768945/techrent/devices/steam-deck-oled-512gb/4-use.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.png",
+          "source": "https://hanoicomputercdn.com/media/lib/02-03-2024/may-choi-game-cam-tay-steam-deck-oled-512gb-nvme-ssd10.png",
+          "page": "https://hacom.vn/may-choi-game-cam-tay-steam-deck-oled-512gb-nvme-ssd",
+          "credit": "© Valve Corporation, ảnh giới thiệu sản phẩm — nguồn: hacom.vn",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792768946/techrent/devices/steam-deck-oled-512gb/5-use.jpg"
+        }
+      ]
+    },
+    "asus-rog-ally-x-24gb-1tb": {
+      "name": "ASUS ROG Ally X 24GB/1TB",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.png",
+          "source": "https://dlcdnwebimgs.asus.com/files/media/C03ED571-0D4B-47B3-90B0-BEF72BB26C05/v2/images/large/1x/nr2501_kv.png",
+          "page": "https://rog.asus.com/gaming-handhelds/rog-ally/rog-ally-x-2024/",
+          "credit": "© ASUSTeK Computer Inc. (ROG), ảnh giới thiệu sản phẩm — nguồn: rog.asus.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794793/techrent/devices/asus-rog-ally-x-24gb-1tb/1-front.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "02-angle.png",
+          "source": "https://dlcdnwebimgs.asus.com/files/media/C03ED571-0D4B-47B3-90B0-BEF72BB26C05/v2/images/large/1x/product_rog_ally_x.png",
+          "page": "https://rog.asus.com/gaming-handhelds/rog-ally/rog-ally-x-2024/",
+          "credit": "© ASUSTeK Computer Inc. (ROG), ảnh giới thiệu sản phẩm — nguồn: rog.asus.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794794/techrent/devices/asus-rog-ally-x-24gb-1tb/2-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "03-detail.png",
+          "source": "https://dlcdnwebimgs.asus.com/files/media/C03ED571-0D4B-47B3-90B0-BEF72BB26C05/v2/images/large/1x/nr2501_ioports.png",
+          "page": "https://rog.asus.com/gaming-handhelds/rog-ally/rog-ally-x-2024/",
+          "credit": "© ASUSTeK Computer Inc. (ROG), ảnh giới thiệu sản phẩm — nguồn: rog.asus.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794795/techrent/devices/asus-rog-ally-x-24gb-1tb/3-detail.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://dlcdnwebimgs.asus.com/files/media/C03ED571-0D4B-47B3-90B0-BEF72BB26C05/v2/images/large/1x/pic_design_slide5.jpg",
+          "page": "https://rog.asus.com/gaming-handhelds/rog-ally/rog-ally-x-2024/",
+          "credit": "© ASUSTeK Computer Inc. (ROG), ảnh giới thiệu sản phẩm — nguồn: rog.asus.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794796/techrent/devices/asus-rog-ally-x-24gb-1tb/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://dlcdnwebimgs.asus.com/files/media/C03ED571-0D4B-47B3-90B0-BEF72BB26C05/v2/images/large/1x/pic_seamless_play_1.jpg",
+          "page": "https://rog.asus.com/gaming-handhelds/rog-ally/rog-ally-x-2024/",
+          "credit": "© ASUSTeK Computer Inc. (ROG), ảnh giới thiệu sản phẩm — nguồn: rog.asus.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794797/techrent/devices/asus-rog-ally-x-24gb-1tb/5-use.jpg"
+        }
+      ]
+    },
+    "lenovo-legion-go-16gb-512gb": {
+      "name": "Lenovo Legion Go 16GB/512GB",
+      "status": "đã upload",
+      "images": [
+        {
+          "role": "front",
+          "file": "01-front.jpg",
+          "source": "https://p4-ofp.static.pub//fes/cms/2023/09/25/0ahnw27rt2tbqkmmsfbpeb5a6ktksf252024.jpg",
+          "page": "https://www.lenovo.com/us/en/p/handheld/legion-go/len106g0001",
+          "credit": "© Lenovo, ảnh giới thiệu sản phẩm — nguồn: www.lenovo.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794798/techrent/devices/lenovo-legion-go-16gb-512gb/1-front.jpg"
+        },
+        {
+          "role": "back",
+          "file": "02-back.jpg",
+          "source": "https://p4-ofp.static.pub//fes/cms/2023/09/23/cbvfedlr86g46id8qxg8xdh3higq8v649661.jpg",
+          "page": "https://www.lenovo.com/us/en/p/handheld/legion-go/len106g0001",
+          "credit": "© Lenovo, ảnh giới thiệu sản phẩm — nguồn: www.lenovo.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794799/techrent/devices/lenovo-legion-go-16gb-512gb/2-back.jpg"
+        },
+        {
+          "role": "angle",
+          "file": "03-angle.jpg",
+          "source": "https://p1-ofp.static.pub//fes/cms/2023/09/23/0n4klmo5h0q6iuzbp83nu3fo56ek0w072011.jpg",
+          "page": "https://www.lenovo.com/us/en/p/handheld/legion-go/len106g0001",
+          "credit": "© Lenovo, ảnh giới thiệu sản phẩm — nguồn: www.lenovo.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794800/techrent/devices/lenovo-legion-go-16gb-512gb/3-angle.jpg"
+        },
+        {
+          "role": "detail",
+          "file": "04-detail.jpg",
+          "source": "https://p3-ofp.static.pub//fes/cms/2023/09/23/fzzo5ubkjnammqxdahx5sqv7vpnnkm682031.jpg",
+          "page": "https://www.lenovo.com/us/en/p/handheld/legion-go/len106g0001",
+          "credit": "© Lenovo, ảnh giới thiệu sản phẩm — nguồn: www.lenovo.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794800/techrent/devices/lenovo-legion-go-16gb-512gb/4-detail.jpg"
+        },
+        {
+          "role": "use",
+          "file": "05-use.jpg",
+          "source": "https://p4-ofp.static.pub//fes/cms/2023/09/23/n0zko9qr88sga7p5dk65qdqlhbnfw0214318.jpg",
+          "page": "https://www.lenovo.com/us/en/p/handheld/legion-go/len106g0001",
+          "credit": "© Lenovo, ảnh giới thiệu sản phẩm — nguồn: www.lenovo.com",
+          "url": "https://res.cloudinary.com/d7mchans/image/upload/v1792794801/techrent/devices/lenovo-legion-go-16gb-512gb/5-use.jpg"
+        }
+      ]
+    }
+  }
+}

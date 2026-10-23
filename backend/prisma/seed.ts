@@ -1,7 +1,6 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Prisma, PrismaClient, DeviceStatus } from '../src/generated/prisma/client';
-import { UploadService } from '../src/upload/upload.service';
 import {
   buildSpecSheet,
   flattenSpecSheet,
@@ -9,15 +8,15 @@ import {
 } from '../src/devices/spec-sheet.util';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { readManifest, slugify, uploadedUrls } from '../scripts/device-images/manifest-store';
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
-// UploadService chỉ cần một object có .get(key) giống ConfigService — không cần bootstrap
-// toàn bộ Nest app chỉ để chạy script seed.
-const uploadService = new UploadService({
-  get: (key: string) => process.env[key],
-} as any);
+// Ảnh thiết bị: 5 ảnh thật đúng model đã kiểm tra và upload lên Cloudinary bởi
+// backend/scripts/device-images/ — seed chỉ đọc URL Cloudinary trong manifest.json,
+// không tải ảnh từ link ngoài.
+const IMAGE_MANIFEST = readManifest();
 
 function readSeedData<T>(file: string): T {
   return JSON.parse(readFileSync(join(__dirname, 'seed-data', file), 'utf-8')) as T;
@@ -53,14 +52,6 @@ interface DeviceSeed {
   /** Mô tả dài: tình trạng máy, phụ kiện kèm theo, năm sản xuất, bảo hành còn lại. */
   detailedDescription: string;
   status?: DeviceStatus;
-  /**
-   * Ảnh thật (Unsplash/Pexels, link CDN trực tiếp) khớp đúng model/loại thiết
-   * bị — xem CLAUDE.md mục "Đã hoàn thành" buổi mở rộng seed data để biết
-   * cách đã chọn ảnh (ưu tiên đúng model, fallback đúng loại nếu không có
-   * ảnh model cụ thể). Tuỳ chọn: thiết bị mới chưa có thì để trống, ảnh bổ
-   * sung bằng backend/scripts/device-images/.
-   */
-  imageUrl?: string;
 }
 
 /** Format câu mô tả chi tiết đồng nhất cho mọi thiết bị — tránh lặp cấu trúc văn bản tay 45 lần. */
@@ -74,8 +65,7 @@ function desc(opts: {
 }
 
 // 8 danh mục GỐC (Tuần 5) — GIỮ NGUYÊN tên/thứ tự thiết bị, KHÔNG xoá/đổi gì
-// để không phá dữ liệu booking/review đang gắn với các thiết bị này. CHỈ đổi
-// `imageUrl` từ picsum.photos (ngẫu nhiên) sang ảnh thật khớp đúng tên/loại.
+// để không phá dữ liệu booking/review đang gắn với các thiết bị này.
 const CATEGORIES: CategorySeed[] = [
   {
     name: 'Laptop',
@@ -92,7 +82,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2024,
           warrantyMonths: 6,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'Dell XPS 15 9530 i7-13700H/RTX 4070 OLED',
@@ -105,7 +94,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2023,
           warrantyMonths: 6,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'ASUS ROG Zephyrus G14 (2024) R9 8945HS/RTX 4070',
@@ -119,7 +107,6 @@ const CATEGORIES: CategorySeed[] = [
           warrantyMonths: 9,
         }),
         status: DeviceStatus.rented,
-        imageUrl: 'https://images.unsplash.com/photo-1698512475067-74ed7c956c8d?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'Lenovo ThinkPad X1 Carbon Gen 12 Ultra 7/16GB/512GB',
@@ -132,7 +119,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2024,
           warrantyMonths: 8,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1770932327451-63bb8530f607?w=800&q=80&auto=format&fit=crop',
       },
     ],
   },
@@ -151,7 +137,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2023,
           warrantyMonths: 6,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'Canon EOS R6 Mark II (body)',
@@ -164,7 +149,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2024,
           warrantyMonths: 9,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'Fujifilm X-T5 (body)',
@@ -178,7 +162,6 @@ const CATEGORIES: CategorySeed[] = [
           warrantyMonths: 6,
         }),
         status: DeviceStatus.maintenance,
-        imageUrl: 'https://images.unsplash.com/photo-1536632087471-3cf3f2986328?w=800&q=80&auto=format&fit=crop',
       },
     ],
   },
@@ -197,7 +180,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2024,
           warrantyMonths: 6,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1473186639016-1451879a06f0?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'DJI Mini 4 Pro',
@@ -210,7 +192,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2024,
           warrantyMonths: 8,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1487304655522-c039cc299c9d?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'DJI Air 3',
@@ -223,7 +204,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2023,
           warrantyMonths: 6,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1631052941794-2a6e26d4ac17?w=800&q=80&auto=format&fit=crop',
       },
     ],
   },
@@ -242,7 +222,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2022,
           warrantyMonths: 4,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1444653614773-995cb1ef9efa?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'BenQ TK850',
@@ -255,7 +234,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2023,
           warrantyMonths: 6,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'Xiaomi Mi Smart Projector 2',
@@ -268,7 +246,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2023,
           warrantyMonths: 6,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1589113050289-1c654e7e305d?w=800&q=80&auto=format&fit=crop',
       },
     ],
   },
@@ -287,7 +264,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2022,
           warrantyMonths: 5,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1589256469067-ea99122bbdc4?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'Bose SoundLink Max',
@@ -300,7 +276,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2023,
           warrantyMonths: 7,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1594501432907-91214bfdd928?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'Marshall Stanmore III',
@@ -314,7 +289,6 @@ const CATEGORIES: CategorySeed[] = [
           warrantyMonths: 0,
         }),
         status: DeviceStatus.broken,
-        imageUrl: 'https://images.unsplash.com/photo-1699567364860-cf5e05224338?w=800&q=80&auto=format&fit=crop',
       },
     ],
   },
@@ -333,7 +307,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2024,
           warrantyMonths: 8,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'Xbox Series X 1TB',
@@ -346,7 +319,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2023,
           warrantyMonths: 6,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1621259182978-fbf93132d53d?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'Nintendo Switch OLED 64GB',
@@ -359,7 +331,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2023,
           warrantyMonths: 6,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1612036781124-847f8939b154?w=800&q=80&auto=format&fit=crop',
       },
     ],
   },
@@ -378,7 +349,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2022,
           warrantyMonths: 5,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1695668548342-c0c1ad479aee?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'TP-Link Archer AX90 (AX6600)',
@@ -391,7 +361,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2023,
           warrantyMonths: 6,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1645725677294-ed0843b97d5c?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'Cisco Meraki MX67',
@@ -404,7 +373,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2022,
           warrantyMonths: 5,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1691435828932-911a7801adfb?w=800&q=80&auto=format&fit=crop',
       },
     ],
   },
@@ -423,7 +391,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2024,
           warrantyMonths: 7,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1780547292624-8bc828bdae07?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'Apple Vision Pro 256GB',
@@ -436,7 +403,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2024,
           warrantyMonths: 9,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1707228773518-7ca0492d0c4d?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'PICO 4 128GB',
@@ -449,7 +415,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2023,
           warrantyMonths: 6,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1593508512255-86ab42a8e620?w=800&q=80&auto=format&fit=crop',
       },
     ],
   },
@@ -473,7 +438,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2024,
           warrantyMonths: 7,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1685615359827-aa31d97578e7?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'DJI Osmo Action 4',
@@ -486,7 +450,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2023,
           warrantyMonths: 6,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1484506399805-c273b8e91dce?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'Insta360 X4',
@@ -499,7 +462,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2024,
           warrantyMonths: 7,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1618482914248-29272d021005?w=800&q=80&auto=format&fit=crop',
       },
     ],
   },
@@ -518,7 +480,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2023,
           warrantyMonths: 6,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1656646549607-8fda5837a4ca?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'Logitech StreamCam',
@@ -531,7 +492,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2022,
           warrantyMonths: 5,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1623949556303-b0d17d198863?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'Elgato Key Light Air',
@@ -544,7 +504,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2023,
           warrantyMonths: 6,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1673196649671-eb09066ad6c1?w=800&q=80&auto=format&fit=crop',
       },
     ],
   },
@@ -563,7 +522,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2023,
           warrantyMonths: 6,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'Razer BlackWidow V4 Pro (Green Switch)',
@@ -576,7 +534,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2022,
           warrantyMonths: 5,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'SteelSeries Arctis Nova Pro Wireless',
@@ -589,7 +546,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2023,
           warrantyMonths: 6,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1560419015-7c427e8ae5ba?w=800&q=80&auto=format&fit=crop',
       },
     ],
   },
@@ -608,7 +564,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2024,
           warrantyMonths: 8,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1662893170097-d6563d0093d3?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'Samsung Galaxy Tab S9 Ultra 12GB/256GB',
@@ -621,7 +576,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2023,
           warrantyMonths: 6,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1620288650879-20db0eb38c05?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'Microsoft Surface Pro 9 i7/16GB/256GB',
@@ -634,7 +588,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2023,
           warrantyMonths: 6,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1544603396-2af4865ec92e?w=800&q=80&auto=format&fit=crop',
       },
     ],
   },
@@ -653,7 +606,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2022,
           warrantyMonths: 6,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1589903308904-1010c2294adc?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'Rode NT-USB+',
@@ -666,7 +618,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2023,
           warrantyMonths: 6,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1660631228116-b3643559f611?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'Focusrite Scarlett 2i2 (4th Gen)',
@@ -679,7 +630,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2023,
           warrantyMonths: 6,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1588800347304-ec7e6f353327?w=800&q=80&auto=format&fit=crop',
       },
     ],
   },
@@ -698,7 +648,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2022,
           warrantyMonths: 5,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1551645120-d70bfe84c826?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'Samsung Smart Monitor M8 32" (LS32BM80)',
@@ -711,7 +660,6 @@ const CATEGORIES: CategorySeed[] = [
           year: 2023,
           warrantyMonths: 6,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1614624532983-4ce03382d63d?w=800&q=80&auto=format&fit=crop',
       },
       {
         name: 'LG gram +view 16MQ70',
@@ -724,13 +672,12 @@ const CATEGORIES: CategorySeed[] = [
           year: 2023,
           warrantyMonths: 6,
         }),
-        imageUrl: 'https://images.unsplash.com/photo-1577375729152-4c8b5fcda381?w=800&q=80&auto=format&fit=crop',
       },
     ],
   },
   // 2 danh mục MỚI (23/10 buổi 3) thay cho "PC & Mini PC" đã bỏ (máy để bàn
   // cồng kềnh, phải lắp đặt màn hình/bàn phím, khó kiểm tra khi giao nhận).
-  // Ảnh do backend/scripts/device-images/ bổ sung (Phần 4) — chưa có thì để trống.
+  // Ảnh lấy từ backend/scripts/device-images/manifest.json như mọi thiết bị khác.
   {
     name: 'Gimbal & chống rung',
     description: 'Gimbal cầm tay chống rung cho máy ảnh và điện thoại — quay phim, vlog, sự kiện',
@@ -838,18 +785,11 @@ async function findOrCreateCategory(input: { name: string; description: string }
   return prisma.category.create({ data: { ...input, specTemplate } });
 }
 
-// Chuyển tên thiết bị thành 1 public_id Cloudinary ổn định (chỉ chữ thường,
-// số, gạch ngang) — dùng để chạy lại script NHIỀU LẦN mà không tạo ảnh trùng
-// (xem UploadService.uploadFromUrl, tham số publicId mới thêm).
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
 async function seedDevice(categoryId: string, categoryName: string, device: DeviceSeed) {
-  const publicId = `device-${slugify(device.name)}`;
+  // Thiết bị có trong manifest ảnh → dùng đúng danh sách ảnh đã upload (rỗng nếu
+  // chưa tìm được ảnh đúng model — không dùng ảnh sai cho đủ). Không có → giữ nguyên.
+  const manifestEntry = IMAGE_MANIFEST.devices[slugify(device.name)];
+  const images = manifestEntry ? uploadedUrls(manifestEntry) : undefined;
   const researched = DEVICE_SPECS[device.name];
   if (!researched) throw new Error(`Thiếu thông số đã tra cứu cho "${device.name}" trong device-specs.json`);
 
@@ -869,12 +809,6 @@ async function seedDevice(categoryId: string, categoryName: string, device: Devi
   });
 
   if (existing) {
-    // Đã có ảnh Cloudinary thì giữ nguyên (ảnh do backend/scripts/device-images/ quản lý).
-    const hasHostedImage = existing.images.some((url) => url.includes('res.cloudinary.com'));
-    const images =
-      !hasHostedImage && device.imageUrl
-        ? [await uploadService.uploadFromUrl(device.imageUrl, publicId)]
-        : undefined;
     await prisma.device.update({
       where: { id: existing.id },
       data: { name: device.name, ...specFields, ...(images ? { images } : {}) },
@@ -884,7 +818,6 @@ async function seedDevice(categoryId: string, categoryName: string, device: Devi
     return;
   }
 
-  const imageUrl = device.imageUrl ? await uploadService.uploadFromUrl(device.imageUrl, publicId) : null;
   await prisma.device.create({
     data: {
       name: device.name,
@@ -893,7 +826,7 @@ async function seedDevice(categoryId: string, categoryName: string, device: Devi
       pricePerHour: device.pricePerHour,
       pricePerDay: device.pricePerDay,
       status: device.status ?? DeviceStatus.available,
-      images: imageUrl ? [imageUrl] : [],
+      images: images ?? [],
     },
   });
   console.log(`  ✅ ${device.name} — ${specSheet.length} thông số`);
