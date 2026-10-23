@@ -2,7 +2,7 @@
 
 ## Laptop: dùng để làm gì, gồm thiết bị nào
 - Thiết bị tiêu biểu: MacBook Pro 14 M3 Pro, Dell XPS 15, ASUS ROG Zephyrus G14, Lenovo ThinkPad X1 Carbon.
-- Phù hợp làm văn phòng, lập trình, đồ hoạ, dựng phim, chơi game. Đồ hoạ/dựng phim nên chọn máy có GPU rời hoặc chip mạnh (MacBook Pro M3 Pro, Dell XPS 15, ROG Zephyrus G14); văn phòng di chuyển nhiều chọn máy nhẹ (ThinkPad X1 Carbon).
+- Phù hợp làm văn phòng, lập trình, đồ hoạ, dựng phim, chơi game. Đồ hoạ/dựng phim nên chọn máy cấu hình mạnh: MacBook Pro 14 M3 Pro (chip Apple M3 Pro), ASUS ROG Zephyrus G14 (card đồ hoạ rời RTX 4070) hoặc Dell XPS 15. Làm văn phòng, di chuyển nhiều nên chọn máy nhẹ như ThinkPad X1 Carbon.
 
 ## Laptop: cách kết nối và cài đặt cơ bản
 - Sạc đầy pin trước khi dùng, dùng đúng củ sạc đi kèm.

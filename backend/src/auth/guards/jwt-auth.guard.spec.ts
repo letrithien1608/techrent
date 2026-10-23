@@ -48,4 +48,22 @@ describe('JwtAuthGuard', () => {
     expect(result).toBe(true);
     expect(parentCanActivate).toHaveBeenCalledTimes(1);
   });
+
+  it('@OptionalAuth(): token hợp lệ thì xác thực như thường', async () => {
+    reflector.getAllAndOverride
+      .mockReturnValueOnce(false) // không phải @Public()
+      .mockReturnValueOnce(true); // là @OptionalAuth()
+
+    await expect(guard.canActivate(createContext())).resolves.toBe(true);
+    expect(parentCanActivate).toHaveBeenCalledTimes(1);
+  });
+
+  it('@OptionalAuth(): token thiếu/sai vẫn cho qua dưới dạng khách', async () => {
+    reflector.getAllAndOverride
+      .mockReturnValueOnce(false)
+      .mockReturnValueOnce(true);
+    parentCanActivate.mockRejectedValue(new Error('Unauthorized'));
+
+    await expect(guard.canActivate(createContext())).resolves.toBe(true);
+  });
 });
