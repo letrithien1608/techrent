@@ -22,6 +22,7 @@ describe('CategoriesService', () => {
     id: 'cat-1',
     name: 'Laptop',
     description: 'Laptop văn phòng, gaming',
+    specTemplate: null,
   };
 
   beforeEach(() => {

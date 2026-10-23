@@ -133,7 +133,9 @@ function AdminBookingsContent() {
             }}
           >
             <SelectTrigger className="w-48">
-              <SelectValue />
+              <SelectValue>
+                {(value: string) => FILTERS.find((item) => item.value === value)?.label}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {FILTERS.map((item) => (

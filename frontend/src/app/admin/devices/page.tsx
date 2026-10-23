@@ -102,7 +102,13 @@ export default function AdminDevicesPage() {
               }}
             >
               <SelectTrigger className="w-40">
-                <SelectValue />
+                <SelectValue>
+                  {(value: string) =>
+                    value === "all"
+                      ? "Tất cả danh mục"
+                      : categoriesQuery.data?.find((category) => category.id === value)?.name
+                  }
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả danh mục</SelectItem>
@@ -121,7 +127,13 @@ export default function AdminDevicesPage() {
               }}
             >
               <SelectTrigger className="w-40">
-                <SelectValue />
+                <SelectValue>
+                  {(value: string) =>
+                    value === "all"
+                      ? "Mọi trạng thái"
+                      : DEVICE_STATUS_LABEL[value as keyof typeof DEVICE_STATUS_LABEL]?.label
+                  }
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Mọi trạng thái</SelectItem>

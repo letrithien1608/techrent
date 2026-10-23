@@ -1,7 +1,7 @@
 # Máy tính bảng
 
 ## Máy tính bảng: dùng để làm gì, gồm thiết bị nào
-- Thiết bị tiêu biểu: iPad Pro 12.9 M4, Samsung Galaxy Tab S9 Ultra, Microsoft Surface Pro 9.
+- Thiết bị tiêu biểu: iPad Pro 13 inch M4, Samsung Galaxy Tab S9 Ultra, Microsoft Surface Pro 9.
 - Tablet cho công việc, giải trí, vẽ.
 
 ## Máy tính bảng: cách kết nối và cài đặt cơ bản

@@ -5,6 +5,7 @@ import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { Device, DeviceStatus } from '../generated/prisma/client';
 import { DevicesCacheService } from './devices-cache.service';
 import { DeviceSort } from './dto/list-devices-query.dto';
+import { flattenSpecSheet, type SpecSheetEntry } from './spec-sheet.util';
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -117,6 +118,7 @@ export class DevicesService {
     name: string;
     categoryId: string;
     specs?: Record<string, unknown>;
+    specSheet?: SpecSheetEntry[];
     detailedDescription?: string;
     pricePerHour: number;
     pricePerDay: number;
@@ -129,7 +131,7 @@ export class DevicesService {
       data: {
         name: data.name,
         categoryId: data.categoryId,
-        specs: data.specs as Prisma.InputJsonValue | undefined,
+        ...specColumns(data),
         detailedDescription: data.detailedDescription,
         pricePerHour: data.pricePerHour,
         pricePerDay: data.pricePerDay,
@@ -147,6 +149,7 @@ export class DevicesService {
       name?: string;
       categoryId?: string;
       specs?: Record<string, unknown>;
+      specSheet?: SpecSheetEntry[];
       detailedDescription?: string;
       pricePerHour?: number;
       pricePerDay?: number;
@@ -163,8 +166,8 @@ export class DevicesService {
     const updated = await this.prisma.device.update({
       where: { id },
       data: {
-        ...data,
-        specs: data.specs as Prisma.InputJsonValue | undefined,
+        ...withoutSpecs(data),
+        ...specColumns(data),
       },
     });
 
@@ -212,4 +215,30 @@ export class DevicesService {
       throw new NotFoundException('Không tìm thấy danh mục');
     }
   }
+}
+
+function withoutSpecs<T extends { specs?: unknown; specSheet?: unknown }>(
+  data: T,
+): Omit<T, 'specs' | 'specSheet'> {
+  const rest = { ...data };
+  delete rest.specs;
+  delete rest.specSheet;
+  return rest;
+}
+
+/**
+ * Gửi `specSheet` (bảng có cấu trúc) thì cột `specs` cũ được đồng bộ theo, để
+ * nơi nào còn đọc dạng cũ cũng thấy đúng số liệu mới.
+ */
+function specColumns(data: {
+  specs?: Record<string, unknown>;
+  specSheet?: SpecSheetEntry[];
+}): { specs?: Prisma.InputJsonValue; specSheet?: Prisma.InputJsonValue } {
+  if (data.specSheet) {
+    return {
+      specSheet: data.specSheet as unknown as Prisma.InputJsonValue,
+      specs: flattenSpecSheet(data.specSheet),
+    };
+  }
+  return { specs: data.specs as Prisma.InputJsonValue | undefined };
 }

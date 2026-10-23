@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
   ArrayMinSize,
   IsArray,
   IsEnum,
@@ -11,7 +12,9 @@ import {
   IsUUID,
   Min,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
+import { SpecSheetEntryDto } from './spec-sheet-entry.dto';
 import { DeviceStatus } from '../../generated/prisma/client';
 
 export class UpdateDeviceDto {
@@ -30,6 +33,18 @@ export class UpdateDeviceDto {
   @IsOptional()
   @IsObject()
   specs?: Record<string, unknown>;
+
+  @ApiPropertyOptional({
+    type: [SpecSheetEntryDto],
+    description:
+      'Thông số kỹ thuật có cấu trúc theo mẫu của danh mục. Gửi kèm thì thay toàn bộ bảng cũ.',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(60)
+  @ValidateNested({ each: true })
+  @Type(() => SpecSheetEntryDto)
+  specSheet?: SpecSheetEntryDto[];
 
   @ApiPropertyOptional({
     description:
@@ -70,8 +85,7 @@ export class UpdateDeviceDto {
   @ApiProperty({
     type: [String],
     required: false,
-    description:
-      'Thay toàn bộ danh sách ảnh hiện có. Nếu có, tối thiểu 5 ảnh.',
+    description: 'Thay toàn bộ danh sách ảnh hiện có. Nếu có, tối thiểu 5 ảnh.',
   })
   @IsOptional()
   @IsArray()

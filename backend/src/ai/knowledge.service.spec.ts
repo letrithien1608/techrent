@@ -38,6 +38,12 @@ const DEVICE_ROWS = [
   {
     name: 'DJI Mini 4 Pro',
     status: 'rented',
+    specs: { legacy: 'không dùng khi đã có bảng thông số' },
+    specSheet: [
+      { group: 'Camera', label: 'Cảm biến', value: '1/1.3 inch CMOS 48MP' },
+      { group: 'Camera', label: 'Video', value: '4K 100fps' },
+      { group: 'Bay', label: 'Thời gian bay', value: '34 phút' },
+    ],
     pricePerHour: 50000,
     pricePerDay: 350000,
     originalPrice: 20000000,
@@ -175,6 +181,7 @@ describe('KnowledgeService', () => {
           'pricePerDay',
           'pricePerHour',
           'specs',
+          'specSheet',
           'status',
         ].sort(),
       );
@@ -206,6 +213,15 @@ describe('KnowledgeService', () => {
         'Thông số: cpu: Apple M3 Pro, ram: 18GB, storage: 512GB SSD, screen: 14.2"',
       );
       expect(formatDevice(device)).not.toContain('battery');
+    });
+
+    it('formatDevice ưu tiên bảng thông số có cấu trúc (specSheet) hơn specs cũ', async () => {
+      const [device] = (await service.findDevices('flycam DJI Mini 4 Pro'))!;
+      const text = formatDevice(device);
+      expect(text).toContain(
+        'Thông số: Cảm biến: 1/1.3 inch CMOS 48MP; Video: 4K 100fps; Thời gian bay: 34 phút',
+      );
+      expect(text).not.toContain('legacy');
     });
   });
 });

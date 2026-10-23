@@ -15,6 +15,7 @@ import {
 } from '../common/business-policy';
 import { DeviceStatus } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { parseSpecSheet } from '../devices/spec-sheet.util';
 import {
   bigrams,
   DEVICE_INTENT_PHRASES,
@@ -317,6 +318,7 @@ export class KnowledgeService implements OnModuleInit {
         name: true,
         status: true,
         specs: true,
+        specSheet: true,
         pricePerHour: true,
         pricePerDay: true,
         originalPrice: true,
@@ -332,7 +334,7 @@ export class KnowledgeService implements OnModuleInit {
       originalPrice: Number(row.originalPrice),
       deposit: calculateDeposit(Number(row.originalPrice)),
       status: row.status,
-      specs: summarizeSpecs(row.specs),
+      specs: summarizeSpecSheet(row.specSheet) || summarizeSpecs(row.specs),
     }));
     this.deviceCache = { at: Date.now(), devices };
     return devices;
@@ -391,6 +393,27 @@ function summarizeSpecs(specs: unknown): string {
     .slice(0, MAX_SPEC_ENTRIES)
     .map(([key, value]) => `${key}: ${String(value)}`)
     .join(', ');
+}
+
+const MAX_SHEET_ENTRIES = 6;
+const MAX_SPEC_VALUE_LENGTH = 70;
+
+/**
+ * Thông số chính từ bảng thông số có cấu trúc — mẫu của mỗi danh mục đã xếp
+ * thông số quan trọng nhất (chip/RAM/màn hình, cảm biến...) lên đầu, nên chỉ
+ * cần lấy vài dòng đầu để model trả lời đúng cấu hình mà không tốn token.
+ */
+function summarizeSpecSheet(raw: unknown): string {
+  return parseSpecSheet(raw)
+    .slice(0, MAX_SHEET_ENTRIES)
+    .map(({ label, value }) => {
+      const short =
+        value.length > MAX_SPEC_VALUE_LENGTH
+          ? `${value.slice(0, MAX_SPEC_VALUE_LENGTH - 1)}…`
+          : value;
+      return `${label}: ${short}`;
+    })
+    .join('; ');
 }
 
 /**

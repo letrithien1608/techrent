@@ -30,6 +30,7 @@ describe('DevicesService', () => {
     name: 'MacBook Pro 14" M3',
     categoryId: 'cat-1',
     specs: { cpu: 'Apple M3 Pro' },
+    specSheet: null,
     status: DeviceStatus.available,
     pricePerHour: '50000' as unknown as Device['pricePerHour'],
     pricePerDay: '350000' as unknown as Device['pricePerDay'],
@@ -231,6 +232,34 @@ describe('DevicesService', () => {
 
       expect(prisma.device.create).toHaveBeenCalledWith({
         data: expect.objectContaining({ images: [] }),
+      });
+    });
+
+    it('lưu specSheet và đồng bộ cột specs cũ theo dạng phẳng', async () => {
+      prisma.category.findUnique.mockResolvedValue({
+        id: 'cat-1',
+        name: 'Laptop',
+      });
+      prisma.device.create.mockResolvedValue(baseDevice);
+      const specSheet = [
+        { group: 'Hiệu năng', label: 'CPU', value: 'Apple M3 Pro' },
+        { group: 'Màn hình', label: 'Tần số quét', value: '120Hz' },
+      ];
+
+      await service.create({
+        name: 'MacBook Pro 14" M3',
+        categoryId: 'cat-1',
+        pricePerHour: 50000,
+        pricePerDay: 350000,
+        originalPrice: 45000000,
+        specSheet,
+      });
+
+      expect(prisma.device.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          specSheet,
+          specs: { CPU: 'Apple M3 Pro', 'Tần số quét': '120Hz' },
+        }),
       });
     });
   });

@@ -3,11 +3,27 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 export type DeviceStatus = "available" | "rented" | "maintenance" | "broken";
 export type DeviceSort = "newest" | "price_asc" | "price_desc";
 
+/** 1 dòng thông số kỹ thuật có cấu trúc (khớp backend spec-sheet.util.ts). */
+export interface SpecSheetEntry {
+  group: string;
+  label: string;
+  value: string;
+}
+
+/** Mẫu thông số của 1 danh mục: các nhóm, mỗi nhóm 1 danh sách tên thông số. */
+export interface SpecTemplateGroup {
+  group: string;
+  fields: string[];
+}
+
 export interface Device {
   id: string;
   name: string;
   categoryId: string;
+  /** Dạng cũ key-value — chỉ dùng khi thiết bị chưa có `specSheet`. */
   specs: Record<string, unknown> | null;
+  /** Bảng thông số theo mẫu của danh mục, đã xếp đúng thứ tự nhóm. */
+  specSheet?: SpecSheetEntry[] | null;
   status: DeviceStatus;
   pricePerHour: string;
   pricePerDay: string;
@@ -39,6 +55,7 @@ export interface Category {
   id: string;
   name: string;
   description?: string | null;
+  specTemplate?: SpecTemplateGroup[] | null;
 }
 
 export interface Review {

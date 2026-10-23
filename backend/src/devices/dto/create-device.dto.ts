@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
   ArrayMinSize,
   IsArray,
   IsNumber,
@@ -10,7 +11,9 @@ import {
   IsUUID,
   Min,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
+import { SpecSheetEntryDto } from './spec-sheet-entry.dto';
 
 export class CreateDeviceDto {
   @ApiProperty({ example: 'MacBook Pro 14" M3' })
@@ -32,6 +35,18 @@ export class CreateDeviceDto {
   @IsOptional()
   @IsObject()
   specs?: Record<string, unknown>;
+
+  @ApiPropertyOptional({
+    type: [SpecSheetEntryDto],
+    description:
+      'Thông số kỹ thuật có cấu trúc theo mẫu của danh mục. Gửi kèm thì thay toàn bộ bảng cũ.',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(60)
+  @ValidateNested({ each: true })
+  @Type(() => SpecSheetEntryDto)
+  specSheet?: SpecSheetEntryDto[];
 
   @ApiPropertyOptional({
     description:

@@ -1,5 +1,5 @@
 import { api } from "./api-client";
-import type { Category, Device, DeviceStatus } from "./devices-api";
+import type { Category, Device, DeviceStatus, SpecSheetEntry } from "./devices-api";
 import type { UserRole } from "@/stores/auth-store";
 
 // ---- Thiết bị (CRUD, admin only) ----
@@ -8,6 +8,7 @@ export interface DevicePayload {
   name: string;
   categoryId: string;
   specs?: Record<string, unknown>;
+  specSheet?: SpecSheetEntry[];
   detailedDescription?: string;
   pricePerHour: number;
   pricePerDay: number;

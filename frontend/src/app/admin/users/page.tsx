@@ -95,7 +95,11 @@ export default function AdminUsersPage() {
               }}
             >
               <SelectTrigger className="w-40">
-                <SelectValue />
+                <SelectValue>
+                  {(value: string) =>
+                    value === "all" ? "Mọi vai trò" : ROLE_LABEL[value as UserRole]?.label
+                  }
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Mọi vai trò</SelectItem>

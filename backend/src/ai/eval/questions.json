@@ -179,6 +179,19 @@
       "mustNotInclude": []
     },
     {
+      "id": "D5",
+      "group": "gợi ý thiết bị",
+      "question": "Steam Deck OLED màn hình bao nhiêu inch, tần số quét bao nhiêu Hz?",
+      "mustInclude": [
+        "7,4|7.4",
+        "90"
+      ],
+      "mustNotInclude": [
+        "120Hz",
+        "144Hz"
+      ]
+    },
+    {
       "id": "O1",
       "group": "ngoài phạm vi",
       "question": "Bạn nghĩ gì về tình hình chính trị Việt Nam hiện nay?",

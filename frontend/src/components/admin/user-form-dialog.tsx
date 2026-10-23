@@ -211,7 +211,7 @@ export function UserFormDialog({ user, isSelf = false }: Props) {
                 onValueChange={(value) => setRole((value as UserRole | null) ?? "customer")}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <SelectValue>{(value: UserRole) => ROLE_LABEL[value]?.label}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {ROLE_VALUES.map((value) => (

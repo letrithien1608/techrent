@@ -2,6 +2,13 @@ import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Prisma, PrismaClient, DeviceStatus } from '../src/generated/prisma/client';
 import { UploadService } from '../src/upload/upload.service';
+import {
+  buildSpecSheet,
+  flattenSpecSheet,
+  type SpecTemplateGroup,
+} from '../src/devices/spec-sheet.util';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -12,6 +19,25 @@ const uploadService = new UploadService({
   get: (key: string) => process.env[key],
 } as any);
 
+function readSeedData<T>(file: string): T {
+  return JSON.parse(readFileSync(join(__dirname, 'seed-data', file), 'utf-8')) as T;
+}
+
+// Mẫu thông số theo danh mục + thông số THẬT từng thiết bị (tra từ trang hãng/
+// trang review, đối chiếu ≥2 nguồn — danh sách nguồn ở docs/device-sources.md).
+// Thông số không chắc chắn được để trống, KHÔNG điền đoán.
+const SPEC_TEMPLATES = readSeedData<Record<string, SpecTemplateGroup[] | string>>(
+  'spec-templates.json',
+);
+const DEVICE_SPECS = readSeedData<
+  Record<string, { previousNames?: string[]; sources: string[]; specs: Record<string, string> }>
+>('device-specs.json');
+
+function templateFor(categoryName: string): SpecTemplateGroup[] | null {
+  const template = SPEC_TEMPLATES[categoryName];
+  return Array.isArray(template) ? template : null;
+}
+
 interface CategorySeed {
   name: string;
   description: string;
@@ -20,7 +46,6 @@ interface CategorySeed {
 
 interface DeviceSeed {
   name: string;
-  specs: Record<string, unknown>;
   pricePerHour: number;
   pricePerDay: number;
   /** Giá gốc/giá trị tài sản (VNĐ) — ước tính giá bán lẻ thật, dùng tính cọc 50%. */
@@ -57,8 +82,7 @@ const CATEGORIES: CategorySeed[] = [
     description: 'Laptop văn phòng, gaming, đồ hoạ',
     devices: [
       {
-        name: 'MacBook Pro 14" M3 Pro',
-        specs: { cpu: 'Apple M3 Pro', ram: '18GB', storage: '512GB SSD', screen: '14.2" Liquid Retina XDR' },
+        name: 'MacBook Pro 14" M3 Pro 18GB/512GB',
         pricePerHour: 60000,
         pricePerDay: 400000,
         originalPrice: 52000000,
@@ -71,8 +95,7 @@ const CATEGORIES: CategorySeed[] = [
         imageUrl: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&q=80&auto=format&fit=crop',
       },
       {
-        name: 'Dell XPS 15 9530',
-        specs: { cpu: 'Intel Core i7-13700H', ram: '32GB', storage: '1TB SSD', screen: '15.6" OLED 3.5K' },
+        name: 'Dell XPS 15 9530 i7-13700H/RTX 4070 OLED',
         pricePerHour: 55000,
         pricePerDay: 380000,
         originalPrice: 45000000,
@@ -85,8 +108,7 @@ const CATEGORIES: CategorySeed[] = [
         imageUrl: 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&q=80&auto=format&fit=crop',
       },
       {
-        name: 'ASUS ROG Zephyrus G14',
-        specs: { cpu: 'AMD Ryzen 9 8945HS', gpu: 'RTX 4070', ram: '32GB', storage: '1TB SSD' },
+        name: 'ASUS ROG Zephyrus G14 (2024) R9 8945HS/RTX 4070',
         pricePerHour: 65000,
         pricePerDay: 420000,
         originalPrice: 42000000,
@@ -100,8 +122,7 @@ const CATEGORIES: CategorySeed[] = [
         imageUrl: 'https://images.unsplash.com/photo-1698512475067-74ed7c956c8d?w=800&q=80&auto=format&fit=crop',
       },
       {
-        name: 'Lenovo ThinkPad X1 Carbon Gen 12',
-        specs: { cpu: 'Intel Core Ultra 7', ram: '16GB', storage: '512GB SSD', screen: '14" 2.8K OLED' },
+        name: 'Lenovo ThinkPad X1 Carbon Gen 12 Ultra 7/16GB/512GB',
         pricePerHour: 45000,
         pricePerDay: 300000,
         originalPrice: 38000000,
@@ -120,8 +141,7 @@ const CATEGORIES: CategorySeed[] = [
     description: 'Máy ảnh mirrorless, DSLR cho quay chụp chuyên nghiệp',
     devices: [
       {
-        name: 'Sony Alpha A7 IV',
-        specs: { sensor: 'Full-frame 33MP', video: '4K 60fps', mount: 'Sony E' },
+        name: 'Sony Alpha A7 IV (body)',
         pricePerHour: 70000,
         pricePerDay: 450000,
         originalPrice: 58000000,
@@ -134,8 +154,7 @@ const CATEGORIES: CategorySeed[] = [
         imageUrl: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&q=80&auto=format&fit=crop',
       },
       {
-        name: 'Canon EOS R6 Mark II',
-        specs: { sensor: 'Full-frame 24.2MP', video: '4K 60fps', mount: 'Canon RF' },
+        name: 'Canon EOS R6 Mark II (body)',
         pricePerHour: 68000,
         pricePerDay: 440000,
         originalPrice: 62000000,
@@ -148,8 +167,7 @@ const CATEGORIES: CategorySeed[] = [
         imageUrl: 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=800&q=80&auto=format&fit=crop',
       },
       {
-        name: 'Fujifilm X-T5',
-        specs: { sensor: 'APS-C 40.2MP', video: '6.2K 30fps', mount: 'Fujifilm X' },
+        name: 'Fujifilm X-T5 (body)',
         pricePerHour: 50000,
         pricePerDay: 330000,
         originalPrice: 42000000,
@@ -170,7 +188,6 @@ const CATEGORIES: CategorySeed[] = [
     devices: [
       {
         name: 'DJI Mavic 3 Pro',
-        specs: { camera: 'Triple-camera Hasselblad', video: '5.1K', flightTime: '43 phút' },
         pricePerHour: 80000,
         pricePerDay: 500000,
         originalPrice: 48000000,
@@ -184,7 +201,6 @@ const CATEGORIES: CategorySeed[] = [
       },
       {
         name: 'DJI Mini 4 Pro',
-        specs: { weight: '249g', video: '4K 60fps', flightTime: '34 phút' },
         pricePerHour: 45000,
         pricePerDay: 280000,
         originalPrice: 18000000,
@@ -198,7 +214,6 @@ const CATEGORIES: CategorySeed[] = [
       },
       {
         name: 'DJI Air 3',
-        specs: { camera: 'Dual-camera', video: '4K 60fps HDR', flightTime: '46 phút' },
         pricePerHour: 55000,
         pricePerDay: 350000,
         originalPrice: 28000000,
@@ -218,7 +233,6 @@ const CATEGORIES: CategorySeed[] = [
     devices: [
       {
         name: 'Epson EB-X06',
-        specs: { brightness: '3600 lumens', resolution: 'XGA 1024x768' },
         pricePerHour: 25000,
         pricePerDay: 150000,
         originalPrice: 9000000,
@@ -232,7 +246,6 @@ const CATEGORIES: CategorySeed[] = [
       },
       {
         name: 'BenQ TK850',
-        specs: { brightness: '3000 lumens', resolution: '4K UHD' },
         pricePerHour: 40000,
         pricePerDay: 250000,
         originalPrice: 22000000,
@@ -246,7 +259,6 @@ const CATEGORIES: CategorySeed[] = [
       },
       {
         name: 'Xiaomi Mi Smart Projector 2',
-        specs: { brightness: '1300 ANSI lumens', resolution: 'Full HD 1080p' },
         pricePerHour: 20000,
         pricePerDay: 120000,
         originalPrice: 7500000,
@@ -266,7 +278,6 @@ const CATEGORIES: CategorySeed[] = [
     devices: [
       {
         name: 'JBL PartyBox 310',
-        specs: { power: '240W', battery: '18 giờ', bluetooth: '5.1' },
         pricePerHour: 30000,
         pricePerDay: 180000,
         originalPrice: 11000000,
@@ -280,7 +291,6 @@ const CATEGORIES: CategorySeed[] = [
       },
       {
         name: 'Bose SoundLink Max',
-        specs: { power: 'Bass boost', battery: '20 giờ', waterproof: 'IP67' },
         pricePerHour: 28000,
         pricePerDay: 170000,
         originalPrice: 9500000,
@@ -294,7 +304,6 @@ const CATEGORIES: CategorySeed[] = [
       },
       {
         name: 'Marshall Stanmore III',
-        specs: { power: '80W', bluetooth: '5.2', style: 'Retro' },
         pricePerHour: 22000,
         pricePerDay: 140000,
         originalPrice: 13000000,
@@ -314,8 +323,7 @@ const CATEGORIES: CategorySeed[] = [
     description: 'Console chơi game tại nhà, sự kiện',
     devices: [
       {
-        name: 'PlayStation 5 Slim',
-        specs: { storage: '1TB SSD', resolution: '4K 120fps' },
+        name: 'PlayStation 5 Slim (bản có ổ đĩa) 1TB',
         pricePerHour: 35000,
         pricePerDay: 220000,
         originalPrice: 13500000,
@@ -328,8 +336,7 @@ const CATEGORIES: CategorySeed[] = [
         imageUrl: 'https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=800&q=80&auto=format&fit=crop',
       },
       {
-        name: 'Xbox Series X',
-        specs: { storage: '1TB SSD', resolution: '4K 120fps' },
+        name: 'Xbox Series X 1TB',
         pricePerHour: 33000,
         pricePerDay: 210000,
         originalPrice: 13000000,
@@ -342,8 +349,7 @@ const CATEGORIES: CategorySeed[] = [
         imageUrl: 'https://images.unsplash.com/photo-1621259182978-fbf93132d53d?w=800&q=80&auto=format&fit=crop',
       },
       {
-        name: 'Nintendo Switch OLED',
-        specs: { screen: '7" OLED', storage: '64GB', mode: 'TV/Handheld' },
+        name: 'Nintendo Switch OLED 64GB',
         pricePerHour: 20000,
         pricePerDay: 130000,
         originalPrice: 8500000,
@@ -362,8 +368,7 @@ const CATEGORIES: CategorySeed[] = [
     description: 'Router, thiết bị mạng cho sự kiện, văn phòng tạm',
     devices: [
       {
-        name: 'Ubiquiti UniFi Dream Machine Pro',
-        specs: { ports: '8x 1G + 1x 10G SFP+', wifi: 'WiFi 6' },
+        name: 'Ubiquiti UniFi Dream Machine Pro (UDM-Pro)',
         pricePerHour: 30000,
         pricePerDay: 190000,
         originalPrice: 15000000,
@@ -376,8 +381,7 @@ const CATEGORIES: CategorySeed[] = [
         imageUrl: 'https://images.unsplash.com/photo-1695668548342-c0c1ad479aee?w=800&q=80&auto=format&fit=crop',
       },
       {
-        name: 'TP-Link Archer AX90',
-        specs: { wifi: 'WiFi 6 AX6600', ports: '4x Gigabit LAN' },
+        name: 'TP-Link Archer AX90 (AX6600)',
         pricePerHour: 18000,
         pricePerDay: 110000,
         originalPrice: 5500000,
@@ -391,7 +395,6 @@ const CATEGORIES: CategorySeed[] = [
       },
       {
         name: 'Cisco Meraki MX67',
-        specs: { type: 'Security Gateway', throughput: '450 Mbps' },
         pricePerHour: 40000,
         pricePerDay: 260000,
         originalPrice: 20000000,
@@ -410,8 +413,7 @@ const CATEGORIES: CategorySeed[] = [
     description: 'Kính VR/AR cho trải nghiệm, sự kiện công nghệ',
     devices: [
       {
-        name: 'Meta Quest 3',
-        specs: { storage: '128GB', tracking: 'Inside-out 6DOF' },
+        name: 'Meta Quest 3 128GB',
         pricePerHour: 35000,
         pricePerDay: 230000,
         originalPrice: 13000000,
@@ -424,8 +426,7 @@ const CATEGORIES: CategorySeed[] = [
         imageUrl: 'https://images.unsplash.com/photo-1780547292624-8bc828bdae07?w=800&q=80&auto=format&fit=crop',
       },
       {
-        name: 'Apple Vision Pro',
-        specs: { storage: '256GB', display: 'Micro-OLED 4K/eye' },
+        name: 'Apple Vision Pro 256GB',
         pricePerHour: 120000,
         pricePerDay: 800000,
         originalPrice: 95000000,
@@ -438,8 +439,7 @@ const CATEGORIES: CategorySeed[] = [
         imageUrl: 'https://images.unsplash.com/photo-1707228773518-7ca0492d0c4d?w=800&q=80&auto=format&fit=crop',
       },
       {
-        name: 'PICO 4',
-        specs: { storage: '128GB', tracking: 'Inside-out 6DOF' },
+        name: 'PICO 4 128GB',
         pricePerHour: 30000,
         pricePerDay: 190000,
         originalPrice: 9500000,
@@ -464,7 +464,6 @@ const CATEGORIES: CategorySeed[] = [
     devices: [
       {
         name: 'GoPro HERO12 Black',
-        specs: { resolution: '5.3K60', waterproof: '10m không cần ốp', stabilization: 'HyperSmooth 6.0' },
         pricePerHour: 35000,
         pricePerDay: 220000,
         originalPrice: 11500000,
@@ -478,7 +477,6 @@ const CATEGORIES: CategorySeed[] = [
       },
       {
         name: 'DJI Osmo Action 4',
-        specs: { resolution: '4K120', sensor: '1/1.3"', battery: '160 phút' },
         pricePerHour: 32000,
         pricePerDay: 200000,
         originalPrice: 9800000,
@@ -492,7 +490,6 @@ const CATEGORIES: CategorySeed[] = [
       },
       {
         name: 'Insta360 X4',
-        specs: { type: '360° camera', resolution: '8K30 360°', waterproof: '10m' },
         pricePerHour: 38000,
         pricePerDay: 240000,
         originalPrice: 13000000,
@@ -512,7 +509,6 @@ const CATEGORIES: CategorySeed[] = [
     devices: [
       {
         name: 'Elgato Stream Deck MK.2',
-        specs: { buttons: '15 phím LCD', connect: 'USB-C' },
         pricePerHour: 15000,
         pricePerDay: 90000,
         originalPrice: 4500000,
@@ -526,7 +522,6 @@ const CATEGORIES: CategorySeed[] = [
       },
       {
         name: 'Logitech StreamCam',
-        specs: { resolution: '1080p60', sensor: 'Full HD CMOS', mount: 'Tripod/laptop clip' },
         pricePerHour: 18000,
         pricePerDay: 110000,
         originalPrice: 2800000,
@@ -540,7 +535,6 @@ const CATEGORIES: CategorySeed[] = [
       },
       {
         name: 'Elgato Key Light Air',
-        specs: { brightness: '1400 lumens', control: 'App/Stream Deck', colorTemp: '2900K-7000K' },
         pricePerHour: 12000,
         pricePerDay: 75000,
         originalPrice: 2500000,
@@ -560,7 +554,6 @@ const CATEGORIES: CategorySeed[] = [
     devices: [
       {
         name: 'Logitech G Pro X Superlight 2',
-        specs: { type: 'Chuột gaming', weight: '60g', sensor: 'HERO 2 32000 DPI', connect: 'Wireless LIGHTSPEED' },
         pricePerHour: 15000,
         pricePerDay: 90000,
         originalPrice: 3200000,
@@ -573,8 +566,7 @@ const CATEGORIES: CategorySeed[] = [
         imageUrl: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800&q=80&auto=format&fit=crop',
       },
       {
-        name: 'Razer BlackWidow V4 Pro',
-        specs: { type: 'Bàn phím cơ', switch: 'Green Clicky', backlight: 'Chroma RGB', connect: 'Wired' },
+        name: 'Razer BlackWidow V4 Pro (Green Switch)',
         pricePerHour: 20000,
         pricePerDay: 130000,
         originalPrice: 4800000,
@@ -588,7 +580,6 @@ const CATEGORIES: CategorySeed[] = [
       },
       {
         name: 'SteelSeries Arctis Nova Pro Wireless',
-        specs: { type: 'Tai nghe gaming', connect: 'Wireless 2.4GHz + Bluetooth', anc: 'Có', battery: '2 pin hoán đổi' },
         pricePerHour: 25000,
         pricePerDay: 160000,
         originalPrice: 9500000,
@@ -607,8 +598,7 @@ const CATEGORIES: CategorySeed[] = [
     description: 'iPad, tablet Android/Windows cho công việc, giải trí, vẽ',
     devices: [
       {
-        name: 'iPad Pro 12.9" M4',
-        specs: { chip: 'Apple M4', storage: '256GB', screen: '13" Ultra Retina XDR' },
+        name: 'iPad Pro 13" M4 256GB Wi-Fi',
         pricePerHour: 70000,
         pricePerDay: 450000,
         originalPrice: 34000000,
@@ -621,8 +611,7 @@ const CATEGORIES: CategorySeed[] = [
         imageUrl: 'https://images.unsplash.com/photo-1662893170097-d6563d0093d3?w=800&q=80&auto=format&fit=crop',
       },
       {
-        name: 'Samsung Galaxy Tab S9 Ultra',
-        specs: { chip: 'Snapdragon 8 Gen 2', ram: '12GB', storage: '256GB', screen: '14.6" Dynamic AMOLED' },
+        name: 'Samsung Galaxy Tab S9 Ultra 12GB/256GB',
         pricePerHour: 60000,
         pricePerDay: 390000,
         originalPrice: 28000000,
@@ -635,8 +624,7 @@ const CATEGORIES: CategorySeed[] = [
         imageUrl: 'https://images.unsplash.com/photo-1620288650879-20db0eb38c05?w=800&q=80&auto=format&fit=crop',
       },
       {
-        name: 'Microsoft Surface Pro 9',
-        specs: { cpu: 'Intel Core i7-1255U', ram: '16GB', storage: '256GB SSD', screen: '13" PixelSense' },
+        name: 'Microsoft Surface Pro 9 i7/16GB/256GB',
         pricePerHour: 55000,
         pricePerDay: 350000,
         originalPrice: 29000000,
@@ -656,7 +644,6 @@ const CATEGORIES: CategorySeed[] = [
     devices: [
       {
         name: 'Shure SM7B',
-        specs: { type: 'Microphone thu âm', pattern: 'Cardioid', connect: 'XLR' },
         pricePerHour: 30000,
         pricePerDay: 190000,
         originalPrice: 10500000,
@@ -670,7 +657,6 @@ const CATEGORIES: CategorySeed[] = [
       },
       {
         name: 'Rode NT-USB+',
-        specs: { type: 'Microphone thu âm', connect: 'USB-C', pattern: 'Cardioid' },
         pricePerHour: 22000,
         pricePerDay: 140000,
         originalPrice: 4200000,
@@ -684,7 +670,6 @@ const CATEGORIES: CategorySeed[] = [
       },
       {
         name: 'Focusrite Scarlett 2i2 (4th Gen)',
-        specs: { type: 'Audio Interface', inputs: '2x XLR/Combo', connect: 'USB-C' },
         pricePerHour: 20000,
         pricePerDay: 130000,
         originalPrice: 4800000,
@@ -703,8 +688,7 @@ const CATEGORIES: CategorySeed[] = [
     description: 'Màn hình ngoài di động cho laptop, làm việc di động, trình chiếu nhỏ',
     devices: [
       {
-        name: 'ASUS ZenScreen MB16AHP',
-        specs: { screen: '15.6" FHD IPS', touch: 'Có', connect: 'USB-C/Mini-HDMI' },
+        name: 'ASUS ZenScreen Go MB16AHP',
         pricePerHour: 25000,
         pricePerDay: 160000,
         originalPrice: 4500000,
@@ -717,8 +701,7 @@ const CATEGORIES: CategorySeed[] = [
         imageUrl: 'https://images.unsplash.com/photo-1551645120-d70bfe84c826?w=800&q=80&auto=format&fit=crop',
       },
       {
-        name: 'Samsung Smart Monitor M8',
-        specs: { screen: '27" 4K UHD', smartTv: 'Có Tizen OS', connect: 'USB-C 65W' },
+        name: 'Samsung Smart Monitor M8 32" (LS32BM80)',
         pricePerHour: 35000,
         pricePerDay: 220000,
         originalPrice: 10500000,
@@ -732,7 +715,6 @@ const CATEGORIES: CategorySeed[] = [
       },
       {
         name: 'LG gram +view 16MQ70',
-        specs: { screen: '16" WQXGA IPS', touch: 'Không', connect: 'USB-C' },
         pricePerHour: 20000,
         pricePerDay: 130000,
         originalPrice: 9000000,
@@ -755,7 +737,6 @@ const CATEGORIES: CategorySeed[] = [
     devices: [
       {
         name: 'DJI RS 4',
-        specs: { payload: '3 kg', battery: '12 giờ', weight: '1,066 kg' },
         pricePerHour: 40000,
         pricePerDay: 250000,
         originalPrice: 12990000,
@@ -768,7 +749,6 @@ const CATEGORIES: CategorySeed[] = [
       },
       {
         name: 'DJI RS 3 Mini',
-        specs: { payload: '2 kg', battery: '10 giờ', weight: '795 g' },
         pricePerHour: 30000,
         pricePerDay: 180000,
         originalPrice: 8490000,
@@ -781,7 +761,6 @@ const CATEGORIES: CategorySeed[] = [
       },
       {
         name: 'DJI Osmo Mobile 6',
-        specs: { payload: '290 g', battery: '6 giờ 24 phút', weight: '309 g' },
         pricePerHour: 15000,
         pricePerDay: 80000,
         originalPrice: 3290000,
@@ -794,7 +773,6 @@ const CATEGORIES: CategorySeed[] = [
       },
       {
         name: 'Zhiyun Crane-M3S',
-        specs: { payload: '1,2 kg', battery: '10 giờ', weight: '700 g' },
         pricePerHour: 25000,
         pricePerDay: 130000,
         originalPrice: 5990000,
@@ -813,7 +791,6 @@ const CATEGORIES: CategorySeed[] = [
     devices: [
       {
         name: 'Steam Deck OLED 512GB',
-        specs: { chip: 'AMD APU 6 nm', ram: '16GB LPDDR5', screen: '7,4" OLED 90Hz' },
         pricePerHour: 40000,
         pricePerDay: 250000,
         originalPrice: 15500000,
@@ -825,8 +802,7 @@ const CATEGORIES: CategorySeed[] = [
         }),
       },
       {
-        name: 'ASUS ROG Ally X',
-        specs: { chip: 'AMD Ryzen Z1 Extreme', ram: '24GB LPDDR5X', screen: '7" 120Hz' },
+        name: 'ASUS ROG Ally X 24GB/1TB',
         pricePerHour: 50000,
         pricePerDay: 320000,
         originalPrice: 21990000,
@@ -838,8 +814,7 @@ const CATEGORIES: CategorySeed[] = [
         }),
       },
       {
-        name: 'Lenovo Legion Go',
-        specs: { chip: 'AMD Ryzen Z1 Extreme', ram: '16GB LPDDR5X', screen: '8,8" QHD+ 144Hz' },
+        name: 'Lenovo Legion Go 16GB/512GB',
         pricePerHour: 45000,
         pricePerDay: 280000,
         originalPrice: 17990000,
@@ -855,9 +830,12 @@ const CATEGORIES: CategorySeed[] = [
 ];
 
 async function findOrCreateCategory(input: { name: string; description: string }) {
+  const specTemplate = (templateFor(input.name) ?? undefined) as unknown as Prisma.InputJsonValue | undefined;
   const existing = await prisma.category.findFirst({ where: { name: input.name } });
-  if (existing) return existing;
-  return prisma.category.create({ data: input });
+  if (existing) {
+    return prisma.category.update({ where: { id: existing.id }, data: { specTemplate } });
+  }
+  return prisma.category.create({ data: { ...input, specTemplate } });
 }
 
 // Chuyển tên thiết bị thành 1 public_id Cloudinary ổn định (chỉ chữ thường,
@@ -870,69 +848,55 @@ function slugify(name: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
-async function seedDevice(categoryId: string, device: DeviceSeed) {
+async function seedDevice(categoryId: string, categoryName: string, device: DeviceSeed) {
   const publicId = `device-${slugify(device.name)}`;
-  const existing = await prisma.device.findFirst({ where: { name: device.name } });
+  const researched = DEVICE_SPECS[device.name];
+  if (!researched) throw new Error(`Thiếu thông số đã tra cứu cho "${device.name}" trong device-specs.json`);
+
+  const specSheet = buildSpecSheet(templateFor(categoryName), researched.specs);
+  const specFields = {
+    specs: flattenSpecSheet(specSheet) as Prisma.InputJsonValue,
+    specSheet: specSheet as unknown as Prisma.InputJsonValue,
+    originalPrice: device.originalPrice,
+    detailedDescription: device.detailedDescription,
+  };
+
+  // Tìm cả theo tên cũ: một số thiết bị được đổi tên cho đúng cấu hình thật
+  // (VD iPad Pro 12.9 inch M4 → iPad Pro 13 inch M4 256GB Wi-Fi) — cập nhật đúng
+  // dòng đang có (giữ nguyên lịch sử đơn/đánh giá), không tạo thiết bị mới.
+  const existing = await prisma.device.findFirst({
+    where: { name: { in: [device.name, ...(researched.previousNames ?? [])] } },
+  });
 
   if (existing) {
-    const alreadyMigrated = existing.images[0]?.includes(`techrent/devices/${publicId}`);
-    const needsFieldSync =
-      Number(existing.originalPrice) !== device.originalPrice ||
-      existing.detailedDescription !== device.detailedDescription;
-
-    if (alreadyMigrated && !needsFieldSync) {
-      console.log(`  ⏭  Bỏ qua (đã đủ dữ liệu mới nhất): ${device.name}`);
-      return;
-    }
-
-    if (!alreadyMigrated && device.imageUrl) {
-      console.log(`  🔄 Cập nhật ảnh thật cho thiết bị đã có: ${device.name}...`);
-      const imageUrl = await uploadService.uploadFromUrl(device.imageUrl, publicId);
-      await prisma.device.update({
-        where: { id: existing.id },
-        data: {
-          images: [imageUrl],
-          originalPrice: device.originalPrice,
-          detailedDescription: device.detailedDescription,
-        },
-      });
-      console.log(`  ✅ Đã cập nhật ảnh + giá gốc/mô tả ${device.name} (${imageUrl})`);
-      return;
-    }
-
-    // Ảnh đã đúng từ buổi trước — chỉ cần đồng bộ originalPrice/detailedDescription
-    // (2 field MỚI thêm buổi này), KHÔNG upload lại ảnh.
-    console.log(`  🔄 Đồng bộ giá gốc/mô tả chi tiết cho: ${device.name}...`);
+    // Đã có ảnh Cloudinary thì giữ nguyên (ảnh do backend/scripts/device-images/ quản lý).
+    const hasHostedImage = existing.images.some((url) => url.includes('res.cloudinary.com'));
+    const images =
+      !hasHostedImage && device.imageUrl
+        ? [await uploadService.uploadFromUrl(device.imageUrl, publicId)]
+        : undefined;
     await prisma.device.update({
       where: { id: existing.id },
-      data: {
-        originalPrice: device.originalPrice,
-        detailedDescription: device.detailedDescription,
-      },
+      data: { name: device.name, ...specFields, ...(images ? { images } : {}) },
     });
-    console.log(`  ✅ Đã đồng bộ ${device.name}`);
+    const renamed = existing.name !== device.name ? ` (đổi tên từ "${existing.name}")` : '';
+    console.log(`  🔄 Đồng bộ ${device.name}${renamed} — ${specSheet.length} thông số`);
     return;
   }
 
-  console.log(`  ⬆  Upload ảnh cho: ${device.name}...`);
-  const imageUrl = device.imageUrl
-    ? await uploadService.uploadFromUrl(device.imageUrl, publicId)
-    : null;
-
+  const imageUrl = device.imageUrl ? await uploadService.uploadFromUrl(device.imageUrl, publicId) : null;
   await prisma.device.create({
     data: {
       name: device.name,
       categoryId,
-      specs: device.specs as Prisma.InputJsonValue,
+      ...specFields,
       pricePerHour: device.pricePerHour,
       pricePerDay: device.pricePerDay,
-      originalPrice: device.originalPrice,
-      detailedDescription: device.detailedDescription,
       status: device.status ?? DeviceStatus.available,
       images: imageUrl ? [imageUrl] : [],
     },
   });
-  console.log(`  ✅ ${device.name} (${imageUrl})`);
+  console.log(`  ✅ ${device.name} — ${specSheet.length} thông số`);
 }
 
 async function main() {
@@ -946,7 +910,7 @@ async function main() {
     });
 
     for (const device of category.devices) {
-      await seedDevice(created.id, device);
+      await seedDevice(created.id, category.name, device);
     }
     console.log('');
   }

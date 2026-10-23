@@ -1,0 +1,1000 @@
+{
+  "MacBook Pro 14\" M3 Pro 18GB/512GB": {
+    "previousNames": [
+      "MacBook Pro 14\" M3 Pro"
+    ],
+    "sources": [
+      "https://support.apple.com/en-us/117736",
+      "https://www.notebookcheck.net/Apple-MacBook-Pro-14-2023-M3-Pro-Review-Efficiency-without-the-Max.766414.0.html"
+    ],
+    "specs": {
+      "CPU": "Apple M3 Pro 11 nhân (5 hiệu năng + 6 tiết kiệm điện)",
+      "GPU": "14 nhân (tích hợp trong M3 Pro)",
+      "RAM": "18GB bộ nhớ hợp nhất",
+      "Ổ cứng": "512GB SSD",
+      "Kích thước": "14,2 inch",
+      "Độ phân giải": "3024 x 1964 (254 ppi)",
+      "Tần số quét": "ProMotion, tối đa 120Hz",
+      "Tấm nền": "Liquid Retina XDR (mini-LED)",
+      "Cổng kết nối": "3x Thunderbolt 4, HDMI, khe thẻ SDXC, MagSafe 3, jack 3,5mm",
+      "Pin": "72,4Wh — tới 18 giờ xem phim",
+      "Trọng lượng": "1,61 kg",
+      "Hệ điều hành": "macOS",
+      "Năm ra mắt": "2023"
+    }
+  },
+  "ASUS ROG Zephyrus G14 (2024) R9 8945HS/RTX 4070": {
+    "previousNames": [
+      "ASUS ROG Zephyrus G14"
+    ],
+    "sources": [
+      "https://rog.asus.com/us/laptops/rog-zephyrus/rog-zephyrus-g14-2024/spec",
+      "https://www.notebookcheck.net/Asus-ROG-Zephyrus-G14-OLED-GA403UV.824441.0.html"
+    ],
+    "specs": {
+      "CPU": "AMD Ryzen 9 8945HS (8 nhân 16 luồng, tối đa 5,2GHz)",
+      "GPU": "NVIDIA GeForce RTX 4070 Laptop 8GB GDDR6 (90W)",
+      "RAM": "32GB LPDDR5X-6400 (hàn trên bo mạch)",
+      "Ổ cứng": "1TB SSD PCIe 4.0 NVMe",
+      "Kích thước": "14 inch, tỷ lệ 16:10",
+      "Độ phân giải": "2880 x 1800 (3K)",
+      "Tần số quét": "120Hz",
+      "Tấm nền": "OLED, 100% DCI-P3",
+      "Cổng kết nối": "1x USB4 Type-C, 1x USB-C 3.2 Gen 2, 2x USB-A 3.2 Gen 2, microSD UHS-II, jack 3,5mm",
+      "Pin": "73Wh",
+      "Trọng lượng": "1,50 kg",
+      "Hệ điều hành": "Windows 11",
+      "Năm ra mắt": "2024"
+    }
+  },
+  "Dell XPS 15 9530 i7-13700H/RTX 4070 OLED": {
+    "previousNames": [
+      "Dell XPS 15 9530"
+    ],
+    "sources": [
+      "https://www.notebookcheck.net/Dell-XPS-15-9530-RTX-4070.723584.0.html",
+      "https://www.laptopmag.com/reviews/dell-xps-15-9530-review",
+      "https://www.dell.com/en-in/shop/laptops/15/spd/xps-15-9530-laptop"
+    ],
+    "specs": {
+      "CPU": "Intel Core i7-13700H (14 nhân 20 luồng, tối đa 5,0GHz)",
+      "GPU": "NVIDIA GeForce RTX 4070 Laptop 8GB GDDR6",
+      "RAM": "32GB DDR5-4800",
+      "Ổ cứng": "1TB SSD NVMe",
+      "Kích thước": "15,6 inch, tỷ lệ 16:10",
+      "Độ phân giải": "3456 x 2160 (3.5K)",
+      "Tần số quét": "60Hz",
+      "Tấm nền": "OLED cảm ứng",
+      "Cổng kết nối": "2x Thunderbolt 4, 1x USB-C 3.2 Gen 2, khe thẻ SD UHS-II, jack 3,5mm",
+      "Pin": "86Wh",
+      "Trọng lượng": "khoảng 1,92 kg",
+      "Hệ điều hành": "Windows 11",
+      "Năm ra mắt": "2023"
+    }
+  },
+  "Lenovo ThinkPad X1 Carbon Gen 12 Ultra 7/16GB/512GB": {
+    "previousNames": [
+      "Lenovo ThinkPad X1 Carbon Gen 12"
+    ],
+    "sources": [
+      "https://psref.lenovo.com/syspool/Sys/PDF/ThinkPad/ThinkPad_X1_Carbon_Gen_12/ThinkPad_X1_Carbon_Gen_12_Spec.PDF",
+      "https://shop.lenovo.ua/en/notebooks/noutbuk-thinkpad-x1-carbon-gen-12-21kc004rra.html"
+    ],
+    "specs": {
+      "CPU": "Intel Core Ultra 7 155U (12 nhân 14 luồng, tối đa 4,8GHz)",
+      "GPU": "Intel Graphics tích hợp",
+      "RAM": "16GB LPDDR5X-6400 (hàn trên bo mạch)",
+      "Ổ cứng": "512GB SSD M.2",
+      "Kích thước": "14 inch, tỷ lệ 16:10",
+      "Độ phân giải": "2880 x 1800 (2.8K)",
+      "Tần số quét": "120Hz",
+      "Tấm nền": "OLED 400 nit, 100% DCI-P3",
+      "Cổng kết nối": "2x Thunderbolt 4, 2x USB-A 5Gbps, HDMI, jack 3,5mm",
+      "Pin": "57Wh, sạc nhanh 80% trong 1 giờ",
+      "Trọng lượng": "từ 1,08 kg",
+      "Hệ điều hành": "Windows 11 Pro",
+      "Năm ra mắt": "2024"
+    }
+  },
+  "Sony Alpha A7 IV (body)": {
+    "previousNames": [
+      "Sony Alpha A7 IV"
+    ],
+    "sources": [
+      "https://www.dpreview.com/products/sony/slrs/sony_a7iv/specifications",
+      "https://en.wikipedia.org/wiki/Sony_%CE%B17_IV",
+      "https://www.fullcompass.com/prod/605591-sony-alpha-a7-iv-33mp-mirrorless-digital-camera-body-only"
+    ],
+    "specs": {
+      "Loại cảm biến": "Full-frame BSI-CMOS (35,6 x 23,8 mm)",
+      "Độ phân giải": "33MP",
+      "Bộ xử lý": "BIONZ XR",
+      "Dải ISO": "100–51200 (mở rộng 50–204800)",
+      "Ngàm ống kính": "Sony E",
+      "Lấy nét tự động": "Lai pha/tương phản, 759 điểm pha, Real-time Eye AF người/động vật/chim",
+      "Chụp liên tiếp": "10 khung hình/giây",
+      "Quay video": "4K 60p 10-bit 4:2:2",
+      "Chống rung": "Chống rung cảm biến 5 trục, 5,5 stop (CIPA)",
+      "Màn hình": "3 inch cảm ứng xoay lật, 1,04 triệu điểm",
+      "Kính ngắm": "OLED 3,69 triệu điểm, phóng đại 0,78x",
+      "Pin": "NP-FZ100, khoảng 580 ảnh (CIPA)",
+      "Khe thẻ nhớ": "1x CFexpress Type A/SD UHS-II + 1x SD UHS-II",
+      "Trọng lượng": "659 g (gồm pin)",
+      "Năm ra mắt": "2021"
+    }
+  },
+  "Canon EOS R6 Mark II (body)": {
+    "previousNames": [
+      "Canon EOS R6 Mark II"
+    ],
+    "sources": [
+      "https://www.dpreview.com/products/canon/slrs/canon_eosr6ii/specifications",
+      "https://canon-europe.com/cameras/eos-r6-mark-ii/specifications/",
+      "https://www.photographyblog.com/news/canon_eos_r6_mark_ii_offers_40fps_burst_shooting_and_6k_video"
+    ],
+    "specs": {
+      "Loại cảm biến": "Full-frame CMOS (36 x 24 mm)",
+      "Độ phân giải": "24,2MP",
+      "Bộ xử lý": "DIGIC X",
+      "Dải ISO": "100–102400 (mở rộng 50–204800)",
+      "Ngàm ống kính": "Canon RF",
+      "Lấy nét tự động": "Dual Pixel CMOS AF II, nhận diện người/động vật/phương tiện",
+      "Chụp liên tiếp": "12 khung hình/giây (màn trập cơ), 40 khung hình/giây (điện tử)",
+      "Quay video": "4K 60p 10-bit lấy mẫu toàn cảm biến; RAW 6K 60p qua HDMI",
+      "Chống rung": "Chống rung cảm biến, tối đa 8 stop (kết hợp ống kính)",
+      "Màn hình": "3 inch cảm ứng xoay lật, 1,62 triệu điểm",
+      "Kính ngắm": "OLED 3,69 triệu điểm, phóng đại 0,76x",
+      "Pin": "LP-E6NH, khoảng 580 ảnh (CIPA, màn hình)",
+      "Khe thẻ nhớ": "2x SD UHS-II",
+      "Trọng lượng": "670 g (gồm pin và thẻ)",
+      "Năm ra mắt": "2022"
+    }
+  },
+  "Fujifilm X-T5 (body)": {
+    "previousNames": [
+      "Fujifilm X-T5"
+    ],
+    "sources": [
+      "https://www.dpreview.com/products/fujifilm/slrs/fujifilm_xt5/specifications",
+      "https://en.wikipedia.org/wiki/Fujifilm_X-T5",
+      "https://sansmirror.com/cameras/camera-database/fujifilm-x-cameras/fujifilm-x-t5-camera-specif.html"
+    ],
+    "specs": {
+      "Loại cảm biến": "APS-C X-Trans CMOS 5 HR",
+      "Độ phân giải": "40,2MP",
+      "Bộ xử lý": "X-Processor 5",
+      "Dải ISO": "125–12800 (mở rộng 64–51200)",
+      "Ngàm ống kính": "Fujifilm X",
+      "Lấy nét tự động": "Lai pha/tương phản, nhận diện chủ thể bằng AI",
+      "Chụp liên tiếp": "15 khung hình/giây (màn trập cơ), 20 khung hình/giây (điện tử, crop 1,29x)",
+      "Quay video": "6,2K 30p và 4K 60p, 10-bit 4:2:2",
+      "Chống rung": "Chống rung cảm biến 5 trục, tối đa 7 stop",
+      "Màn hình": "3 inch cảm ứng lật 3 chiều, 1,84 triệu điểm",
+      "Kính ngắm": "OLED 3,69 triệu điểm",
+      "Pin": "NP-W235, khoảng 580 ảnh (CIPA)",
+      "Khe thẻ nhớ": "2x SD UHS-II",
+      "Trọng lượng": "557 g (gồm pin)",
+      "Năm ra mắt": "2022"
+    }
+  },
+  "DJI Mavic 3 Pro": {
+    "sources": [
+      "https://www.dji.com/mavic-3-pro/specs",
+      "https://www.techradar.com/reviews/dji-mavic-3-pro-review",
+      "https://www.maisondudrone.com/en/dji-mavic-3-pro-with-three-cameras-full-review/"
+    ],
+    "specs": {
+      "Camera": "3 camera: Hasselblad 4/3 CMOS 20MP, tele trung 1/1.3\" 48MP (70mm), tele 1/2\" 12MP (166mm)",
+      "Quay video": "Hasselblad: 5.1K 50fps, 4K 120fps; 2 camera tele: 4K 60fps; 10-bit D-Log M",
+      "Ảnh tĩnh": "JPEG/DNG RAW",
+      "Gimbal": "3 trục cơ học",
+      "Thời gian bay": "tối đa 43 phút",
+      "Tầm truyền hình ảnh": "O3+, 15 km (FCC) / 8 km (CE)",
+      "Tốc độ tối đa": "21 m/s (chế độ Sport)",
+      "Cảm biến tránh vật cản": "Thị giác hai mắt đa hướng + cảm biến hồng ngoại phía dưới",
+      "Trọng lượng cất cánh": "958 g",
+      "Bộ nhớ trong": "8GB",
+      "Năm ra mắt": "2023"
+    }
+  },
+  "DJI Mini 4 Pro": {
+    "sources": [
+      "https://www.dji.com/mini-4-pro/specs",
+      "https://ldlc.com/en/product/PB00574086.html",
+      "https://www.adorama.com/dji-mini-4-pro-drone-rc-2-controller/p/djim4prorc"
+    ],
+    "specs": {
+      "Camera": "CMOS 1/1.3\", 48MP",
+      "Quay video": "4K tối đa 100fps (quay chậm), 1080p 200fps, H.264/H.265",
+      "Ảnh tĩnh": "12MP và 48MP, JPEG/DNG RAW",
+      "Gimbal": "3 trục cơ học, xoay dọc để quay video đứng",
+      "Thời gian bay": "34 phút (pin tiêu chuẩn), 45 phút (pin Plus)",
+      "Tầm truyền hình ảnh": "O4, 20 km (FCC) / 10 km (CE)",
+      "Tốc độ tối đa": "16 m/s (chế độ S)",
+      "Cảm biến tránh vật cản": "Thị giác hai mắt đa hướng + cảm biến hồng ngoại 3D phía dưới",
+      "Trọng lượng cất cánh": "dưới 249 g (pin tiêu chuẩn)",
+      "Bộ nhớ trong": "2GB",
+      "Năm ra mắt": "2023"
+    }
+  },
+  "DJI Air 3": {
+    "sources": [
+      "https://dji.com/air-3/specs",
+      "https://www.cined.com/dji-air-3-released-24mm-and-70mm-cameras-with-4k-100fps-in-d-log-m/",
+      "https://dronefly.com/products/dji-air-3"
+    ],
+    "specs": {
+      "Camera": "2 camera CMOS 1/1.3\" 48MP: góc rộng 24mm f/1.7 và tele trung 3x 70mm f/2.8",
+      "Quay video": "4K HDR, 4K 100fps quay chậm (cả 2 camera), FHD 200fps, D-Log M 10-bit",
+      "Ảnh tĩnh": "48MP, JPEG/DNG RAW",
+      "Gimbal": "3 trục cơ học",
+      "Thời gian bay": "tối đa 46 phút",
+      "Tầm truyền hình ảnh": "O4, tối đa 20 km, xem trực tiếp 1080p 60fps",
+      "Cảm biến tránh vật cản": "Thị giác hai mắt đa hướng + cảm biến hồng ngoại phía dưới",
+      "Trọng lượng cất cánh": "720 g",
+      "Bộ nhớ trong": "8GB",
+      "Năm ra mắt": "2023"
+    }
+  },
+  "GoPro HERO12 Black": {
+    "sources": [
+      "https://gopro.com/en/us/shop/cameras/hero12-black/CHDHX-121-master.html",
+      "https://cathayphoto.com.sg/cameras/action-cameras/gopro-hero12-black",
+      "https://Microcenter.com/quickView/670489/gopro-hero12-black"
+    ],
+    "specs": {
+      "Cảm biến": "27,6MP (ảnh hiệu dụng 27MP)",
+      "Quay video": "5.3K 60fps, 4K 120fps, 2.7K 240fps; HDR ở 5.3K30/4K60",
+      "Ảnh tĩnh": "27MP, hỗ trợ RAW",
+      "Góc nhìn": "156° (tỷ lệ 8:7); 177° với Max Lens Mod 2.0",
+      "Chống rung": "HyperSmooth 6.0 với AutoBoost",
+      "Chống nước": "10 m không cần vỏ, 60 m với vỏ bảo vệ",
+      "Màn hình": "Sau 2,27 inch cảm ứng + trước 1,4 inch màu",
+      "Pin": "Enduro 1720 mAh",
+      "Trọng lượng": "154 g (gồm pin)",
+      "Năm ra mắt": "2023"
+    }
+  },
+  "DJI Osmo Action 4": {
+    "sources": [
+      "https://www.tomsguide.com/reviews/dji-osmo-action-4",
+      "https://tvtechnology.com/news/dji-introduces-osmo-action-4-camera",
+      "https://Microcenter.Com/quickView/669549/dji-osmo-action-4-standard-combo",
+      "https://camerajabber.com/reviews/dji-osmo-action-4/"
+    ],
+    "specs": {
+      "Cảm biến": "CMOS 1/1.3 inch, khẩu f/2.8",
+      "Quay video": "4K 120fps, 10-bit D-Log M",
+      "Ảnh tĩnh": "10MP",
+      "Góc nhìn": "155° siêu rộng",
+      "Chống rung": "RockSteady 3.0 và HorizonSteady (giữ thăng bằng chân trời)",
+      "Chống nước": "18 m không cần vỏ",
+      "Màn hình": "2 màn hình cảm ứng (trước và sau)",
+      "Pin": "1770 mAh, quay hơn 2,5 giờ (theo DJI)",
+      "Trọng lượng": "145 g",
+      "Năm ra mắt": "2023"
+    }
+  },
+  "Insta360 X4": {
+    "sources": [
+      "https://www.adorama.com/insta360-x4-8k-360-action-camera/p/insta360x4",
+      "https://www.scuba.com/p-insta360x4/insta360-x4-8k-360-action-camera",
+      "https://ldlc.com/en/product/PB00614799.html"
+    ],
+    "specs": {
+      "Cảm biến": "2 ống kính 360°",
+      "Quay video": "360°: 8K 30fps, 5.7K 60fps",
+      "Ảnh tĩnh": "khoảng 72MP (11904 x 5952)",
+      "Góc nhìn": "360°",
+      "Chống rung": "FlowState + khoá đường chân trời 360°",
+      "Chống nước": "10 m không cần vỏ, 60 m với vỏ lặn",
+      "Màn hình": "2,5 inch cảm ứng, kính Gorilla Glass",
+      "Pin": "2290 mAh — 135 phút ở 5.7K30, 75 phút ở 8K30",
+      "Trọng lượng": "203 g",
+      "Năm ra mắt": "2024"
+    }
+  },
+  "Epson EB-X06": {
+    "sources": [
+      "https://epson.com.vn/Máy-chiếu/Kinh-doanh-và-giáo-dục/Epson-EB-X06-XGA-3LCD-Projector/p/V11H972052",
+      "https://www.vandenborre.be/beamer/eb-x06",
+      "https://sourceit.com.sg/products/epson-eb-x06-compact-projector-v11h972052"
+    ],
+    "specs": {
+      "Công nghệ": "3LCD",
+      "Độ phân giải": "XGA (1024 x 768)",
+      "Độ sáng": "3600 lumen",
+      "Độ tương phản": "16.000:1 (động)",
+      "Cổng kết nối": "1x HDMI (không hỗ trợ MHL)",
+      "Loa": "2W tích hợp",
+      "Tuổi thọ bóng đèn/nguồn sáng": "6.000 giờ (thường), 12.000 giờ (ECO)",
+      "Trọng lượng": "khoảng 2,5 kg"
+    }
+  },
+  "BenQ TK850": {
+    "sources": [
+      "https://www.benq.eu/en-uk/projector/cinema/tk850/spec.html",
+      "https://www.adorama.com/bqtk850.html",
+      "https://www.huntoffice.ie/benq-tk850-dlp-projector-3d-3000-ansi-lumens-3840-x-2160-16-9-zoom-lens-9h-jlh77-37e-5652391.html"
+    ],
+    "specs": {
+      "Công nghệ": "DLP, hỗ trợ HDR10 và HLG",
+      "Độ phân giải": "4K UHD (3840 x 2160)",
+      "Độ sáng": "3000 ANSI lumen",
+      "Độ tương phản": "30.000:1 (FOFO, iris động)",
+      "Loa": "Có loa tích hợp",
+      "Tuổi thọ bóng đèn/nguồn sáng": "4.000 giờ (thường), 10.000 giờ (ECO), 15.000 giờ (SmartEco)",
+      "Trọng lượng": "khoảng 4,2 kg",
+      "Năm ra mắt": "2019"
+    }
+  },
+  "Xiaomi Mi Smart Projector 2": {
+    "sources": [
+      "https://www.mi.com/global/product/mi-smart-projector-2/specs",
+      "https://www.pbtech.com/product/PROMIX34374/product/PROMIX34374/Xiaomi-Smart-Projector-2-1920X1080--500-Lumens--An"
+    ],
+    "specs": {
+      "Công nghệ": "DLP, nguồn sáng LED, giải mã HDR10",
+      "Độ phân giải": "Full HD (1920 x 1080)",
+      "Độ sáng": "500 ANSI lumen",
+      "Kích thước chiếu": "60–120 inch, tỷ lệ chiếu 1,2:1",
+      "Không dây": "Wi-Fi 2 băng tần, Bluetooth 5.0",
+      "Loa": "2 x 5W, Dolby Audio",
+      "Hệ điều hành": "Android TV (2GB RAM, 16GB bộ nhớ)",
+      "Trọng lượng": "1,3 kg"
+    }
+  },
+  "JBL PartyBox 310": {
+    "sources": [
+      "https://support.jbl.com/us/en/speakers/PARTYBOX310-.html",
+      "https://jblstore.co.id/en/product/jbl-partybox-310"
+    ],
+    "specs": {
+      "Công suất": "240W RMS",
+      "Dải tần": "45 Hz – 20 kHz (-6 dB)",
+      "Bluetooth": "5.1, tầm khoảng 10 m",
+      "Pin": "72Wh — tối đa 18 giờ, sạc 3,5 giờ",
+      "Chống nước": "IPX4 (chống nước bắn)",
+      "Trọng lượng": "17,42 kg",
+      "Năm ra mắt": "2020"
+    }
+  },
+  "Bose SoundLink Max": {
+    "sources": [
+      "https://support.bose.com/s/article/soundlink-max-specifications",
+      "https://www.adorama.com/bose-soundlink-max-waterproof-bluetooth-speaker/p/bo8838480100",
+      "https://www.techradar.com/audio/wireless-bluetooth-speakers/bose-launches-its-biggest-bluetooth-speaker-yet-for-beefy-barbecue-tunes"
+    ],
+    "specs": {
+      "Cổng kết nối": "Jack 3,5mm, USB-C (sạc loa và sạc ngược điện thoại)",
+      "Pin": "khoảng 20 giờ, sạc đầy khoảng 5 giờ",
+      "Chống nước": "IP67",
+      "Trọng lượng": "khoảng 2,1–2,2 kg",
+      "Năm ra mắt": "2024"
+    }
+  },
+  "Marshall Stanmore III": {
+    "sources": [
+      "https://www.pbtech.com/product/SPKMAR1006010/Marshall-Stanmore-III-80W-Home-Stereo-Bluetooth-Sp",
+      "https://www.galaxus.it/en/s1/product/marshall-stanmore-iii-bluetooth-speakers-32539172"
+    ],
+    "specs": {
+      "Công suất": "80W (1 ampli 50W cho loa trầm + 2 ampli 15W cho loa tweeter)",
+      "Dải tần": "45 Hz – 20 kHz, tối đa 97 dB SPL @1 m",
+      "Củ loa": "1 loa trầm + 2 loa tweeter, thùng bass-reflex",
+      "Bluetooth": "5.2, tầm khoảng 10 m, sẵn sàng LE Audio",
+      "Cổng kết nối": "Jack 3,5mm, RCA",
+      "Pin": "Không có pin — dùng điện trực tiếp",
+      "Năm ra mắt": "2022"
+    }
+  },
+  "PlayStation 5 Slim (bản có ổ đĩa) 1TB": {
+    "previousNames": [
+      "PlayStation 5 Slim"
+    ],
+    "sources": [
+      "https://gamesradar.com/ps5-slim-guide",
+      "https://thepcenthusiast.com/sony-ps5-slim-edition-announced/",
+      "https://coolblue.de/en/advice/compare-the-playstation-5-slim-to-the-playstation-5.html"
+    ],
+    "specs": {
+      "CPU": "AMD Zen 2, 8 nhân 16 luồng, tối đa 3,5GHz",
+      "GPU": "AMD RDNA 2, tối đa 2,23GHz (10,3 TFLOPS)",
+      "RAM": "16GB GDDR6 (448GB/s)",
+      "Bộ nhớ": "1TB SSD (đọc 5,5GB/s)",
+      "Độ phân giải tối đa": "4K (hỗ trợ đầu ra 8K)",
+      "Tốc độ khung hình": "tối đa 120fps",
+      "Ổ đĩa": "Ultra HD Blu-ray, tối đa 100GB/đĩa",
+      "Trọng lượng": "khoảng 3,2 kg",
+      "Năm ra mắt": "2023"
+    }
+  },
+  "Xbox Series X 1TB": {
+    "previousNames": [
+      "Xbox Series X"
+    ],
+    "sources": [
+      "https://www.techradar.com/news/xbox-series-x-specs",
+      "https://windowscentral.com/xbox-series-x-specs",
+      "https://mp1st.com/news/xbox-series-x-official-specs-revealed"
+    ],
+    "specs": {
+      "CPU": "AMD Zen 2, 8 nhân, 3,8GHz (3,6GHz khi bật SMT)",
+      "GPU": "AMD RDNA 2 tuỳ biến, 52 CU @ 1,825GHz (12 TFLOPS)",
+      "RAM": "16GB GDDR6 (10GB @ 560GB/s + 6GB @ 336GB/s)",
+      "Bộ nhớ": "1TB SSD NVMe tuỳ biến",
+      "Độ phân giải tối đa": "4K, hỗ trợ tới 8K",
+      "Tốc độ khung hình": "4K 60fps, tối đa 120fps",
+      "Ổ đĩa": "Có ổ đĩa 4K UHD Blu-ray",
+      "Trọng lượng": "4,45 kg",
+      "Năm ra mắt": "2020"
+    }
+  },
+  "Nintendo Switch OLED 64GB": {
+    "previousNames": [
+      "Nintendo Switch OLED"
+    ],
+    "sources": [
+      "https://nintendo.com/switch/tech-specs",
+      "https://mp1st.com/news/nintendo-switch-oled-tech-specs-revealed",
+      "https://www.currys.co.uk/gbuk/gaming/console-gaming/consoles/nintendo-switch-oled-white-10227413-pdt.html"
+    ],
+    "specs": {
+      "CPU": "NVIDIA Tegra tuỳ biến",
+      "Bộ nhớ": "64GB (mở rộng bằng thẻ microSD)",
+      "Độ phân giải tối đa": "1080p khi cắm TV, 720p khi cầm tay",
+      "Màn hình tích hợp": "OLED 7 inch, 1280 x 720",
+      "Cổng kết nối": "Dock: 1x HDMI, 2x USB, 1x LAN",
+      "Trọng lượng": "khoảng 420 g (gồm Joy-Con)",
+      "Năm ra mắt": "2021"
+    }
+  },
+  "Ubiquiti UniFi Dream Machine Pro (UDM-Pro)": {
+    "previousNames": [
+      "Ubiquiti UniFi Dream Machine Pro"
+    ],
+    "sources": [
+      "https://www.comx-computers.co.za/UDM-PRO-specifications-244558.htm",
+      "https://linitx.com/product/ubiquiti-unifi-dream-machine-pro---udm-pro/16313"
+    ],
+    "specs": {
+      "Loại thiết bị": "Gateway/router bảo mật kiêm bộ điều khiển UniFi (KHÔNG có Wi-Fi tích hợp)",
+      "Thông lượng": "IDS/IPS tới 3,5 Gbps",
+      "Bộ xử lý": "ARM Cortex-A57 4 nhân 1,7GHz, 4GB DDR4, 16GB eMMC",
+      "Cổng WAN": "1x RJ45 Gigabit + 1x SFP+ 10G",
+      "Cổng LAN": "8x RJ45 Gigabit + 1x SFP+ 10G",
+      "Cổng khác": "Khay ổ cứng 3,5\" cho camera NVR",
+      "Lắp đặt": "Gắn tủ rack 1U, nguồn AC 100–240V, tối đa 33W",
+      "Năm ra mắt": "2019"
+    }
+  },
+  "TP-Link Archer AX90 (AX6600)": {
+    "previousNames": [
+      "TP-Link Archer AX90"
+    ],
+    "sources": [
+      "https://www.nimans.net/product/70154/tp-link-archer-ax90-wireless-router-3-port-switch-gige-2-5-gige-802-11a-b-g-n-ac-ax-tri-band",
+      "https://www.digitec.ch/en/s1/product/tp-link-archer-ax90-routers-15681463",
+      "https://techinfodepot.shoutwiki.com/wiki/TP-LINK_Archer_AX90"
+    ],
+    "specs": {
+      "Loại thiết bị": "Router Wi-Fi",
+      "Wi-Fi": "Wi-Fi 6 AX6600 ba băng tần: 574 Mbps (2,4GHz) + 1201 Mbps + 4804 Mbps (5GHz)",
+      "Bộ xử lý": "4 nhân 1,5GHz",
+      "Cổng WAN": "1x 2,5Gbps WAN/LAN + 1x 1Gbps WAN/LAN",
+      "Cổng LAN": "3x Gigabit LAN",
+      "Cổng khác": "USB 3.0",
+      "Năm ra mắt": "2020"
+    }
+  },
+  "Cisco Meraki MX67": {
+    "sources": [
+      "https://documentation.meraki.com/MX/MX_Overviews_and_Specifications/MX67_and_MX68_Datasheet",
+      "https://shop.sharp.nl/cisco-meraki-mx67-security-appliance/cat-p/c/p10377707/l_en"
+    ],
+    "specs": {
+      "Loại thiết bị": "Thiết bị bảo mật/tường lửa SD-WAN cho chi nhánh nhỏ (tối đa ~50 thiết bị)",
+      "Thông lượng": "Tường lửa 700 Mbps, NGFW 400 Mbps, VPN 400 Mbps",
+      "Cổng WAN": "1x Gigabit RJ45 + 1x cổng LAN chuyển thành WAN (dual WAN)",
+      "Cổng LAN": "3x Gigabit RJ45 (không PoE)",
+      "Cổng khác": "USB cho modem 4G rời",
+      "Quản lý": "Quản lý qua Meraki Dashboard (đám mây)",
+      "Lắp đặt": "Để bàn hoặc treo tường"
+    }
+  },
+  "Meta Quest 3 128GB": {
+    "previousNames": [
+      "Meta Quest 3"
+    ],
+    "sources": [
+      "https://www.geekay.com/en/meta-quest-3-128gb",
+      "https://mixed-news.com/en/meta-quest-3-roundup-specs-release-price/",
+      "https://electronicexpress.com/catalog/210428/meta-mtquest3128g-quest-3-all-in-one-vr-headset-128gb"
+    ],
+    "specs": {
+      "Màn hình": "LCD, thấu kính pancake",
+      "Độ phân giải": "2064 x 2208 mỗi mắt",
+      "Tần số quét": "72 / 80 / 90 / 120Hz",
+      "Trường nhìn": "110° ngang x 96° dọc",
+      "Chip": "Snapdragon XR2 Gen 2",
+      "RAM": "8GB",
+      "Bộ nhớ": "128GB",
+      "Theo dõi": "Inside-out 6DoF, camera màu passthrough (thực tế hỗn hợp)",
+      "Điều khiển": "Tay cầm Touch Plus, theo dõi bàn tay",
+      "Pin": "khoảng 2,2 giờ",
+      "Trọng lượng": "515 g",
+      "Năm ra mắt": "2023"
+    }
+  },
+  "Apple Vision Pro 256GB": {
+    "previousNames": [
+      "Apple Vision Pro"
+    ],
+    "sources": [
+      "https://support.apple.com/en-ng/117810",
+      "https://macrumors.com/2024/01/19/apple-vision-pro-tech-specs",
+      "https://EveryMac.com/systems/apple/vision/specs/apple-vision-pro-original-a2117-specs.html"
+    ],
+    "specs": {
+      "Màn hình": "Micro-OLED, 92% DCI-P3",
+      "Độ phân giải": "23 triệu điểm ảnh (2 màn hình)",
+      "Tần số quét": "90 / 96 / 100Hz",
+      "Chip": "Apple M2 (CPU 8 nhân, GPU 10 nhân) + chip cảm biến R1",
+      "RAM": "16GB bộ nhớ hợp nhất",
+      "Bộ nhớ": "256GB",
+      "Theo dõi": "Theo dõi mắt, bàn tay và không gian (R1, độ trễ 12 ms)",
+      "Điều khiển": "Mắt, tay và giọng nói (không cần tay cầm)",
+      "Pin": "Pin rời — tới 2 giờ sử dụng chung, 2,5 giờ xem video",
+      "Trọng lượng": "600–650 g (kính, tuỳ đệm/dây đeo)",
+      "Năm ra mắt": "2024"
+    }
+  },
+  "PICO 4 128GB": {
+    "previousNames": [
+      "PICO 4"
+    ],
+    "sources": [
+      "https://en.wikipedia.org/wiki/PICO_4",
+      "https://uploadvr.com/pico-4-vs-quest-2-specs-features/",
+      "https://www.startech.com.bd/pico-4-all-in-one-128gb-vr-headset"
+    ],
+    "specs": {
+      "Màn hình": "LCD, thấu kính pancake",
+      "Độ phân giải": "2160 x 2160 mỗi mắt",
+      "Tần số quét": "72Hz (mặc định), tối đa 90Hz",
+      "Trường nhìn": "khoảng 105°",
+      "Chip": "Snapdragon XR2",
+      "RAM": "8GB LPDDR4",
+      "Bộ nhớ": "128GB",
+      "Theo dõi": "Inside-out 6DoF",
+      "Pin": "5300 mAh, khoảng 2,5–3 giờ",
+      "Trọng lượng": "295 g (thân kính), 586 g (gồm dây đeo)",
+      "Năm ra mắt": "2022"
+    }
+  },
+  "Elgato Stream Deck MK.2": {
+    "sources": [
+      "https://help.elgato.com/hc/en-us/articles/18208816152333-Elgato-Stream-Deck-MK-2-Technical-Specifications",
+      "https://www.photospecialist.ie/elgato-stream-deck-mk-2"
+    ],
+    "specs": {
+      "Loại thiết bị": "Bàn điều khiển livestream",
+      "Nút bấm": "15 phím LCD tuỳ biến",
+      "Kết nối": "USB-C trên máy (giao tiếp USB 2.0)",
+      "Điều khiển": "Phần mềm Stream Deck (Windows/macOS)",
+      "Gắn đặt": "Chân đế tháo rời, kích thước 118 x 84 x 25 mm",
+      "Trọng lượng": "145 g (không chân đế), 270 g (có chân đế)",
+      "Năm ra mắt": "2021"
+    }
+  },
+  "Logitech StreamCam": {
+    "sources": [
+      "https://logitech.com/en-sg/shop/p/streamcam",
+      "https://www.techradar.com/reviews/logitech-streamcam",
+      "https://tsgdoc.socsci.ru.nl/index.php/Logitech_StreamCam"
+    ],
+    "specs": {
+      "Loại thiết bị": "Webcam livestream",
+      "Độ phân giải": "1080p 60fps (MJPEG), 720p 60fps",
+      "Cảm biến/Nguồn sáng": "Ống kính kính f/2.0, góc nhìn 78° (chéo), tự động lấy nét 10 cm – vô cực",
+      "Kết nối": "USB-C 3.1 Gen 1 (cáp 1,5 m)",
+      "Điều khiển": "Phần mềm Logitech Capture, hỗ trợ quay video dọc",
+      "Gắn đặt": "Kẹp màn hình hoặc chân tripod",
+      "Trọng lượng": "150 g (222 g kèm kẹp màn hình)",
+      "Năm ra mắt": "2020"
+    }
+  },
+  "Elgato Key Light Air": {
+    "sources": [
+      "https://www.kitguru.net/channel/generaltech/andrew-munro/elgato-key-light-air-review/",
+      "https://www.videocraft.com.au/elgato-key-light-air-led-panel",
+      "https://www.guru3d.com/review/elgato-key-light-air-review/page-2/"
+    ],
+    "specs": {
+      "Loại thiết bị": "Đèn LED panel livestream",
+      "Cảm biến/Nguồn sáng": "80 đèn LED OSRAM, CRI > 92",
+      "Độ sáng": "tối đa 1400 lumen, điều chỉnh được",
+      "Nhiệt độ màu": "2900 – 7000K",
+      "Kết nối": "Wi-Fi 2,4GHz 802.11 b/g/n",
+      "Điều khiển": "Ứng dụng Control Center (máy tính/điện thoại), Stream Deck",
+      "Gắn đặt": "Chân đế để bàn, cột kéo dài 60–88 cm",
+      "Trọng lượng": "550 g (tấm đèn), chân đế 1 kg",
+      "Năm ra mắt": "2019"
+    }
+  },
+  "Logitech G Pro X Superlight 2": {
+    "sources": [
+      "https://www.logitechg.com/en-gb/products/gaming-mice/pro-x2-superlight-wireless-mouse.html",
+      "https://lanoc.org/review/input-devices/logitech-g-pro-x-superlight-2"
+    ],
+    "specs": {
+      "Loại thiết bị": "Chuột gaming không dây",
+      "Cảm biến/Switch/Driver": "Cảm biến HERO 2, switch quang-cơ LIGHTFORCE (70 triệu lần nhấn)",
+      "Độ phân giải/DPI": "100 – 32.000 DPI (lên tới 44.000 DPI sau cập nhật firmware)",
+      "Tần số phản hồi": "tối đa 8000Hz qua LIGHTSPEED (firmware mới; bản đầu 2000Hz)",
+      "Kết nối": "Không dây LIGHTSPEED (đầu thu USB), cáp USB-C sạc/có dây",
+      "Pin": "khoảng 95 giờ",
+      "Trọng lượng": "60 g",
+      "Năm ra mắt": "2023"
+    }
+  },
+  "Razer BlackWidow V4 Pro (Green Switch)": {
+    "previousNames": [
+      "Razer BlackWidow V4 Pro"
+    ],
+    "sources": [
+      "https://mysupport.razer.com/app/answers/detail/a_id/9704",
+      "https://www.tech-critter.com/razer-blackwidow-v4-pro-keyboard/",
+      "https://www.mechanical-keyboard.org/razer-blackwidow-v4-pro/"
+    ],
+    "specs": {
+      "Loại thiết bị": "Bàn phím cơ full-size",
+      "Cảm biến/Switch/Driver": "Razer Green (clicky), 80 triệu lần nhấn",
+      "Tần số phản hồi": "tối đa 8000Hz",
+      "Kết nối": "Có dây, cáp USB-C tháo rời, cổng USB 2.0 passthrough",
+      "Đèn LED": "Razer Chroma RGB từng phím + đèn viền thân và kê tay",
+      "Thiết kế": "Núm xoay Command Dial, 8 phím macro, kê tay da từ tính, mặt nhôm",
+      "Năm ra mắt": "2023"
+    }
+  },
+  "SteelSeries Arctis Nova Pro Wireless": {
+    "sources": [
+      "https://www.Steelseries.com/gaming-headsets/arctis-nova-pro-wireless-xbox-pc",
+      "https://www.chillblast.com/headsets/steelseries-arctis-nova-pro-wireless-for-pc-and-playstation-headset",
+      "https://www.bestbuy.com/site/6506348.p"
+    ],
+    "specs": {
+      "Loại thiết bị": "Tai nghe gaming không dây",
+      "Cảm biến/Switch/Driver": "Driver 40mm nam châm neodymium",
+      "Kết nối": "2.4GHz Quantum 2.0 + Bluetooth dùng đồng thời, tầm 12 m",
+      "Pin": "2 pin thay nóng (Infinity Power System), 18–22 giờ mỗi pin, sạc ở trạm gốc",
+      "Chống ồn": "Chống ồn chủ động (ANC) 4 micro lai + chế độ xuyên âm",
+      "Thiết kế": "Trạm gốc màn hình OLED, 2 cổng USB-C cho 2 máy, line-in/line-out",
+      "Năm ra mắt": "2022"
+    }
+  },
+  "iPad Pro 13\" M4 256GB Wi-Fi": {
+    "previousNames": [
+      "iPad Pro 12.9\" M4"
+    ],
+    "sources": [
+      "https://www.bhphotovideo.com/c/product/1826781-REG/apple_mvx23ll_a_13_ipad_pro_wifi.html",
+      "https://theapplewiki.com/wiki/IPad_Pro_13-inch_(M4)",
+      "https://devices.vodafone.com.au/apple/ipad-pro-13-inch-m4-ipados-17/specifications/"
+    ],
+    "specs": {
+      "Chip": "Apple M4 (CPU 9 nhân, GPU 10 nhân)",
+      "RAM": "8GB",
+      "Bộ nhớ": "256GB",
+      "Kích thước": "13 inch",
+      "Độ phân giải": "2752 x 2064 (264 ppi)",
+      "Tần số quét": "ProMotion 10 – 120Hz",
+      "Tấm nền": "Ultra Retina XDR (OLED 2 lớp tandem), HDR tối đa 1600 nit",
+      "Camera": "Sau 12MP (quay 4K ProRes 60fps) + LiDAR, trước 12MP",
+      "Cổng kết nối": "USB-C",
+      "Pin": "khoảng 10 giờ lướt web/xem video",
+      "Trọng lượng": "579 g (bản Wi-Fi)",
+      "Hệ điều hành": "iPadOS",
+      "Năm ra mắt": "2024"
+    }
+  },
+  "Samsung Galaxy Tab S9 Ultra 12GB/256GB": {
+    "previousNames": [
+      "Samsung Galaxy Tab S9 Ultra"
+    ],
+    "sources": [
+      "https://m.gsmarena.com/samsung_galaxy_tab_s9_ultra-12217.php",
+      "https://www.phonearena.com/phones/Samsung-Galaxy-Tab-S9-Ultra_id12175"
+    ],
+    "specs": {
+      "Chip": "Snapdragon 8 Gen 2 for Galaxy",
+      "RAM": "12GB",
+      "Bộ nhớ": "256GB (hỗ trợ thẻ microSD)",
+      "Kích thước": "14,6 inch",
+      "Độ phân giải": "2960 x 1848",
+      "Tần số quét": "120Hz",
+      "Tấm nền": "Dynamic AMOLED 2X, HDR10+",
+      "Cổng kết nối": "USB-C",
+      "Bút/Bàn phím": "Kèm bút S Pen (độ trễ 2,8 ms)",
+      "Pin": "11.200 mAh, sạc nhanh 45W",
+      "Trọng lượng": "732 g",
+      "Hệ điều hành": "Android (One UI)",
+      "Năm ra mắt": "2023"
+    }
+  },
+  "Microsoft Surface Pro 9 i7/16GB/256GB": {
+    "previousNames": [
+      "Microsoft Surface Pro 9"
+    ],
+    "sources": [
+      "https://www.geektopia.es/es/product/microsoft/surface-pro-9-core-i7-1255u-16-256-gb/",
+      "https://smccd.edu/dsgs/docs/Surface%20Pro.pdf",
+      "https://icecat.co.uk/p/vendorName/mpn/desc-120215011.html"
+    ],
+    "specs": {
+      "Chip": "Intel Core i7-1255U (10 nhân)",
+      "RAM": "16GB LPDDR5",
+      "Bộ nhớ": "256GB SSD",
+      "Kích thước": "13 inch",
+      "Độ phân giải": "2880 x 1920",
+      "Tần số quét": "tối đa 120Hz",
+      "Tấm nền": "PixelSense Flow, cảm ứng",
+      "Cổng kết nối": "2x USB-C (USB4/Thunderbolt 4), cổng Surface Connect",
+      "Pin": "47,7 Wh, tới 15,5 giờ (theo nhà sản xuất)",
+      "Trọng lượng": "879 g",
+      "Hệ điều hành": "Windows 11",
+      "Năm ra mắt": "2022"
+    }
+  },
+  "Shure SM7B": {
+    "sources": [
+      "https://media.sweetwater.com/store/media/us_pro_sm7b_specsheet.pdf",
+      "https://canford.co.uk/Products/92-401_SHURE-SM7B-MICROPHONE-Studio-cardioid-dynamic",
+      "https://www.galaxus.fr/en/s1/product/shure-sm7b-microphones-2585342"
+    ],
+    "specs": {
+      "Loại thiết bị": "Microphone dynamic thu giọng (podcast, livestream, thu âm)",
+      "Hướng thu": "Cardioid",
+      "Dải tần": "50Hz – 20kHz",
+      "Kết nối": "XLR 3 chân (cần audio interface/mixer, khuyến nghị preamp ~60dB gain)",
+      "Cổng vào/ra": "Trở kháng 150 ohm, độ nhạy -59 dB (1,12 mV)",
+      "Nguồn phantom": "Không cần",
+      "Trọng lượng": "khoảng 765 g"
+    }
+  },
+  "Rode NT-USB+": {
+    "sources": [
+      "https://edge.rode.com//pdf/products/1053/NT-USB _ds_V02.pdf",
+      "https://www.hhb.co.uk/wp-content/uploads/NT-USB-_ds_FA.pdf",
+      "https://www.adorama.com/rode-nt-usb-studio-cardioid-condenser-microphone/p/rontusbp"
+    ],
+    "specs": {
+      "Loại thiết bị": "Microphone condenser USB",
+      "Hướng thu": "Cardioid",
+      "Dải tần": "20Hz – 20kHz",
+      "Độ phân giải âm thanh": "24-bit / 48kHz",
+      "Kết nối": "USB-C, cắm thẳng máy tính (nguồn qua USB 5V)",
+      "Cổng vào/ra": "Jack tai nghe 3,5 mm giám sát không độ trễ",
+      "Nguồn phantom": "Không cần",
+      "Trọng lượng": "540 g (thân mic), 730 g kèm phụ kiện",
+      "Năm ra mắt": "2023"
+    }
+  },
+  "Focusrite Scarlett 2i2 (4th Gen)": {
+    "sources": [
+      "https://andertons.co.uk/focusrite-scarlett-2i2-4th-gen",
+      "https://www.georgesmusic.com/products/focusrite-scarlett-2i2-recording-interface-4th-gen",
+      "https://www.johdeheer.nl/item/focusrite-scarlett-2i2-4th-gen-audio-interface-en.html"
+    ],
+    "specs": {
+      "Loại thiết bị": "Audio interface USB 2 vào / 2 ra",
+      "Độ phân giải âm thanh": "24-bit / 192kHz, dải động ADC 120dB",
+      "Kết nối": "USB-C (USB 2.0), cấp nguồn qua USB",
+      "Cổng vào/ra": "2 cổng combo XLR/jack 6,3 mm (gain tối đa 69dB), 2 cổng ra jack 6,3 mm, cổng tai nghe",
+      "Nguồn phantom": "Có, 48V",
+      "Tính năng": "Auto Gain, Clip Safe, chế độ Air",
+      "Năm ra mắt": "2023"
+    }
+  },
+  "ASUS ZenScreen Go MB16AHP": {
+    "previousNames": [
+      "ASUS ZenScreen MB16AHP"
+    ],
+    "sources": [
+      "https://www.asus.com/uk/displays-desktops/monitors/zenscreen/zenscreen-go-mb16ahp/techspec/",
+      "https://www.alza.hu/EN/15-6-asus-zenscreen-mb16ahp-d6298499.htm",
+      "https://www.adorama.com/ASMB16AHP.html"
+    ],
+    "specs": {
+      "Kích thước": "15,6 inch",
+      "Độ phân giải": "1920 x 1080 (Full HD)",
+      "Tấm nền": "IPS, chống chói",
+      "Tần số quét": "60Hz",
+      "Độ sáng": "220 nit",
+      "Cảm ứng": "Không",
+      "Cổng kết nối": "1x USB-C (DP Alt Mode), 1x micro HDMI",
+      "Loa": "Có, 2 x 1W",
+      "Tính năng thông minh": "Pin tích hợp 7800 mAh, dùng không cần cắm sạc",
+      "Trọng lượng": "0,86 kg"
+    }
+  },
+  "Samsung Smart Monitor M8 32\" (LS32BM80)": {
+    "previousNames": [
+      "Samsung Smart Monitor M8"
+    ],
+    "sources": [
+      "https://galaxus.it/en/s1/product/samsung-smart-monitor-m8-3840-x-2160-pixels-32-monitor-20395205",
+      "https://wibi.com.kw/products/samsung-ls32bm80bumxue-m8-smart-monitor-32-0-va-4k-uhd-4ms-usb-c-micro-hdmi-wi-fi-bluetooth-blue-monitor",
+      "https://monitornerds.com/?p=17484"
+    ],
+    "specs": {
+      "Kích thước": "32 inch",
+      "Độ phân giải": "3840 x 2160 (4K UHD)",
+      "Tấm nền": "VA",
+      "Tần số quét": "60Hz",
+      "Cảm ứng": "Không",
+      "Cổng kết nối": "USB-C (sạc laptop tới 65W), micro HDMI 2.0",
+      "Tính năng thông minh": "Tizen OS — xem Netflix/YouTube không cần máy tính, Wi-Fi 5, Bluetooth 5.2",
+      "Năm ra mắt": "2022"
+    }
+  },
+  "LG gram +view 16MQ70": {
+    "sources": [
+      "https://lg.com/us/business/download/resources/CT40000311/lg_spec_sheet_16mq70.asdu_052215_lr[20220702_063612].pdf",
+      "https://www.tomshardware.com/news/lg-gram-view-16-portable-monitor",
+      "https://monitornerds.com/lg-gram-view-16mq70-review/"
+    ],
+    "specs": {
+      "Kích thước": "16 inch",
+      "Độ phân giải": "2560 x 1600 (WQXGA)",
+      "Tấm nền": "IPS, 99% DCI-P3, chống chói",
+      "Tần số quét": "60Hz",
+      "Độ sáng": "350 nit",
+      "Cảm ứng": "Không",
+      "Cổng kết nối": "2x USB-C (mỗi bên 1 cổng)",
+      "Trọng lượng": "670 g (990 g kèm ốp gập làm chân đế)",
+      "Năm ra mắt": "2022"
+    }
+  },
+  "DJI RS 4": {
+    "sources": [
+      "https://www.dronenerds.com/collections/dji/products/dji-rs-4",
+      "https://vistek.ca/store/467775/RS-4-Gimbal-Stabilizer",
+      "https://www.Ormsdirect.Co.Za/products/dji-rs-4-gimbal-stabilizer"
+    ],
+    "specs": {
+      "Số trục": "3 trục",
+      "Tải trọng tối đa": "3 kg",
+      "Thiết bị tương thích": "Máy ảnh mirrorless/DSLR cỡ vừa kèm ống kính",
+      "Pin": "tới 12 giờ (29,5 giờ với tay cầm pin BG70 mua thêm)",
+      "Sạc": "USB-C sạc nhanh",
+      "Kết nối": "Bluetooth 5.1 điều khiển màn trập",
+      "Trọng lượng": "khoảng 1,07 kg (gimbal)",
+      "Tính năng nổi bật": "Quay dọc chuyển nhanh, khoá trục tự động",
+      "Năm ra mắt": "2024"
+    }
+  },
+  "DJI RS 3 Mini": {
+    "sources": [
+      "https://www.dji.com/lv/rs-3-mini",
+      "https://www.adorama.com/alc/dji-rs-3-mini-gimbal",
+      "https://www.cathayphoto.com.sg/photo-video-accessories/camera-stabilizers/dji-rs-3-mini"
+    ],
+    "specs": {
+      "Số trục": "3 trục",
+      "Tải trọng tối đa": "2 kg",
+      "Thiết bị tương thích": "Máy ảnh mirrorless gọn nhẹ",
+      "Pin": "tới 10 giờ (pin 2450 mAh tích hợp tay cầm)",
+      "Sạc": "khoảng 2,5 giờ",
+      "Kết nối": "Bluetooth điều khiển màn trập",
+      "Trọng lượng": "795 g (850 g kèm đế ngang)",
+      "Tính năng nổi bật": "Quay dọc native, màn hình cảm ứng 1,4 inch",
+      "Năm ra mắt": "2023"
+    }
+  },
+  "DJI Osmo Mobile 6": {
+    "sources": [
+      "https://www.dji.com/osmo-mobile-6/specs",
+      "https://www.cliftoncameras.co.uk/uploads/specifications/DJI%20Osmo%20Mobile%206%20Specifications.pdf",
+      "https://www.xmart.jo/en/products/dji-osmo-moble-6"
+    ],
+    "specs": {
+      "Số trục": "3 trục",
+      "Tải trọng tối đa": "Điện thoại 170 – 290 g",
+      "Thiết bị tương thích": "Điện thoại thông minh",
+      "Pin": "1000 mAh, khoảng 6 giờ 24 phút",
+      "Sạc": "USB-C 10W, khoảng 1 giờ 24 phút",
+      "Kết nối": "Bluetooth, ứng dụng DJI Mimo",
+      "Ứng dụng": "DJI Mimo (ActiveTrack bám đối tượng)",
+      "Trọng lượng": "305 g (gimbal) + kẹp điện thoại",
+      "Tính năng nổi bật": "Gậy nối dài tích hợp 215 mm, gập gọn",
+      "Năm ra mắt": "2022"
+    }
+  },
+  "Zhiyun Crane-M3S": {
+    "sources": [
+      "https://uk.zhiyun-tech.com/products/crane-m3s",
+      "https://www.bhphotovideo.com/c/product/1767243-REG/zhiyun_c020129abr2_rane_m3_s_3_axis_handheld.html",
+      "https://www.teds.com.au/products/zhiyun-tech-crane-m3s-3-axis-gimbal-with-tripod-up-to-720g-payload"
+    ],
+    "specs": {
+      "Số trục": "3 trục",
+      "Thiết bị tương thích": "Máy ảnh mirrorless nhỏ, máy compact, action cam, điện thoại",
+      "Pin": "1150 mAh, khoảng 7,5 giờ",
+      "Sạc": "Sạc nhanh PD, khoảng 2 giờ",
+      "Kết nối": "Bluetooth 5.0 điều khiển màn trập, cáp USB-C",
+      "Trọng lượng": "705 g",
+      "Tính năng nổi bật": "Đèn trợ sáng tích hợp 1000 lux (2700 – 5500K), màn hình cảm ứng 1,22 inch",
+      "Năm ra mắt": "2023"
+    }
+  },
+  "Steam Deck OLED 512GB": {
+    "sources": [
+      "https://www.gematsu.com/2023/11/steam-deck-oled-announced",
+      "https://mezha.media/en/2023/11/10/valve-announced-steam-deck-oled",
+      "https://www.jbhifi.co.nz/products/steam-deck-oled-handheld-gaming-pc-512gb-import"
+    ],
+    "specs": {
+      "Chip": "AMD APU 6nm — CPU Zen 2 4 nhân 8 luồng 2,4–3,5GHz, GPU RDNA 2 8 CU 1,6GHz",
+      "RAM": "16GB LPDDR5 6400 MT/s",
+      "Bộ nhớ": "512GB SSD NVMe (hỗ trợ thẻ microSD)",
+      "Kích thước": "7,4 inch",
+      "Độ phân giải": "1280 x 800",
+      "Tần số quét": "tối đa 90Hz",
+      "Tấm nền": "HDR OLED, 1000 nit (HDR) / 600 nit (SDR), cảm ứng",
+      "Cổng kết nối": "USB-C (DisplayPort, sạc), jack 3,5 mm",
+      "Không dây": "Wi-Fi 6E, Bluetooth 5.3",
+      "Pin": "50 Wh, khoảng 3–12 giờ chơi tuỳ game",
+      "Trọng lượng": "khoảng 640 g",
+      "Hệ điều hành": "SteamOS",
+      "Năm ra mắt": "2023"
+    }
+  },
+  "ASUS ROG Ally X 24GB/1TB": {
+    "previousNames": [
+      "ASUS ROG Ally X"
+    ],
+    "sources": [
+      "https://za.store.asus.com/rog-ally-2024-x",
+      "https://retrohandhelds.gg/the-asus-rog-ally-x-checks-all-the-boxes/",
+      "https://www.pricerunner.dk/pl/52-3306143089/Spillekonsoller/ASUS-ROG-Ally-X-Z1-Extreme-1TB-Sammenlign-Priser"
+    ],
+    "specs": {
+      "Chip": "AMD Ryzen Z1 Extreme (Zen 4, 8 nhân 16 luồng, GPU RDNA 3)",
+      "RAM": "24GB LPDDR5X",
+      "Bộ nhớ": "1TB SSD PCIe 4.0 M.2 2280",
+      "Kích thước": "7 inch",
+      "Độ phân giải": "1920 x 1080",
+      "Tần số quét": "120Hz, FreeSync Premium",
+      "Tấm nền": "IPS cảm ứng, 500 nit, 100% sRGB",
+      "Cổng kết nối": "2x USB-C (1 cổng tốc độ cao xuất hình DisplayPort + sạc PD, 1 cổng USB 3.2 Gen 2), jack 3,5 mm",
+      "Không dây": "Wi-Fi 6E, Bluetooth",
+      "Pin": "80 Wh",
+      "Trọng lượng": "678 g",
+      "Hệ điều hành": "Windows 11",
+      "Năm ra mắt": "2024"
+    }
+  },
+  "Lenovo Legion Go 16GB/512GB": {
+    "previousNames": [
+      "Lenovo Legion Go"
+    ],
+    "sources": [
+      "https://laptopmedia.com/laptop-specs/lenovo-legion-go/review/",
+      "https://smartprix.com/bytes/lenovo-legion-go-debuts-with-144hz-touchscreen-ryzen-z1-extreme-soc-check-price-and-specs-here"
+    ],
+    "specs": {
+      "Chip": "AMD Ryzen Z1 Extreme (GPU Radeon 780M)",
+      "RAM": "16GB LPDDR5X",
+      "Bộ nhớ": "512GB SSD",
+      "Kích thước": "8,8 inch",
+      "Độ phân giải": "2560 x 1600 (QHD+)",
+      "Tần số quét": "144Hz",
+      "Tấm nền": "IPS cảm ứng",
+      "Pin": "49,2 Wh",
+      "Trọng lượng": "khoảng 850 g (kèm tay cầm)",
+      "Hệ điều hành": "Windows 11",
+      "Năm ra mắt": "2023"
+    }
+  }
+}

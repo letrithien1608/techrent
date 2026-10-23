@@ -107,6 +107,9 @@ model Category {
   id          String  @id @default(uuid())
   name        String
   description String?
+  // Mẫu thông số kỹ thuật của danh mục: [{ group, fields: [label] }]. Form admin
+  // dựng ô nhập theo mẫu này; trang chi tiết nhóm bảng thông số theo thứ tự này.
+  specTemplate Json?  @map("spec_template")
 
   devices     Device[]
 
@@ -118,6 +121,10 @@ model Device {
   name          String
   categoryId    String       @map("category_id")
   specs         Json?
+  // Thông số kỹ thuật có cấu trúc, tra từ nguồn thật (xem docs/device-sources.md):
+  // [{ group, label, value }] theo mẫu `Category.specTemplate`. `specs` ở trên là
+  // dạng cũ key-value, giữ để tương thích ngược.
+  specSheet     Json?        @map("spec_sheet")
   status        DeviceStatus @default(available)
   pricePerHour  Decimal      @map("price_per_hour") @db.Decimal(10, 2)
   pricePerDay   Decimal      @map("price_per_day") @db.Decimal(10, 2)

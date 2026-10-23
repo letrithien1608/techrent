@@ -1,0 +1,486 @@
+{
+  "_ghiChu": "Khung thông số theo danh mục — nhóm + tên thông số theo thứ tự hiển thị. Dùng cho seed (gán vào Category.specTemplate), form admin và bảng thông số trang chi tiết.",
+  "Laptop": [
+    {
+      "group": "Hiệu năng",
+      "fields": [
+        "CPU",
+        "GPU",
+        "RAM",
+        "Ổ cứng"
+      ]
+    },
+    {
+      "group": "Màn hình",
+      "fields": [
+        "Kích thước",
+        "Độ phân giải",
+        "Tần số quét",
+        "Tấm nền"
+      ]
+    },
+    {
+      "group": "Kết nối",
+      "fields": [
+        "Cổng kết nối",
+        "Không dây"
+      ]
+    },
+    {
+      "group": "Pin & thiết kế",
+      "fields": [
+        "Pin",
+        "Trọng lượng"
+      ]
+    },
+    {
+      "group": "Khác",
+      "fields": [
+        "Hệ điều hành",
+        "Năm ra mắt"
+      ]
+    }
+  ],
+  "Máy ảnh": [
+    {
+      "group": "Cảm biến",
+      "fields": [
+        "Loại cảm biến",
+        "Độ phân giải",
+        "Bộ xử lý",
+        "Dải ISO"
+      ]
+    },
+    {
+      "group": "Ống kính & lấy nét",
+      "fields": [
+        "Ngàm ống kính",
+        "Lấy nét tự động"
+      ]
+    },
+    {
+      "group": "Chụp & quay",
+      "fields": [
+        "Chụp liên tiếp",
+        "Quay video",
+        "Chống rung"
+      ]
+    },
+    {
+      "group": "Màn hình & kính ngắm",
+      "fields": [
+        "Màn hình",
+        "Kính ngắm"
+      ]
+    },
+    {
+      "group": "Pin & thiết kế",
+      "fields": [
+        "Pin",
+        "Khe thẻ nhớ",
+        "Trọng lượng",
+        "Năm ra mắt"
+      ]
+    }
+  ],
+  "Flycam": [
+    {
+      "group": "Camera",
+      "fields": [
+        "Camera",
+        "Quay video",
+        "Ảnh tĩnh",
+        "Gimbal"
+      ]
+    },
+    {
+      "group": "Bay",
+      "fields": [
+        "Thời gian bay",
+        "Tầm truyền hình ảnh",
+        "Tốc độ tối đa",
+        "Cảm biến tránh vật cản"
+      ]
+    },
+    {
+      "group": "Thiết kế",
+      "fields": [
+        "Trọng lượng cất cánh",
+        "Bộ nhớ trong",
+        "Năm ra mắt"
+      ]
+    }
+  ],
+  "Máy chiếu": [
+    {
+      "group": "Hình ảnh",
+      "fields": [
+        "Công nghệ",
+        "Độ phân giải",
+        "Độ sáng",
+        "Độ tương phản",
+        "Kích thước chiếu"
+      ]
+    },
+    {
+      "group": "Kết nối & âm thanh",
+      "fields": [
+        "Cổng kết nối",
+        "Không dây",
+        "Loa",
+        "Hệ điều hành"
+      ]
+    },
+    {
+      "group": "Thiết kế",
+      "fields": [
+        "Tuổi thọ bóng đèn/nguồn sáng",
+        "Trọng lượng",
+        "Năm ra mắt"
+      ]
+    }
+  ],
+  "Thiết bị âm thanh": [
+    {
+      "group": "Âm thanh",
+      "fields": [
+        "Công suất",
+        "Dải tần",
+        "Củ loa"
+      ]
+    },
+    {
+      "group": "Kết nối",
+      "fields": [
+        "Bluetooth",
+        "Cổng kết nối"
+      ]
+    },
+    {
+      "group": "Pin & thiết kế",
+      "fields": [
+        "Pin",
+        "Chống nước",
+        "Kích thước",
+        "Trọng lượng",
+        "Năm ra mắt"
+      ]
+    }
+  ],
+  "Máy chơi game": [
+    {
+      "group": "Hiệu năng",
+      "fields": [
+        "CPU",
+        "GPU",
+        "RAM",
+        "Bộ nhớ"
+      ]
+    },
+    {
+      "group": "Hiển thị",
+      "fields": [
+        "Độ phân giải tối đa",
+        "Tốc độ khung hình",
+        "Màn hình tích hợp"
+      ]
+    },
+    {
+      "group": "Kết nối & thiết kế",
+      "fields": [
+        "Ổ đĩa",
+        "Cổng kết nối",
+        "Không dây",
+        "Trọng lượng",
+        "Năm ra mắt"
+      ]
+    }
+  ],
+  "Thiết bị mạng": [
+    {
+      "group": "Hiệu năng",
+      "fields": [
+        "Loại thiết bị",
+        "Wi-Fi",
+        "Thông lượng",
+        "Bộ xử lý"
+      ]
+    },
+    {
+      "group": "Cổng",
+      "fields": [
+        "Cổng WAN",
+        "Cổng LAN",
+        "Cổng khác"
+      ]
+    },
+    {
+      "group": "Khác",
+      "fields": [
+        "Quản lý",
+        "Lắp đặt",
+        "Năm ra mắt"
+      ]
+    }
+  ],
+  "Kính thực tế ảo": [
+    {
+      "group": "Hiển thị",
+      "fields": [
+        "Màn hình",
+        "Độ phân giải",
+        "Tần số quét",
+        "Trường nhìn"
+      ]
+    },
+    {
+      "group": "Hiệu năng",
+      "fields": [
+        "Chip",
+        "RAM",
+        "Bộ nhớ"
+      ]
+    },
+    {
+      "group": "Theo dõi & điều khiển",
+      "fields": [
+        "Theo dõi",
+        "Điều khiển"
+      ]
+    },
+    {
+      "group": "Pin & thiết kế",
+      "fields": [
+        "Pin",
+        "Trọng lượng",
+        "Năm ra mắt"
+      ]
+    }
+  ],
+  "Camera hành động": [
+    {
+      "group": "Camera",
+      "fields": [
+        "Cảm biến",
+        "Quay video",
+        "Ảnh tĩnh",
+        "Góc nhìn"
+      ]
+    },
+    {
+      "group": "Tính năng",
+      "fields": [
+        "Chống rung",
+        "Chống nước",
+        "Màn hình"
+      ]
+    },
+    {
+      "group": "Pin & thiết kế",
+      "fields": [
+        "Pin",
+        "Trọng lượng",
+        "Năm ra mắt"
+      ]
+    }
+  ],
+  "Thiết bị livestream": [
+    {
+      "group": "Thông số chính",
+      "fields": [
+        "Loại thiết bị",
+        "Độ phân giải",
+        "Cảm biến/Nguồn sáng",
+        "Độ sáng",
+        "Nhiệt độ màu",
+        "Nút bấm"
+      ]
+    },
+    {
+      "group": "Kết nối & thiết kế",
+      "fields": [
+        "Kết nối",
+        "Điều khiển",
+        "Gắn đặt",
+        "Trọng lượng",
+        "Năm ra mắt"
+      ]
+    }
+  ],
+  "Phụ kiện gaming": [
+    {
+      "group": "Thông số chính",
+      "fields": [
+        "Loại thiết bị",
+        "Cảm biến/Switch/Driver",
+        "Độ phân giải/DPI",
+        "Tần số phản hồi"
+      ]
+    },
+    {
+      "group": "Kết nối & pin",
+      "fields": [
+        "Kết nối",
+        "Pin",
+        "Đèn LED"
+      ]
+    },
+    {
+      "group": "Thiết kế",
+      "fields": [
+        "Thiết kế",
+        "Chống ồn",
+        "Trọng lượng",
+        "Năm ra mắt"
+      ]
+    }
+  ],
+  "Máy tính bảng": [
+    {
+      "group": "Hiệu năng",
+      "fields": [
+        "Chip",
+        "RAM",
+        "Bộ nhớ"
+      ]
+    },
+    {
+      "group": "Màn hình",
+      "fields": [
+        "Kích thước",
+        "Độ phân giải",
+        "Tần số quét",
+        "Tấm nền"
+      ]
+    },
+    {
+      "group": "Camera & kết nối",
+      "fields": [
+        "Camera",
+        "Cổng kết nối",
+        "Bút/Bàn phím"
+      ]
+    },
+    {
+      "group": "Pin & thiết kế",
+      "fields": [
+        "Pin",
+        "Trọng lượng",
+        "Hệ điều hành",
+        "Năm ra mắt"
+      ]
+    }
+  ],
+  "Thiết bị thu âm": [
+    {
+      "group": "Âm thanh",
+      "fields": [
+        "Loại thiết bị",
+        "Hướng thu",
+        "Dải tần",
+        "Độ phân giải âm thanh"
+      ]
+    },
+    {
+      "group": "Kết nối",
+      "fields": [
+        "Kết nối",
+        "Cổng vào/ra",
+        "Nguồn phantom",
+        "Tính năng"
+      ]
+    },
+    {
+      "group": "Thiết kế",
+      "fields": [
+        "Trọng lượng",
+        "Năm ra mắt"
+      ]
+    }
+  ],
+  "Màn hình di động": [
+    {
+      "group": "Hiển thị",
+      "fields": [
+        "Kích thước",
+        "Độ phân giải",
+        "Tấm nền",
+        "Tần số quét",
+        "Độ sáng",
+        "Cảm ứng"
+      ]
+    },
+    {
+      "group": "Kết nối & thiết kế",
+      "fields": [
+        "Cổng kết nối",
+        "Loa",
+        "Tính năng thông minh",
+        "Trọng lượng",
+        "Năm ra mắt"
+      ]
+    }
+  ],
+  "Gimbal & chống rung": [
+    {
+      "group": "Hiệu năng",
+      "fields": [
+        "Số trục",
+        "Tải trọng tối đa",
+        "Thiết bị tương thích"
+      ]
+    },
+    {
+      "group": "Pin & kết nối",
+      "fields": [
+        "Pin",
+        "Sạc",
+        "Kết nối",
+        "Ứng dụng"
+      ]
+    },
+    {
+      "group": "Thiết kế",
+      "fields": [
+        "Trọng lượng",
+        "Tính năng nổi bật",
+        "Năm ra mắt"
+      ]
+    }
+  ],
+  "Máy chơi game cầm tay": [
+    {
+      "group": "Hiệu năng",
+      "fields": [
+        "Chip",
+        "RAM",
+        "Bộ nhớ"
+      ]
+    },
+    {
+      "group": "Màn hình",
+      "fields": [
+        "Kích thước",
+        "Độ phân giải",
+        "Tần số quét",
+        "Tấm nền"
+      ]
+    },
+    {
+      "group": "Kết nối & pin",
+      "fields": [
+        "Cổng kết nối",
+        "Không dây",
+        "Pin"
+      ]
+    },
+    {
+      "group": "Thiết kế",
+      "fields": [
+        "Trọng lượng",
+        "Hệ điều hành",
+        "Năm ra mắt"
+      ]
+    }
+  ]
+}

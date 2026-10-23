@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Loader2, Plus, X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { FormErrorBanner } from "@/components/form-error-banner";
 import { ImageDropzone } from "@/components/admin/image-dropzone";
+import { SpecSheetEditor, type ExtraSpecRow } from "@/components/admin/spec-sheet-editor";
 import {
   createDevice,
   updateDevice,
@@ -25,18 +26,13 @@ import {
   type DevicePayload,
 } from "@/lib/admin-api";
 import { fetchCategories, type Device } from "@/lib/devices-api";
-import { DEVICE_STATUS_LABEL } from "@/lib/device-format";
+import { DEVICE_STATUS_LABEL, specLabel } from "@/lib/device-format";
+import { buildSpecSheet, OTHER_SPEC_GROUP, templateLabels } from "@/lib/spec-sheet";
 import { getErrorMessage } from "@/lib/get-error-message";
 
 interface DeviceFormMutationResult {
   device: Device;
   imageUploadFailed: boolean;
-}
-
-interface SpecRow {
-  id: string;
-  key: string;
-  value: string;
 }
 
 type FieldErrors = Partial<
@@ -53,23 +49,31 @@ function FieldError({ message }: { message?: string }) {
   return <p className="text-xs text-destructive">{message}</p>;
 }
 
-function specsToRows(specs: Record<string, unknown> | null): SpecRow[] {
-  if (!specs) return [];
-  return Object.entries(specs).map(([key, value]) => ({
-    id: crypto.randomUUID(),
-    key,
-    value: String(value),
-  }));
-}
-
-function rowsToSpecs(rows: SpecRow[]): Record<string, string> {
-  const specs: Record<string, string> = {};
-  for (const row of rows) {
-    const key = row.key.trim();
-    if (!key) continue;
-    specs[key] = row.value;
+/** Giá trị ban đầu của form: bảng mới nếu có, không thì chuyển dạng cũ thành "Thông số khác". */
+function initialSpecState(device?: Device): {
+  values: Record<string, string>;
+  extras: ExtraSpecRow[];
+} {
+  if (device?.specSheet && device.specSheet.length > 0) {
+    const inTemplate = device.specSheet.filter((entry) => entry.group !== OTHER_SPEC_GROUP);
+    const other = device.specSheet.filter((entry) => entry.group === OTHER_SPEC_GROUP);
+    return {
+      values: Object.fromEntries(inTemplate.map((entry) => [entry.label, entry.value])),
+      extras: other.map((entry) => ({
+        id: crypto.randomUUID(),
+        label: entry.label,
+        value: entry.value,
+      })),
+    };
   }
-  return specs;
+  return {
+    values: {},
+    extras: Object.entries(device?.specs ?? {}).map(([key, value]) => ({
+      id: crypto.randomUUID(),
+      label: specLabel(key),
+      value: String(value),
+    })),
+  };
 }
 
 export function DeviceForm({ device }: { device?: Device }) {
@@ -85,7 +89,8 @@ export function DeviceForm({ device }: { device?: Device }) {
     device?.detailedDescription ?? "",
   );
   const [status, setStatus] = useState(device?.status ?? "available");
-  const [specRows, setSpecRows] = useState<SpecRow[]>(() => specsToRows(device?.specs ?? null));
+  const [specValues, setSpecValues] = useState(() => initialSpecState(device).values);
+  const [extraSpecs, setExtraSpecs] = useState(() => initialSpecState(device).extras);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -103,6 +108,17 @@ export function DeviceForm({ device }: { device?: Device }) {
   }, [previews]);
 
   const categoriesQuery = useQuery({ queryKey: ["categories"], queryFn: () => fetchCategories() });
+  const specTemplate = useMemo(
+    () => categoriesQuery.data?.find((category) => category.id === categoryId)?.specTemplate ?? [],
+    [categoriesQuery.data, categoryId],
+  );
+
+  // Phòng hờ: giá trị không thuộc mẫu đang chọn (VD mẫu danh mục vừa đổi phía
+  // server) vẫn được gửi lên ở nhóm "Thông số khác" thay vì mất.
+  const orphanSpecs = useMemo(() => {
+    const labels = templateLabels(specTemplate);
+    return Object.entries(specValues).filter(([label, value]) => !labels.has(label) && value.trim());
+  }, [specTemplate, specValues]);
 
   const mutation = useMutation({
     mutationFn: async (payload: DevicePayload): Promise<DeviceFormMutationResult> => {
@@ -154,16 +170,25 @@ export function DeviceForm({ device }: { device?: Device }) {
     setPendingFiles((prev) => prev.filter((_, i) => i !== index));
   }
 
-  function addSpecRow() {
-    setSpecRows((rows) => [...rows, { id: crypto.randomUUID(), key: "", value: "" }]);
-  }
-
-  function updateSpecRow(id: string, field: "key" | "value", value: string) {
-    setSpecRows((rows) => rows.map((row) => (row.id === id ? { ...row, [field]: value } : row)));
-  }
-
-  function removeSpecRow(id: string) {
-    setSpecRows((rows) => rows.filter((row) => row.id !== id));
+  function changeCategory(nextId: string) {
+    // Thông số không có trong mẫu của danh mục mới chuyển xuống "Thông số khác"
+    // thay vì biến mất khỏi form.
+    const nextTemplate =
+      categoriesQuery.data?.find((category) => category.id === nextId)?.specTemplate ?? [];
+    const nextLabels = templateLabels(nextTemplate);
+    const moved = Object.entries(specValues).filter(
+      ([label, value]) => !nextLabels.has(label) && value.trim(),
+    );
+    if (moved.length > 0) {
+      setExtraSpecs((rows) => [
+        ...rows,
+        ...moved.map(([label, value]) => ({ id: crypto.randomUUID(), label, value })),
+      ]);
+    }
+    setSpecValues((values) =>
+      Object.fromEntries(Object.entries(values).filter(([label]) => nextLabels.has(label))),
+    );
+    setCategoryId(nextId);
   }
 
   function validate(): FieldErrors {
@@ -209,7 +234,10 @@ export function DeviceForm({ device }: { device?: Device }) {
       pricePerDay: Number(pricePerDay),
       originalPrice: Number(originalPrice),
       detailedDescription: detailedDescription.trim() || undefined,
-      specs: rowsToSpecs(specRows),
+      specSheet: buildSpecSheet(specTemplate, specValues, [
+        ...orphanSpecs.map(([label, value]) => ({ label, value })),
+        ...extraSpecs,
+      ]),
       ...(isEdit ? { status: status as Device["status"] } : {}),
     });
   }
@@ -233,9 +261,14 @@ export function DeviceForm({ device }: { device?: Device }) {
 
         <div className="flex flex-col gap-1.5">
           <Label>Danh mục</Label>
-          <Select value={categoryId} onValueChange={(value) => setCategoryId(value ?? "")}>
+          <Select value={categoryId} onValueChange={(value) => changeCategory(value ?? "")}>
             <SelectTrigger className="w-full" aria-invalid={!!fieldErrors.categoryId}>
-              <SelectValue placeholder="Chọn danh mục" />
+              <SelectValue placeholder="Chọn danh mục">
+                {(value: string) =>
+                  categoriesQuery.data?.find((category) => category.id === value)?.name ??
+                  "Chọn danh mục"
+                }
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {(categoriesQuery.data ?? []).map((category) => (
@@ -253,7 +286,9 @@ export function DeviceForm({ device }: { device?: Device }) {
             <Label>Trạng thái</Label>
             <Select value={status} onValueChange={(v) => setStatus(v as Device["status"])}>
               <SelectTrigger className="w-full">
-                <SelectValue />
+                <SelectValue>
+                  {(value: Device["status"]) => DEVICE_STATUS_LABEL[value]?.label}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {Object.entries(DEVICE_STATUS_LABEL).map(([value, meta]) => (
@@ -321,52 +356,13 @@ export function DeviceForm({ device }: { device?: Device }) {
         />
       </div>
 
-      <div className="rounded-xl border border-border/60 p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <Label>Thông số kỹ thuật</Label>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Tuỳ ý theo từng danh mục — VD laptop: cpu, ram, storage
-            </p>
-          </div>
-          <Button type="button" variant="outline" size="sm" onClick={addSpecRow}>
-            <Plus /> Thêm dòng
-          </Button>
-        </div>
-        {specRows.length === 0 ? (
-          <p className="mt-3 text-sm text-muted-foreground">
-            Chưa có thông số nào — bấm &quot;Thêm dòng&quot; để thêm.
-          </p>
-        ) : (
-          <div className="mt-3 space-y-2">
-            {specRows.map((row) => (
-              <div key={row.id} className="flex gap-2">
-                <Input
-                  value={row.key}
-                  onChange={(e) => updateSpecRow(row.id, "key", e.target.value)}
-                  placeholder="Tên thông số (VD: cpu)"
-                  className="flex-1"
-                />
-                <Input
-                  value={row.value}
-                  onChange={(e) => updateSpecRow(row.id, "value", e.target.value)}
-                  placeholder="Giá trị (VD: Apple M3 Pro)"
-                  className="flex-1"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => removeSpecRow(row.id)}
-                  aria-label="Xoá dòng"
-                >
-                  <X className="size-4" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <SpecSheetEditor
+        template={specTemplate}
+        values={specValues}
+        onValueChange={(label, value) => setSpecValues((values) => ({ ...values, [label]: value }))}
+        extras={extraSpecs}
+        onExtrasChange={setExtraSpecs}
+      />
 
       {!isEdit && (
         <div>
