@@ -4,6 +4,7 @@
 // thu tiền thuê, trả máy, hoàn cọc) chỉ cần thêm 1 nhánh ở đây + 1 mục ở
 // bảng NOTIFICATION_KIND phía frontend.
 import type { Prisma } from '../generated/prisma/client';
+import { DEPOSIT_REFUND_BUSINESS_DAYS } from '../common/business-policy';
 
 export type NotificationAudience = 'customer' | 'staff';
 
@@ -102,7 +103,23 @@ export type BookingNotificationKind =
       refundPercentage: number;
       refundAmount: number;
     }
-  | { kind: 'expired' };
+  | { kind: 'expired' }
+  | { kind: 'rental_paid'; method: 'cash' | 'bank_transfer' }
+  | {
+      kind: 'returned';
+      lateFee: number;
+      damageFee: number;
+      refundAmount: number;
+      amountOwed: number;
+    }
+  | { kind: 'deposit_refunded'; amount: number; transactionRef: string };
+
+const RENTAL_PAYMENT_METHOD_LABEL = {
+  cash: 'tiền mặt',
+  bank_transfer: 'chuyển khoản',
+} as const;
+
+const REFUND_DEADLINE = `trong tối đa ${DEPOSIT_REFUND_BUSINESS_DAYS} ngày làm việc`;
 
 export function buildBookingNotification(
   booking: BookingNotificationSource,
@@ -148,7 +165,7 @@ export function buildBookingNotification(
       const reason = event.reason?.trim();
       const refund =
         event.refundPercentage > 0
-          ? ` Hoàn ${event.refundPercentage}% cọc (${formatVnd(event.refundAmount)}).`
+          ? ` Hoàn ${event.refundPercentage}% cọc (${formatVnd(event.refundAmount)}) bằng chuyển khoản ${REFUND_DEADLINE}.`
           : '';
       return {
         type: 'booking_cancelled',
@@ -169,6 +186,58 @@ export function buildBookingNotification(
         type: 'booking_cancelled',
         title: 'Đơn tự huỷ do quá hạn thanh toán',
         message: `Đơn ${code} – ${deviceAndPeriod(booking)} đã tự huỷ vì chưa thanh toán cọc đúng hạn. Bạn có thể đặt lại nếu thiết bị còn trống.`,
+      };
+    case 'rental_paid':
+      return {
+        ...base,
+        type: 'booking_rental_paid',
+        title: 'Đã thu tiền thuê',
+        message: `Cửa hàng đã nhận ${formatVnd(booking.totalPrice)} tiền thuê (${RENTAL_PAYMENT_METHOD_LABEL[event.method]}) cho đơn ${code} – ${booking.device.name}.`,
+        metadata: { ...base.metadata, rentalPaymentMethod: event.method },
+      };
+    case 'returned': {
+      const deductions = [
+        event.lateFee > 0 ? `phí trễ hạn ${formatVnd(event.lateFee)}` : null,
+        event.damageFee > 0
+          ? `phí hư hỏng ${formatVnd(event.damageFee)}`
+          : null,
+      ].filter(Boolean);
+      const deductionText = deductions.length
+        ? ` Đã trừ ${deductions.join(', ')}.`
+        : '';
+      const outcome =
+        event.refundAmount > 0
+          ? ` Tiền cọc hoàn lại: ${formatVnd(event.refundAmount)}, chuyển khoản ${REFUND_DEADLINE}.`
+          : ' Không còn tiền cọc để hoàn.';
+      const owed =
+        event.amountOwed > 0
+          ? ` Bạn còn thiếu ${formatVnd(event.amountOwed)}, vui lòng liên hệ cửa hàng để thanh toán.`
+          : '';
+      return {
+        ...base,
+        type: 'booking_returned',
+        title: 'Cửa hàng đã nhận lại máy',
+        message: `Đã nhận lại ${booking.device.name} (đơn ${code}).${deductionText}${outcome}${owed}`,
+        metadata: {
+          ...base.metadata,
+          lateFee: event.lateFee,
+          damageFee: event.damageFee,
+          refundAmount: event.refundAmount,
+          amountOwed: event.amountOwed,
+        },
+      };
+    }
+    case 'deposit_refunded':
+      return {
+        ...base,
+        type: 'booking_deposit_refunded',
+        title: 'Đã hoàn tiền cọc',
+        message: `Cửa hàng đã chuyển khoản hoàn ${formatVnd(event.amount)} tiền cọc cho đơn ${code} – ${booking.device.name}. Mã giao dịch: ${event.transactionRef}.`,
+        metadata: {
+          ...base.metadata,
+          refundAmount: event.amount,
+          transactionRef: event.transactionRef,
+        },
       };
   }
 }

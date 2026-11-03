@@ -185,42 +185,26 @@ export class PaymentsService {
   }
 
   /**
-   * Hoàn cọc tự động khi booking bị huỷ — dùng lại % và số tiền đã tính sẵn ở
-   * `BookingsService.cancel()` (mục 4.2 Roadmap). VNPay Sandbox chỉ cấp credential
-   * thanh toán (`vnp_TmnCode`/Hash Secret), KHÔNG cấp API hoàn tiền merchant thật
-   * (cần `merchant_webapi` riêng, ngoài phạm vi sandbox demo) — nên ở đây chỉ cập
-   * nhật đúng trạng thái `Payment.status = refunded` để phản ánh chính sách hoàn
-   * cọc, chưa gọi API hoàn tiền thật ra ngoài.
+   * Nhân viên đã chuyển khoản hoàn cọc thủ công (BookingsService.markDepositRefunded)
+   * → đánh dấu Payment cọc VNPay thành công gần nhất của đơn là `refunded`.
+   * VNPay Sandbox không cấp API hoàn tiền merchant nên tiền hoàn đi bằng
+   * chuyển khoản ngoài hệ thống; ở đây chỉ phản ánh đúng trạng thái.
    */
-  async refundForBooking(
-    bookingId: string,
-    refundPercentage: number,
-    refundAmount: string,
-  ): Promise<void> {
+  async markDepositPaymentRefunded(bookingId: string): Promise<void> {
     const payment = await this.prisma.payment.findFirst({
       where: { bookingId, status: PaymentStatus.success },
       orderBy: { paidAt: 'desc' },
     });
     if (!payment) {
       this.logger.log(
-        `Booking ${bookingId} bị huỷ nhưng chưa có thanh toán thành công nào — không cần hoàn cọc`,
+        `Booking ${bookingId} không có thanh toán cọc VNPay thành công — chỉ cập nhật trạng thái hoàn cọc trên đơn`,
       );
       return;
     }
-    if (refundPercentage <= 0) {
-      this.logger.log(
-        `Booking ${bookingId} huỷ không đủ điều kiện hoàn cọc (0% theo chính sách mục 4.2)`,
-      );
-      return;
-    }
-
     await this.prisma.payment.update({
       where: { id: payment.id },
       data: { status: PaymentStatus.refunded },
     });
-    this.logger.log(
-      `Đã hoàn ${refundPercentage}% cọc (${refundAmount} VND) cho booking ${bookingId}`,
-    );
   }
 
   private async confirmBookingAfterPayment(bookingId: string): Promise<void> {

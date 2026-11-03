@@ -14,17 +14,23 @@ import { DevicesCacheService } from '../devices/devices-cache.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PaymentsService } from '../payments/payments.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
+import { UploadService } from '../upload/upload.service';
 import { UsersService } from '../users/users.service';
 import {
   Booking,
   BookingStatus,
+  DepositRefundStatus,
+  DeviceCondition,
   DeviceStatus,
+  InspectionType,
   Prisma,
+  RentalPaymentMethod,
   Role,
 } from '../generated/prisma/client';
 import { RequestUser } from '../auth/interfaces/jwt-payload.interface';
 import { CancelBookingDto } from './dto/cancel-booking.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { ConfirmReturnDto } from './dto/confirm-return.dto';
 import { BOOKING_TTL_JOB, BOOKING_TTL_QUEUE } from './bookings.constants';
 import {
   type BookingNotificationKind,
@@ -32,11 +38,15 @@ import {
 } from '../notifications/notification-templates';
 import {
   calculateDeposit,
+  calculateDepositSettlement,
   calculateLateFee,
   calculateRefundPercentage,
   calculateRentalPrice,
   DEFAULT_BOOKING_TTL_MINUTES,
+  depositRefundDueAt,
+  HANDOVER_MIN_PHOTOS,
   HOUR_MS,
+  RETURN_DAMAGE_MIN_PHOTOS,
 } from '../common/business-policy';
 import { buildContractContent } from './contract-template.util';
 
@@ -59,12 +69,52 @@ const bookingWithDevice = {
     device: {
       select: { id: true, name: true, images: true, categoryId: true },
     },
+    // Tên + SĐT khách: nhân viên cần để liên hệ hoàn cọc. Khách chỉ xem được
+    // đơn của chính mình nên không lộ thông tin người khác.
+    user: { select: { id: true, name: true, phone: true } },
   },
 } satisfies Prisma.BookingDefaultArgs;
 
 export type BookingWithDevice = Prisma.BookingGetPayload<
   typeof bookingWithDevice
 >;
+
+// Chi tiết 1 đơn: thêm biên bản giao/nhận máy (ảnh đối chiếu + tình trạng).
+const bookingDetail = {
+  include: {
+    ...bookingWithDevice.include,
+    inspections: { orderBy: { createdAt: 'asc' } },
+  },
+} satisfies Prisma.BookingDefaultArgs;
+
+export type BookingDetail = Prisma.BookingGetPayload<typeof bookingDetail>;
+
+/** File ảnh nhận từ Multer memory storage. */
+export interface UploadedImage {
+  buffer: Buffer;
+  mimetype: string;
+}
+
+const CONDITION_LABEL: Record<DeviceCondition, string> = {
+  intact: 'Nguyên vẹn',
+  damaged: 'Hư hỏng',
+  missing_accessories: 'Thiếu phụ kiện',
+};
+
+export interface FinancialStats {
+  /** Tiền thuê đã thu tại quầy. */
+  rentalRevenue: number;
+  /** Phí trễ hạn đã khấu trừ khi trả máy. */
+  lateFees: number;
+  /** Phí bồi thường hư hỏng/thiếu phụ kiện. */
+  damageFees: number;
+  /** Tiền cọc cửa hàng đang giữ (đơn đang hiệu lực + khoản chờ hoàn). */
+  depositHeld: number;
+  /** Tổng tiền khách còn nợ (khấu trừ vượt tiền cọc). */
+  amountOwed: number;
+  pendingRefundCount: number;
+  overdueRefundCount: number;
+}
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -90,6 +140,7 @@ export class BookingsService {
     private readonly realtimeGateway: RealtimeGateway,
     private readonly notificationsService: NotificationsService,
     private readonly devicesCacheService: DevicesCacheService,
+    private readonly uploadService: UploadService,
   ) {}
 
   /**
@@ -287,6 +338,7 @@ export class BookingsService {
       limit: number;
       status?: BookingStatus;
       userId?: string;
+      depositRefundStatus?: DepositRefundStatus;
     },
   ): Promise<PaginatedResult<BookingWithDevice>> {
     // customer LUÔN bị ép lọc theo chính userId của họ — filter.userId (nếu
@@ -299,14 +351,22 @@ export class BookingsService {
           ? { userId: filter.userId }
           : {}),
       ...(filter.status ? { status: filter.status } : {}),
+      ...(filter.depositRefundStatus
+        ? { depositRefundStatus: filter.depositRefundStatus }
+        : {}),
     };
+    // Danh sách chờ hoàn cọc: hạn gần nhất (hoặc đã quá hạn) lên đầu.
+    const orderBy: Prisma.BookingOrderByWithRelationInput =
+      filter.depositRefundStatus === DepositRefundStatus.pending
+        ? { depositRefundDueAt: 'asc' }
+        : { createdAt: 'desc' };
 
     const [data, total] = await this.prisma.$transaction([
       this.prisma.booking.findMany({
         where,
         skip: (filter.page - 1) * filter.limit,
         take: filter.limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         ...bookingWithDevice,
       }),
       this.prisma.booking.count({ where }),
@@ -331,11 +391,11 @@ export class BookingsService {
     return booking;
   }
 
-  /** Dùng cho `GET /bookings/:id` — kèm thông tin thiết bị gọn để frontend hiển thị. */
-  async findByIdWithDeviceOrThrow(id: string): Promise<BookingWithDevice> {
+  /** Dùng cho `GET /bookings/:id` — kèm thiết bị gọn + biên bản giao/nhận máy. */
+  async findByIdWithDeviceOrThrow(id: string): Promise<BookingDetail> {
     const booking = await this.prisma.booking.findUnique({
       where: { id },
-      ...bookingWithDevice,
+      ...bookingDetail,
     });
     if (!booking) {
       throw new NotFoundException('Không tìm thấy booking');
@@ -346,7 +406,7 @@ export class BookingsService {
   async findOneForUser(
     id: string,
     currentUser: RequestUser,
-  ): Promise<BookingWithDevice> {
+  ): Promise<BookingDetail> {
     const booking = await this.findByIdWithDeviceOrThrow(id);
     this.assertOwnerOrStaff(booking, currentUser);
     return booking;
@@ -486,7 +546,81 @@ export class BookingsService {
     });
   }
 
-  /** Staff/admin giao thiết bị: confirmed → ongoing. */
+  /**
+   * Biên bản giao máy: nhân viên chụp tối thiểu HANDOVER_MIN_PHOTOS ảnh tình
+   * trạng thiết bị + ghi chú (trầy xước, phụ kiện kèm theo). Lập lại được
+   * (chụp lại) chừng nào đơn còn `confirmed` — bản mới thay bản cũ.
+   */
+  async recordHandover(
+    id: string,
+    actorId: string,
+    files: UploadedImage[],
+    notes?: string,
+  ): Promise<BookingDetail> {
+    const booking = await this.findByIdOrThrow(id);
+    if (booking.status !== BookingStatus.confirmed) {
+      throw new BadRequestException(
+        'Chỉ lập biên bản giao máy cho đơn đã xác nhận, chưa giao máy',
+      );
+    }
+    if (files.length < HANDOVER_MIN_PHOTOS) {
+      throw new BadRequestException(
+        `Biên bản giao máy cần tối thiểu ${HANDOVER_MIN_PHOTOS} ảnh tình trạng thiết bị`,
+      );
+    }
+    const images = await this.uploadService.uploadInspectionImages(
+      files,
+      id,
+      InspectionType.handover,
+    );
+    const data = {
+      images,
+      notes: notes?.trim() || null,
+      condition: DeviceCondition.intact,
+      performedById: actorId,
+    };
+    await this.prisma.bookingInspection.upsert({
+      where: {
+        bookingId_type: { bookingId: id, type: InspectionType.handover },
+      },
+      create: { bookingId: id, type: InspectionType.handover, ...data },
+      update: { ...data, createdAt: new Date() },
+    });
+    return this.findByIdWithDeviceOrThrow(id);
+  }
+
+  /** Nhân viên thu tiền thuê tại quầy (tiền mặt/chuyển khoản) khi giao máy. */
+  async recordRentalPayment(
+    id: string,
+    actorId: string,
+    method: RentalPaymentMethod,
+  ): Promise<Booking> {
+    const booking = await this.findByIdOrThrow(id);
+    if (booking.status !== BookingStatus.confirmed) {
+      throw new BadRequestException(
+        'Chỉ thu tiền thuê cho đơn đã xác nhận, chưa giao máy',
+      );
+    }
+    if (booking.rentalPaid) {
+      throw new BadRequestException('Đơn này đã thu tiền thuê');
+    }
+    const updated = await this.prisma.booking.update({
+      where: { id },
+      data: {
+        rentalPaid: true,
+        rentalPaidAt: new Date(),
+        rentalPaymentMethod: method,
+        rentalCollectedById: actorId,
+      },
+    });
+    await this.notifyCustomer(booking, { kind: 'rental_paid', method });
+    return updated;
+  }
+
+  /**
+   * Staff/admin giao thiết bị: confirmed → ongoing. Chỉ cho phép khi đã đủ 3
+   * điều kiện tại quầy: thu tiền thuê, khách ký hợp đồng, có biên bản giao máy.
+   */
   async start(id: string): Promise<Booking> {
     const booking = await this.findByIdOrThrow(id);
     if (booking.status !== BookingStatus.confirmed) {
@@ -494,6 +628,20 @@ export class BookingsService {
         `Chỉ có thể bắt đầu booking đang ở trạng thái "confirmed" (hiện tại: "${booking.status}")`,
       );
     }
+    const handover = await this.prisma.bookingInspection.findUnique({
+      where: {
+        bookingId_type: { bookingId: id, type: InspectionType.handover },
+      },
+    });
+    const missing = [
+      !booking.rentalPaid && 'chưa thu tiền thuê',
+      !booking.contractSigned && 'khách chưa ký hợp đồng',
+      !handover && 'chưa lập biên bản giao máy',
+    ].filter((item): item is string => !!item);
+    if (missing.length) {
+      throw new BadRequestException(`Chưa thể giao máy: ${missing.join(', ')}`);
+    }
+
     const [updated] = await this.prisma.$transaction([
       this.prisma.booking.update({
         where: { id },
@@ -504,76 +652,289 @@ export class BookingsService {
         data: { status: DeviceStatus.rented },
       }),
     ]);
-    this.realtimeGateway.emitDeviceStatusChanged({
-      deviceId: booking.deviceId,
-      status: DeviceStatus.rented,
-    });
-    // Cùng điểm emit realtime ở trên — Device.status vừa đổi nên cache danh
-    // sách thiết bị (GET /devices) cũng phải xoá ngay, không đợi hết TTL.
-    await this.devicesCacheService.invalidateAll();
-
-    try {
-      await this.notificationsService.create(
-        booking.userId,
-        await this.notificationContent(id, { kind: 'ongoing' }, 'customer'),
-      );
-    } catch (error) {
-      this.logger.warn(
-        `Không tạo được thông báo giao hàng cho booking ${id}: ${(error as Error).message}`,
-      );
-    }
-
+    await this.afterDeviceStatusChanged(booking.deviceId, DeviceStatus.rented);
+    await this.notifyCustomer(booking, { kind: 'ongoing' });
     return updated;
   }
 
   /**
-   * Staff/admin nhận lại thiết bị: ongoing → completed. Nếu trả SAU `endTime`
-   * dự kiến, tự tính phí trễ hạn leo thang (xem `calculateLateFee()`) — cộng
-   * thẳng vào `totalPrice` (giữ đúng ý nghĩa "tổng tiền phải trả") NHƯNG lưu
-   * riêng ở `lateFeeAmount` để khách/admin thấy rõ đây là phần phạt, không
-   * lẫn vào tiền thuê gốc.
+   * Nhân viên xác nhận trả máy (ongoing → completed) — thay cho "Hoàn tất" cũ.
+   * Ghi biên bản nhận lại máy (tình trạng + ảnh), tự tính phí trễ hạn leo
+   * thang và quyết toán cọc: hoàn = cọc − phí trễ hạn − phí hư hỏng; âm thì
+   * hoàn 0 và lưu phần thiếu vào `amountOwed`. Máy hư hỏng/thiếu phụ kiện
+   * chuyển sang bảo trì (kèm phiếu bảo trì) thay vì cho thuê lại ngay.
    */
-  async complete(id: string): Promise<Booking> {
+  async confirmReturn(
+    id: string,
+    actorId: string,
+    dto: ConfirmReturnDto,
+    files: UploadedImage[],
+  ): Promise<BookingDetail> {
     const booking = await this.findByIdOrThrow(id);
     if (booking.status !== BookingStatus.ongoing) {
       throw new BadRequestException(
-        `Chỉ có thể hoàn tất booking đang ở trạng thái "ongoing" (hiện tại: "${booking.status}")`,
+        `Chỉ xác nhận trả máy cho đơn đang thuê (hiện tại: "${booking.status}")`,
       );
     }
-
     const device = await this.prisma.device.findUniqueOrThrow({
       where: { id: booking.deviceId },
     });
-    const lateFeeAmount = calculateLateFee(
+
+    const intact = dto.condition === DeviceCondition.intact;
+    const damageFee = intact ? 0 : (dto.damageFee ?? 0);
+    const damageDescription = dto.damageDescription?.trim() || null;
+    if (!intact) {
+      if (!damageDescription) {
+        throw new BadRequestException(
+          'Vui lòng mô tả hư hỏng hoặc phụ kiện bị thiếu',
+        );
+      }
+      if (damageFee <= 0) {
+        throw new BadRequestException('Vui lòng nhập số tiền bồi thường');
+      }
+      if (files.length < RETURN_DAMAGE_MIN_PHOTOS) {
+        throw new BadRequestException(
+          `Cần tối thiểu ${RETURN_DAMAGE_MIN_PHOTOS} ảnh minh chứng hư hỏng/thiếu phụ kiện`,
+        );
+      }
+    }
+    if (damageFee > Number(device.originalPrice)) {
+      throw new BadRequestException(
+        'Số tiền bồi thường không được vượt quá giá trị thiết bị',
+      );
+    }
+
+    const returnedAt = new Date();
+    const lateFee = calculateLateFee(
+      returnedAt,
+      booking.endTime,
+      Number(device.pricePerDay),
+      Number(device.originalPrice),
+    );
+    const settlement = calculateDepositSettlement({
+      depositAmount: Number(booking.depositAmount),
+      lateFee,
+      damageFee,
+    });
+    const images = files.length
+      ? await this.uploadService.uploadInspectionImages(
+          files,
+          id,
+          InspectionType.return,
+        )
+      : [];
+    const nextDeviceStatus = intact
+      ? DeviceStatus.available
+      : DeviceStatus.maintenance;
+    const hasRefund = settlement.refundAmount > 0;
+
+    await this.prisma.$transaction([
+      this.prisma.bookingInspection.create({
+        data: {
+          bookingId: id,
+          type: InspectionType.return,
+          images,
+          notes: dto.notes?.trim() || null,
+          condition: dto.condition,
+          damageDescription,
+          performedById: actorId,
+        },
+      }),
+      this.prisma.booking.update({
+        where: { id },
+        data: {
+          status: BookingStatus.completed,
+          returnedAt,
+          lateFeeAmount: lateFee,
+          damageFeeAmount: damageFee,
+          amountOwed: settlement.amountOwed,
+          depositRefundAmount: settlement.refundAmount,
+          depositRefundStatus: hasRefund
+            ? DepositRefundStatus.pending
+            : DepositRefundStatus.not_refunded,
+          depositRefundDueAt: hasRefund ? depositRefundDueAt(returnedAt) : null,
+        },
+      }),
+      this.prisma.device.update({
+        where: { id: booking.deviceId },
+        data: { status: nextDeviceStatus },
+      }),
+      ...(intact
+        ? []
+        : [
+            this.prisma.maintenance.create({
+              data: {
+                deviceId: booking.deviceId,
+                reportedBy: actorId,
+                issue: `Trả máy – ${CONDITION_LABEL[dto.condition]}: ${damageDescription}`,
+              },
+            }),
+          ]),
+    ]);
+    await this.afterDeviceStatusChanged(booking.deviceId, nextDeviceStatus);
+    await this.notifyCustomer(booking, {
+      kind: 'returned',
+      lateFee,
+      damageFee,
+      refundAmount: settlement.refundAmount,
+      amountOwed: settlement.amountOwed,
+    });
+    return this.findByIdWithDeviceOrThrow(id);
+  }
+
+  /**
+   * Xem trước quyết toán cọc nếu nhận lại máy NGAY BÂY GIỜ — form "Xác nhận
+   * trả máy" gọi để hiện bảng khấu trừ bằng đúng công thức của backend.
+   */
+  async previewReturn(
+    id: string,
+    damageFee = 0,
+  ): Promise<{
+    depositAmount: number;
+    lateFee: number;
+    damageFee: number;
+    totalDeductions: number;
+    refundAmount: number;
+    amountOwed: number;
+  }> {
+    const booking = await this.findByIdOrThrow(id);
+    const device = await this.prisma.device.findUniqueOrThrow({
+      where: { id: booking.deviceId },
+    });
+    const lateFee = calculateLateFee(
       new Date(),
       booking.endTime,
       Number(device.pricePerDay),
       Number(device.originalPrice),
     );
-    const totalPrice = Number(booking.totalPrice) + lateFeeAmount;
+    const depositAmount = Number(booking.depositAmount);
+    return {
+      depositAmount,
+      lateFee,
+      damageFee,
+      ...calculateDepositSettlement({ depositAmount, lateFee, damageFee }),
+    };
+  }
 
-    const [updated] = await this.prisma.$transaction([
-      this.prisma.booking.update({
-        where: { id },
-        data: { status: BookingStatus.completed, lateFeeAmount, totalPrice },
-      }),
-      this.prisma.device.update({
-        where: { id: booking.deviceId },
-        data: { status: DeviceStatus.available },
-      }),
-    ]);
-    this.realtimeGateway.emitDeviceStatusChanged({
-      deviceId: booking.deviceId,
-      status: DeviceStatus.available,
+  /**
+   * Nhân viên đã chuyển khoản hoàn cọc thủ công: pending → refunded, lưu mã
+   * giao dịch, đánh dấu Payment VNPay tương ứng là `refunded`, báo khách realtime.
+   */
+  async markDepositRefunded(
+    id: string,
+    actorId: string,
+    transactionRef: string,
+  ): Promise<Booking> {
+    const booking = await this.findByIdOrThrow(id);
+    if (booking.depositRefundStatus !== DepositRefundStatus.pending) {
+      throw new BadRequestException('Đơn này không có khoản cọc đang chờ hoàn');
+    }
+    const txnRef = transactionRef.trim();
+    const updated = await this.prisma.booking.update({
+      where: { id },
+      data: {
+        depositRefundStatus: DepositRefundStatus.refunded,
+        depositRefundedAt: new Date(),
+        depositRefundTxnRef: txnRef,
+        depositRefundedById: actorId,
+      },
     });
-    await this.devicesCacheService.invalidateAll();
+    try {
+      await this.paymentsService.markDepositPaymentRefunded(id);
+    } catch (error) {
+      this.logger.warn(
+        `Không cập nhật được trạng thái thanh toán cọc cho booking ${id}: ${(error as Error).message}`,
+      );
+    }
+    await this.notifyCustomer(booking, {
+      kind: 'deposit_refunded',
+      amount: Number(booking.depositRefundAmount),
+      transactionRef: txnRef,
+    });
     return updated;
   }
 
   /**
-   * Huỷ booking + tính % hoàn cọc theo chính sách mục 4.2 Roadmap. Chỉ tính toán
-   * chính sách hoàn tiền (chưa xử lý dòng tiền thật — đó là phần việc của module
-   * `payments` ở Tuần 7, hiện chưa xây).
+   * Thống kê tài chính cho Dashboard — tổng hợp bằng SQL trên TOÀN BỘ đơn
+   * (không bị giới hạn 100 đơn như cách tính phía client trước đây), tách
+   * riêng tiền thuê / phí trễ hạn / phí hư hỏng / tiền cọc đang giữ.
+   */
+  async getFinancialStats(now = new Date()): Promise<FinancialStats> {
+    const pendingRefund = { depositRefundStatus: DepositRefundStatus.pending };
+    const [rental, settled, heldActive, heldPending, pending, overdue] =
+      await this.prisma.$transaction([
+        this.prisma.booking.aggregate({
+          where: { rentalPaid: true },
+          _sum: { totalPrice: true },
+        }),
+        this.prisma.booking.aggregate({
+          where: { status: BookingStatus.completed },
+          _sum: {
+            lateFeeAmount: true,
+            damageFeeAmount: true,
+            amountOwed: true,
+          },
+        }),
+        this.prisma.booking.aggregate({
+          where: {
+            status: { in: [BookingStatus.confirmed, BookingStatus.ongoing] },
+          },
+          _sum: { depositAmount: true },
+        }),
+        this.prisma.booking.aggregate({
+          where: pendingRefund,
+          _sum: { depositRefundAmount: true },
+        }),
+        this.prisma.booking.count({ where: pendingRefund }),
+        this.prisma.booking.count({
+          where: { ...pendingRefund, depositRefundDueAt: { lt: now } },
+        }),
+      ]);
+    return {
+      rentalRevenue: Number(rental._sum.totalPrice ?? 0),
+      lateFees: Number(settled._sum.lateFeeAmount ?? 0),
+      damageFees: Number(settled._sum.damageFeeAmount ?? 0),
+      depositHeld:
+        Number(heldActive._sum.depositAmount ?? 0) +
+        Number(heldPending._sum.depositRefundAmount ?? 0),
+      amountOwed: Number(settled._sum.amountOwed ?? 0),
+      pendingRefundCount: pending,
+      overdueRefundCount: overdue,
+    };
+  }
+
+  /** Mọi thay đổi Device.status: phát realtime + xoá cache danh sách thiết bị. */
+  private async afterDeviceStatusChanged(
+    deviceId: string,
+    status: DeviceStatus,
+  ): Promise<void> {
+    this.realtimeGateway.emitDeviceStatusChanged({ deviceId, status });
+    await this.devicesCacheService.invalidateAll();
+  }
+
+  /** Thông báo cho khách — lỗi tạo thông báo không làm hỏng thao tác chính. */
+  private async notifyCustomer(
+    booking: Booking,
+    event: BookingNotificationKind,
+  ): Promise<void> {
+    try {
+      await this.notificationsService.create(
+        booking.userId,
+        await this.notificationContent(booking.id, event, 'customer'),
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Không tạo được thông báo "${event.kind}" cho booking ${booking.id}: ${(error as Error).message}`,
+      );
+    }
+  }
+
+  /**
+   * Huỷ booking + tính % hoàn cọc theo chính sách (bậc % ở business-policy.ts).
+   * Cọc đã thu thì KHÔNG đánh dấu hoàn ngay: đặt trạng thái "chờ hoàn" kèm hạn
+   * DEPOSIT_REFUND_BUSINESS_DAYS ngày làm việc — nhân viên chuyển khoản thủ
+   * công rồi bấm "Đã hoàn cọc" (markDepositRefunded). Huỷ đơn đang thuê chỉ
+   * staff/admin được làm và giải phóng thiết bị về "available".
    */
   async cancel(
     id: string,
@@ -594,12 +955,23 @@ export class BookingsService {
 
     const isStaffOrAdmin =
       currentUser.role === Role.staff || currentUser.role === Role.admin;
+    // Khách đang giữ máy không được tự huỷ đơn (sẽ "trả" máy trên giấy mà
+    // không qua bước nhận lại máy tại quầy).
+    if (booking.status === BookingStatus.ongoing && !isStaffOrAdmin) {
+      throw new ForbiddenException(
+        'Đơn đang thuê không thể tự huỷ — vui lòng mang máy đến cửa hàng để trả',
+      );
+    }
     const refundPercentage = this.calculateRefundPercentage(
       booking.startTime,
       !!dto.storeFault && isStaffOrAdmin,
     );
-    const refundAmount =
-      (Number(booking.depositAmount) * refundPercentage) / 100;
+    // Đơn còn "pending" thì chưa thu cọc — không có gì để hoàn.
+    const depositCollected = booking.status !== BookingStatus.pending;
+    const refundAmount = depositCollected
+      ? (Number(booking.depositAmount) * refundPercentage) / 100
+      : 0;
+    const now = new Date();
 
     await this.cancelTtlExpiry(id);
     const reason = dto.reason?.trim() || null;
@@ -609,57 +981,41 @@ export class BookingsService {
         status: BookingStatus.cancelled,
         cancelledById: currentUser.userId,
         cancellationReason: reason,
+        ...(depositCollected
+          ? {
+              depositRefundAmount: refundAmount,
+              depositRefundStatus:
+                refundAmount > 0
+                  ? DepositRefundStatus.pending
+                  : DepositRefundStatus.not_refunded,
+              depositRefundDueAt:
+                refundAmount > 0 ? depositRefundDueAt(now) : null,
+            }
+          : {}),
       },
     });
 
-    // KHÔNG emit realtime ở đây: huỷ booking `pending`/`confirmed` không đổi
-    // Device.status (thiết bị chưa từng bị đổi khỏi "available" ở các trạng
-    // thái này — chỉ start() mới đổi thành "rented", xem phía trên). Lưu ý
-    // NGOÀI PHẠM VI task này: cancel() cũng cho phép huỷ booking `ongoing`
-    // (thiết bị đang thật sự "rented") mà không đưa Device.status về lại
-    // "available" — đây là khoảng trống nghiệp vụ có sẵn TỪ TRƯỚC (Tuần 6),
-    // không phải lỗi phát sinh do thêm realtime, và không thuộc phạm vi Tuần
-    // 8 (chỉ thêm WebSocket, không sửa lại state machine booking) nên CHƯA sửa.
-
-    // Hoàn cọc tự động (module payments) — lỗi ở đây không nên làm hỏng response
-    // huỷ booking (booking đã huỷ thành công), chỉ log để staff xử lý tay nếu cần.
-    try {
-      await this.paymentsService.refundForBooking(
-        id,
-        refundPercentage,
-        refundAmount.toFixed(2),
-      );
-    } catch (error) {
-      this.logger.warn(
-        `Không xử lý được hoàn cọc tự động cho booking ${id}: ${(error as Error).message}`,
+    // Huỷ đơn đang thuê (thiết bị đang "rented") phải trả thiết bị về
+    // "available". Huỷ pending/confirmed không đổi Device.status.
+    if (booking.status === BookingStatus.ongoing) {
+      await this.prisma.device.update({
+        where: { id: booking.deviceId },
+        data: { status: DeviceStatus.available },
+      });
+      await this.afterDeviceStatusChanged(
+        booking.deviceId,
+        DeviceStatus.available,
       );
     }
 
-    // Thông báo cho customer BẤT KỂ ai chủ động huỷ (chính họ hay staff/admin)
-    // — nếu staff huỷ thay, khách hàng vẫn cần biết ngay, không chỉ khi họ tự
-    // bấm huỷ mới biết.
-    try {
-      // Đơn còn "pending" thì chưa thu cọc — không nhắc hoàn tiền cho khỏi hiểu nhầm.
-      const depositCollected = booking.status !== BookingStatus.pending;
-      await this.notificationsService.create(
-        booking.userId,
-        await this.notificationContent(
-          id,
-          {
-            kind: 'cancelled',
-            byStore: isStaffOrAdmin && booking.userId !== currentUser.userId,
-            reason,
-            refundPercentage: depositCollected ? refundPercentage : 0,
-            refundAmount: depositCollected ? refundAmount : 0,
-          },
-          'customer',
-        ),
-      );
-    } catch (error) {
-      this.logger.warn(
-        `Không tạo được thông báo huỷ đơn cho booking ${id}: ${(error as Error).message}`,
-      );
-    }
+    // Thông báo cho customer BẤT KỂ ai chủ động huỷ (chính họ hay staff/admin).
+    await this.notifyCustomer(booking, {
+      kind: 'cancelled',
+      byStore: isStaffOrAdmin && booking.userId !== currentUser.userId,
+      reason,
+      refundPercentage: depositCollected ? refundPercentage : 0,
+      refundAmount,
+    });
 
     return {
       booking: updated,

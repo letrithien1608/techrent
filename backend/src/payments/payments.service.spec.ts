@@ -289,22 +289,21 @@ describe('PaymentsService', () => {
     });
   });
 
-  describe('refundForBooking', () => {
-    it('bỏ qua nếu chưa có payment thành công nào cho booking', async () => {
+  describe('markDepositPaymentRefunded', () => {
+    it('bỏ qua nếu đơn không có thanh toán cọc VNPay thành công', async () => {
       prisma.payment.findFirst.mockResolvedValue(null);
-      await service.refundForBooking(bookingId, 100, '90000.00');
+      await service.markDepositPaymentRefunded(bookingId);
       expect(prisma.payment.update).not.toHaveBeenCalled();
     });
 
-    it('bỏ qua nếu refundPercentage = 0 (huỷ trễ, không đủ điều kiện hoàn cọc)', async () => {
+    it('đánh dấu payment cọc thành công gần nhất là refunded', async () => {
       prisma.payment.findFirst.mockResolvedValue({ id: 'payment-1' });
-      await service.refundForBooking(bookingId, 0, '0.00');
-      expect(prisma.payment.update).not.toHaveBeenCalled();
-    });
-
-    it('set payment status = refunded khi đủ điều kiện hoàn cọc', async () => {
-      prisma.payment.findFirst.mockResolvedValue({ id: 'payment-1' });
-      await service.refundForBooking(bookingId, 50, '45000.00');
+      await service.markDepositPaymentRefunded(bookingId);
+      expect(prisma.payment.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { bookingId, status: PaymentStatus.success },
+        }),
+      );
       expect(prisma.payment.update).toHaveBeenCalledWith({
         where: { id: 'payment-1' },
         data: { status: PaymentStatus.refunded },

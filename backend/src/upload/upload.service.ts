@@ -54,15 +54,37 @@ export class UploadService {
     return result.secure_url;
   }
 
+  /**
+   * Ảnh biên bản giao/nhận máy — thư mục riêng theo đơn
+   * (`techrent/inspections/<bookingId>/<handover|return>`). Ảnh công khai như
+   * ảnh thiết bị (chỉ chụp thiết bị, không có giấy tờ cá nhân) để khách xem
+   * được ảnh đối chiếu ở trang chi tiết đơn của mình.
+   */
+  async uploadInspectionImages(
+    files: { buffer: Buffer; mimetype: string }[],
+    bookingId: string,
+    type: string,
+  ): Promise<string[]> {
+    const folder = `techrent/inspections/${bookingId}/${type}`;
+    return Promise.all(
+      files.map(async (file) => {
+        const dataUri = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+        const result = await this.uploadDataUri(dataUri, undefined, folder);
+        return result.secure_url;
+      }),
+    );
+  }
+
   private uploadDataUri(
     source: string,
     publicId?: string,
+    folder: string = UPLOAD_FOLDER,
   ): Promise<UploadApiResponse> {
     return new Promise((resolve, reject) => {
       cloudinary.uploader.upload(
         source,
         {
-          folder: UPLOAD_FOLDER,
+          folder,
           ...(publicId ? { public_id: publicId, overwrite: true } : {}),
         },
         (error, result) => {

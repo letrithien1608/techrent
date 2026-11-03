@@ -1,7 +1,10 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
-import { BookingStatus } from '../../generated/prisma/client';
+import {
+  BookingStatus,
+  DepositRefundStatus,
+} from '../../generated/prisma/client';
 
 export class ListBookingsQueryDto {
   @ApiPropertyOptional({ default: 1 })
@@ -32,4 +35,11 @@ export class ListBookingsQueryDto {
   @IsOptional()
   @IsUUID()
   userId?: string;
+
+  // Chỉ có ý nghĩa với staff/admin (trang "Hoàn cọc") — lọc pending thì sắp
+  // theo hạn hoàn cọc gần nhất trước.
+  @ApiPropertyOptional({ enum: DepositRefundStatus })
+  @IsOptional()
+  @IsEnum(DepositRefundStatus)
+  depositRefundStatus?: DepositRefundStatus;
 }

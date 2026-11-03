@@ -36,6 +36,24 @@ export const HOURLY_PRICING_MAX_HOURS = 24;
 /** TTL mặc định (phút) giữ chỗ booking `pending` chưa thanh toán — ghi đè qua env BOOKING_TTL_MINUTES. */
 export const DEFAULT_BOOKING_TTL_MINUTES = 5;
 
+/** Hoàn cọc bằng chuyển khoản thủ công trong tối đa N NGÀY LÀM VIỆC (T2–T6) kể từ khi trả máy/huỷ đơn. */
+export const DEPOSIT_REFUND_BUSINESS_DAYS = 3;
+
+/** Biên bản giao máy phải có tối thiểu N ảnh tình trạng thiết bị. */
+export const HANDOVER_MIN_PHOTOS = 3;
+
+/** Khi trả máy hư hỏng/thiếu phụ kiện phải có tối thiểu N ảnh minh chứng. */
+export const RETURN_DAMAGE_MIN_PHOTOS = 1;
+
+/**
+ * Không giao hàng tận nơi — chỉ nhận/trả tại cửa hàng để nhân viên đối chiếu
+ * CCCD gốc và ký hợp đồng trực tiếp với khách.
+ */
+export const STORE_PICKUP_ONLY = true;
+
+/** Múi giờ cửa hàng — dùng để xác định ngày làm việc (VN không có giờ mùa hè). */
+const STORE_UTC_OFFSET_MS = 7 * HOUR_MS;
+
 export function calculateDeposit(originalPrice: number): number {
   return originalPrice * DEPOSIT_RATIO;
 }
@@ -95,4 +113,52 @@ export function calculateRentalPrice(
 /** Đổi tỷ lệ 0.5 → "50%" để chèn vào văn bản (hợp đồng, kho kiến thức AI). */
 export function formatPercent(ratio: number): string {
   return `${Math.round(ratio * 100)}%`;
+}
+
+export interface DepositSettlement {
+  /** Tổng khấu trừ = phí trễ hạn + phí hư hỏng. */
+  totalDeductions: number;
+  /** Số tiền hoàn lại cho khách (không âm). */
+  refundAmount: number;
+  /** Phần khấu trừ vượt quá tiền cọc — khách còn nợ cửa hàng (không âm). */
+  amountOwed: number;
+}
+
+/**
+ * Quyết toán cọc khi trả máy: hoàn = cọc − phí trễ hạn − phí hư hỏng. Nếu ra
+ * số âm thì hoàn 0 và phần thiếu thành tiền khách còn nợ.
+ */
+export function calculateDepositSettlement(input: {
+  depositAmount: number;
+  lateFee: number;
+  damageFee: number;
+}): DepositSettlement {
+  const totalDeductions = input.lateFee + input.damageFee;
+  const balance = input.depositAmount - totalDeductions;
+  return {
+    totalDeductions,
+    refundAmount: Math.max(balance, 0),
+    amountOwed: Math.max(-balance, 0),
+  };
+}
+
+function isStoreWeekend(date: Date): boolean {
+  const day = new Date(date.getTime() + STORE_UTC_OFFSET_MS).getUTCDay();
+  return day === 0 || day === 6;
+}
+
+/** Cộng N ngày làm việc (bỏ T7, CN theo giờ Việt Nam), giữ nguyên giờ trong ngày. Chưa tính ngày lễ. */
+export function addBusinessDays(from: Date, days: number): Date {
+  const result = new Date(from.getTime());
+  let added = 0;
+  while (added < days) {
+    result.setTime(result.getTime() + DAY_MS);
+    if (!isStoreWeekend(result)) added++;
+  }
+  return result;
+}
+
+/** Hạn chót hoàn cọc tính từ thời điểm phát sinh nghĩa vụ hoàn (trả máy/huỷ đơn). */
+export function depositRefundDueAt(from: Date): Date {
+  return addBusinessDays(from, DEPOSIT_REFUND_BUSINESS_DAYS);
 }

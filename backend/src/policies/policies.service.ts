@@ -4,8 +4,12 @@ import {
   calculateDeposit,
   calculateLateFeeForDays,
   calculateRefundPercentage,
+  calculateDepositSettlement,
   DEFAULT_BOOKING_TTL_MINUTES,
   DEPOSIT_RATIO,
+  DEPOSIT_REFUND_BUSINESS_DAYS,
+  HANDOVER_MIN_PHOTOS,
+  STORE_PICKUP_ONLY,
   HOURLY_PRICING_MAX_HOURS,
   LATE_FEE_DAILY_RATIO,
   REFUND_TIERS,
@@ -13,6 +17,7 @@ import {
 
 const EXAMPLE_ORIGINAL_PRICE = 30_000_000;
 const EXAMPLE_PRICE_PER_DAY = 400_000;
+const EXAMPLE_DAMAGE_FEE = 1_000_000;
 
 /**
  * Chính sách thuê công khai cho trang /policies — số liệu và ví dụ đều tính
@@ -34,6 +39,9 @@ export class PoliciesService {
       refundTiers: REFUND_TIERS,
       hourlyPricingMaxHours: HOURLY_PRICING_MAX_HOURS,
       bookingTtlMinutes,
+      depositRefundBusinessDays: DEPOSIT_REFUND_BUSINESS_DAYS,
+      handoverMinPhotos: HANDOVER_MIN_PHOTOS,
+      storePickupOnly: STORE_PICKUP_ONLY,
       examples: {
         deposit: {
           originalPrice: EXAMPLE_ORIGINAL_PRICE,
@@ -49,6 +57,25 @@ export class PoliciesService {
               Number.MAX_VALUE,
             ),
           })),
+        },
+        // Trả máy trễ 1 ngày + phí hư hỏng 1.000.000đ, cọc 15.000.000đ.
+        settlement: {
+          depositAmount: calculateDeposit(EXAMPLE_ORIGINAL_PRICE),
+          lateFee: calculateLateFeeForDays(
+            1,
+            EXAMPLE_PRICE_PER_DAY,
+            Number.MAX_VALUE,
+          ),
+          damageFee: EXAMPLE_DAMAGE_FEE,
+          ...calculateDepositSettlement({
+            depositAmount: calculateDeposit(EXAMPLE_ORIGINAL_PRICE),
+            lateFee: calculateLateFeeForDays(
+              1,
+              EXAMPLE_PRICE_PER_DAY,
+              Number.MAX_VALUE,
+            ),
+            damageFee: EXAMPLE_DAMAGE_FEE,
+          }),
         },
         refund: [30, 10, 3].map((hoursBeforeStart) => ({
           hoursBeforeStart,

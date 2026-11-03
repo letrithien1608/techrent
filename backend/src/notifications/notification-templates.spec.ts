@@ -112,6 +112,64 @@ describe('notification-templates', () => {
     );
   });
 
+  it('đã thu tiền thuê: nêu số tiền + hình thức', () => {
+    const n = buildBookingNotification(
+      booking,
+      { kind: 'rental_paid', method: 'cash' },
+      'customer',
+    );
+    expect(n.type).toBe('booking_rental_paid');
+    expect(n.message).toBe(
+      'Cửa hàng đã nhận 1.140.000đ tiền thuê (tiền mặt) cho đơn #AB12CD34 – MacBook Pro M3.',
+    );
+  });
+
+  it('đã nhận lại máy: liệt kê khấu trừ, số tiền hoàn và hạn chuyển khoản', () => {
+    const n = buildBookingNotification(
+      booking,
+      {
+        kind: 'returned',
+        lateFee: 48_000,
+        damageFee: 3_000_000,
+        refundAmount: 19_452_000,
+        amountOwed: 0,
+      },
+      'customer',
+    );
+    expect(n.type).toBe('booking_returned');
+    expect(n.message).toBe(
+      'Đã nhận lại MacBook Pro M3 (đơn #AB12CD34). Đã trừ phí trễ hạn 48.000đ, phí hư hỏng 3.000.000đ. Tiền cọc hoàn lại: 19.452.000đ, chuyển khoản trong tối đa 3 ngày làm việc.',
+    );
+    expect(n.metadata).toMatchObject({ refundAmount: 19_452_000 });
+  });
+
+  it('đã nhận lại máy nhưng khấu trừ vượt cọc: báo số tiền còn thiếu', () => {
+    const n = buildBookingNotification(
+      booking,
+      {
+        kind: 'returned',
+        lateFee: 0,
+        damageFee: 23_000_000,
+        refundAmount: 0,
+        amountOwed: 500_000,
+      },
+      'customer',
+    );
+    expect(n.message).toContain('Không còn tiền cọc để hoàn.');
+    expect(n.message).toContain('Bạn còn thiếu 500.000đ');
+  });
+
+  it('đã hoàn cọc: kèm mã giao dịch', () => {
+    const n = buildBookingNotification(
+      booking,
+      { kind: 'deposit_refunded', amount: 22_500_000, transactionRef: 'FT123' },
+      'customer',
+    );
+    expect(n.type).toBe('booking_deposit_refunded');
+    expect(n.message).toContain('22.500.000đ');
+    expect(n.message).toContain('Mã giao dịch: FT123.');
+  });
+
   it('mã đơn ngắn viết hoa', () => {
     expect(bookingCode('ab12cd34-xxxx')).toBe('#AB12CD34');
   });

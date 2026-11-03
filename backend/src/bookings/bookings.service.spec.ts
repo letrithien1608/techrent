@@ -5,7 +5,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { BookingStatus, DeviceStatus, Role } from '../generated/prisma/client';
+import {
+  BookingStatus,
+  DepositRefundStatus,
+  DeviceCondition,
+  DeviceStatus,
+  RentalPaymentMethod,
+  Role,
+} from '../generated/prisma/client';
 import { RequestUser } from '../auth/interfaces/jwt-payload.interface';
 import { BookingsService } from './bookings.service';
 
@@ -25,12 +32,20 @@ describe('BookingsService', () => {
       findMany: jest.Mock;
       count: jest.Mock;
       update: jest.Mock;
+      aggregate: jest.Mock;
     };
     device: { update: jest.Mock; findUniqueOrThrow: jest.Mock };
+    bookingInspection: {
+      findUnique: jest.Mock;
+      upsert: jest.Mock;
+      create: jest.Mock;
+    };
+    maintenance: { create: jest.Mock };
   };
   let configService: { get: jest.Mock };
   let ttlQueue: { add: jest.Mock; getJob: jest.Mock };
-  let paymentsService: { refundForBooking: jest.Mock };
+  let paymentsService: { markDepositPaymentRefunded: jest.Mock };
+  let uploadService: { uploadInspectionImages: jest.Mock };
   let usersService: { findByIdOrThrow: jest.Mock; revealCccd: jest.Mock };
   let realtimeGateway: { emitDeviceStatusChanged: jest.Mock };
   let notificationsService: { create: jest.Mock; createForRoles: jest.Mock };
@@ -106,8 +121,15 @@ describe('BookingsService', () => {
         findMany: jest.fn(),
         count: jest.fn(),
         update: jest.fn(),
+        aggregate: jest.fn(),
       },
       device: { update: jest.fn(), findUniqueOrThrow: jest.fn() },
+      bookingInspection: {
+        findUnique: jest.fn(),
+        upsert: jest.fn(),
+        create: jest.fn(),
+      },
+      maintenance: { create: jest.fn() },
     };
     prisma.device.findUniqueOrThrow.mockResolvedValue(baseDevice);
     configService = { get: jest.fn().mockReturnValue('5') };
@@ -116,7 +138,14 @@ describe('BookingsService', () => {
       getJob: jest.fn().mockResolvedValue(null),
     };
     paymentsService = {
-      refundForBooking: jest.fn().mockResolvedValue(undefined),
+      markDepositPaymentRefunded: jest.fn().mockResolvedValue(undefined),
+    };
+    uploadService = {
+      uploadInspectionImages: jest
+        .fn()
+        .mockImplementation((files: unknown[]) =>
+          Promise.resolve(files.map((_, i) => `https://img/${i}.jpg`)),
+        ),
     };
     // Mặc định user ĐÃ có CCCD + ĐỦ 3 ảnh KYC để các test `create` có sẵn từ
     // trước không bị ảnh hưởng — test riêng cho từng lớp chặn tự override lại.
@@ -151,6 +180,7 @@ describe('BookingsService', () => {
       realtimeGateway as any,
       notificationsService as any,
       devicesCacheService as any,
+      uploadService as any,
     );
   });
 
@@ -470,7 +500,7 @@ describe('BookingsService', () => {
     });
   });
 
-  describe('state machine (confirm/start/complete)', () => {
+  describe('state machine (confirm/start/confirmReturn)', () => {
     it('confirm() chuyển pending -> confirmed và huỷ job TTL', async () => {
       prisma.booking.findUnique.mockResolvedValue({
         ...baseBooking,
@@ -546,11 +576,14 @@ describe('BookingsService', () => {
       );
     });
 
-    it('start() chuyển confirmed -> ongoing và set device status = rented', async () => {
+    it('start() chuyển confirmed -> ongoing và set device status = rented khi đủ điều kiện', async () => {
       prisma.booking.findUnique.mockResolvedValue({
         ...baseBooking,
         status: BookingStatus.confirmed,
+        rentalPaid: true,
+        contractSigned: true,
       });
+      prisma.bookingInspection.findUnique.mockResolvedValue({ id: 'insp-1' });
       prisma.booking.update.mockResolvedValue({
         ...baseBooking,
         status: BookingStatus.ongoing,
@@ -577,6 +610,52 @@ describe('BookingsService', () => {
       );
     });
 
+    it('start() chặn giao máy khi chưa thu tiền thuê, chưa ký hợp đồng, chưa có biên bản — liệt kê đủ lý do', async () => {
+      prisma.booking.findUnique.mockResolvedValue({
+        ...baseBooking,
+        status: BookingStatus.confirmed,
+        rentalPaid: false,
+        contractSigned: false,
+      });
+      prisma.bookingInspection.findUnique.mockResolvedValue(null);
+
+      await expect(service.start(baseBooking.id)).rejects.toThrow(
+        'Chưa thể giao máy: chưa thu tiền thuê, khách chưa ký hợp đồng, chưa lập biên bản giao máy',
+      );
+      expect(prisma.booking.update).not.toHaveBeenCalled();
+      expect(prisma.device.update).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['chưa thu tiền thuê', { rentalPaid: false, contractSigned: true }, true],
+      [
+        'khách chưa ký hợp đồng',
+        { rentalPaid: true, contractSigned: false },
+        true,
+      ],
+      [
+        'chưa lập biên bản giao máy',
+        { rentalPaid: true, contractSigned: true },
+        false,
+      ],
+    ])(
+      'start() chặn khi thiếu đúng 1 điều kiện: %s',
+      async (reason, flags, hasHandover) => {
+        prisma.booking.findUnique.mockResolvedValue({
+          ...baseBooking,
+          status: BookingStatus.confirmed,
+          ...flags,
+        });
+        prisma.bookingInspection.findUnique.mockResolvedValue(
+          hasHandover ? { id: 'insp-1' } : null,
+        );
+
+        await expect(service.start(baseBooking.id)).rejects.toThrow(
+          `Chưa thể giao máy: ${reason}`,
+        );
+      },
+    );
+
     it('start() ném BadRequestException nếu booking không ở trạng thái confirmed', async () => {
       prisma.booking.findUnique.mockResolvedValue({
         ...baseBooking,
@@ -587,126 +666,431 @@ describe('BookingsService', () => {
         BadRequestException,
       );
     });
+  });
 
-    it('complete() chuyển ongoing -> completed và set device status = available', async () => {
+  describe('biên bản giao máy + thu tiền thuê', () => {
+    const file = { buffer: Buffer.from('x'), mimetype: 'image/jpeg' };
+
+    it('recordHandover() chặn khi ít hơn 3 ảnh, không upload gì', async () => {
+      prisma.booking.findUnique.mockResolvedValue({
+        ...baseBooking,
+        status: BookingStatus.confirmed,
+      });
+
+      await expect(
+        service.recordHandover(baseBooking.id, admin.userId, [file, file]),
+      ).rejects.toThrow('tối thiểu 3 ảnh');
+      expect(uploadService.uploadInspectionImages).not.toHaveBeenCalled();
+    });
+
+    it('recordHandover() chỉ lập cho đơn đã xác nhận (không cho đơn đang thuê)', async () => {
       prisma.booking.findUnique.mockResolvedValue({
         ...baseBooking,
         status: BookingStatus.ongoing,
       });
-      prisma.booking.update.mockResolvedValue({
+
+      await expect(
+        service.recordHandover(baseBooking.id, admin.userId, [
+          file,
+          file,
+          file,
+        ]),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('recordHandover() upload ảnh rồi lưu biên bản (lập lại thì ghi đè)', async () => {
+      prisma.booking.findUnique.mockResolvedValue({
         ...baseBooking,
-        status: BookingStatus.completed,
-      });
-      prisma.device.update.mockResolvedValue({
-        ...baseDevice,
-        status: DeviceStatus.available,
+        status: BookingStatus.confirmed,
       });
 
-      await service.complete(baseBooking.id);
+      await service.recordHandover(
+        baseBooking.id,
+        admin.userId,
+        [file, file, file],
+        '  Trầy nhẹ góc trái, kèm sạc  ',
+      );
 
+      expect(uploadService.uploadInspectionImages).toHaveBeenCalledWith(
+        [file, file, file],
+        baseBooking.id,
+        'handover',
+      );
+      expect(prisma.bookingInspection.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            bookingId_type: { bookingId: baseBooking.id, type: 'handover' },
+          },
+          create: expect.objectContaining({
+            images: [
+              'https://img/0.jpg',
+              'https://img/1.jpg',
+              'https://img/2.jpg',
+            ],
+            notes: 'Trầy nhẹ góc trái, kèm sạc',
+            performedById: admin.userId,
+          }),
+        }),
+      );
+    });
+
+    it('recordRentalPayment() lưu hình thức + người thu và báo khách', async () => {
+      prisma.booking.findUnique.mockResolvedValue({
+        ...baseBooking,
+        status: BookingStatus.confirmed,
+        rentalPaid: false,
+      });
+
+      await service.recordRentalPayment(
+        baseBooking.id,
+        admin.userId,
+        RentalPaymentMethod.cash,
+      );
+
+      expect(prisma.booking.update).toHaveBeenCalledWith({
+        where: { id: baseBooking.id },
+        data: expect.objectContaining({
+          rentalPaid: true,
+          rentalPaymentMethod: RentalPaymentMethod.cash,
+          rentalCollectedById: admin.userId,
+        }),
+      });
+      expect(notificationsService.create).toHaveBeenCalledWith(
+        baseBooking.userId,
+        expect.objectContaining({ type: 'booking_rental_paid' }),
+      );
+    });
+
+    it('recordRentalPayment() không thu 2 lần', async () => {
+      prisma.booking.findUnique.mockResolvedValue({
+        ...baseBooking,
+        status: BookingStatus.confirmed,
+        rentalPaid: true,
+      });
+
+      await expect(
+        service.recordRentalPayment(
+          baseBooking.id,
+          admin.userId,
+          RentalPaymentMethod.cash,
+        ),
+      ).rejects.toThrow('đã thu tiền thuê');
+    });
+  });
+
+  describe('confirmReturn — nhận lại máy + quyết toán cọc', () => {
+    const file = { buffer: Buffer.from('x'), mimetype: 'image/jpeg' };
+    // baseDevice: pricePerDay 80.000, originalPrice 20.000.000
+    const ongoing = {
+      ...baseBooking,
+      status: BookingStatus.ongoing,
+      depositAmount: '10000000',
+      endTime: new Date(Date.now() + 3600 * 1000),
+    };
+
+    function lastBookingUpdate() {
+      return prisma.booking.update.mock.calls.at(-1)?.[0] as {
+        data: Record<string, unknown>;
+      };
+    }
+
+    it('nguyên vẹn, đúng hạn: hoàn đủ cọc, chờ hoàn, thiết bị về available', async () => {
+      prisma.booking.findUnique.mockResolvedValue(ongoing);
+
+      await service.confirmReturn(
+        ongoing.id,
+        admin.userId,
+        { condition: DeviceCondition.intact },
+        [],
+      );
+
+      expect(lastBookingUpdate().data).toEqual(
+        expect.objectContaining({
+          status: BookingStatus.completed,
+          lateFeeAmount: 0,
+          damageFeeAmount: 0,
+          depositRefundAmount: 10_000_000,
+          amountOwed: 0,
+          depositRefundStatus: DepositRefundStatus.pending,
+          depositRefundDueAt: expect.any(Date),
+        }),
+      );
+      // totalPrice KHÔNG còn bị cộng phí trễ hạn (phí trừ vào cọc).
+      expect(lastBookingUpdate().data).not.toHaveProperty('totalPrice');
       expect(prisma.device.update).toHaveBeenCalledWith({
-        where: { id: baseBooking.deviceId },
+        where: { id: deviceId },
         data: { status: DeviceStatus.available },
       });
       expect(realtimeGateway.emitDeviceStatusChanged).toHaveBeenCalledWith({
-        deviceId: baseBooking.deviceId,
+        deviceId,
         status: DeviceStatus.available,
       });
       expect(devicesCacheService.invalidateAll).toHaveBeenCalled();
+      expect(prisma.maintenance.create).not.toHaveBeenCalled();
+      expect(notificationsService.create).toHaveBeenCalledWith(
+        ongoing.userId,
+        expect.objectContaining({ type: 'booking_returned' }),
+      );
     });
 
-    it('complete() KHÔNG tính phí trễ hạn nếu trả đúng/trước hạn', async () => {
+    it('trễ 2 ngày: phí trễ hạn leo thang (16.000 + 32.000) trừ vào cọc', async () => {
       prisma.booking.findUnique.mockResolvedValue({
-        ...baseBooking,
-        status: BookingStatus.ongoing,
-        // endTime trong TƯƠNG LAI — trả bây giờ coi như chưa trễ.
-        endTime: new Date(Date.now() + 3600 * 1000),
-      });
-      prisma.booking.update.mockResolvedValue({
-        ...baseBooking,
-        status: BookingStatus.completed,
-      });
-      prisma.device.update.mockResolvedValue(baseDevice);
-
-      await service.complete(baseBooking.id);
-
-      expect(prisma.booking.update).toHaveBeenCalledWith({
-        where: { id: baseBooking.id },
-        data: {
-          status: BookingStatus.completed,
-          lateFeeAmount: 0,
-          totalPrice: Number(baseBooking.totalPrice),
-        },
-      });
-    });
-
-    it('complete() trễ 1 ngày: phạt đúng 20% giá thuê/ngày, cộng vào totalPrice', async () => {
-      prisma.booking.findUnique.mockResolvedValue({
-        ...baseBooking,
-        status: BookingStatus.ongoing,
-        // endTime cách đây 12 giờ -> ceil(12h / 24h) = 1 ngày trễ.
-        endTime: new Date(Date.now() - 12 * 3600 * 1000),
-      });
-      prisma.booking.update.mockResolvedValue({});
-      prisma.device.update.mockResolvedValue(baseDevice);
-
-      await service.complete(baseBooking.id);
-
-      // pricePerDay = 80000 -> ngày trễ thứ 1 phạt 80000 * 0.2 * 1 = 16000
-      const expectedLateFee = 80000 * 0.2 * 1;
-      expect(prisma.booking.update).toHaveBeenCalledWith({
-        where: { id: baseBooking.id },
-        data: {
-          status: BookingStatus.completed,
-          lateFeeAmount: expectedLateFee,
-          totalPrice: Number(baseBooking.totalPrice) + expectedLateFee,
-        },
-      });
-    });
-
-    it('complete() trễ 2 ngày: phạt LEO THANG (ngày 1 + ngày 2, không chỉ nhân đôi ngày 1)', async () => {
-      prisma.booking.findUnique.mockResolvedValue({
-        ...baseBooking,
-        status: BookingStatus.ongoing,
-        // endTime cách đây 30 giờ -> ceil(30h / 24h) = 2 ngày trễ.
+        ...ongoing,
         endTime: new Date(Date.now() - 30 * 3600 * 1000),
       });
-      prisma.booking.update.mockResolvedValue({});
-      prisma.device.update.mockResolvedValue(baseDevice);
 
-      await service.complete(baseBooking.id);
+      await service.confirmReturn(
+        ongoing.id,
+        admin.userId,
+        { condition: DeviceCondition.intact },
+        [],
+      );
 
-      // Ngày 1: 80000*0.2*1=16000; Ngày 2: 80000*0.2*2=32000 -> tổng 48000
-      // (KHÔNG phải 16000*2=32000 nếu tính phẳng — phải thấy rõ phần leo thang)
-      const expectedLateFee = 80000 * 0.2 * 1 + 80000 * 0.2 * 2;
-      expect(expectedLateFee).toBe(48000);
-      expect(prisma.booking.update).toHaveBeenCalledWith(
+      expect(lastBookingUpdate().data).toEqual(
         expect.objectContaining({
-          data: expect.objectContaining({ lateFeeAmount: expectedLateFee }),
+          lateFeeAmount: 48_000,
+          depositRefundAmount: 10_000_000 - 48_000,
         }),
       );
     });
 
-    it('complete() KHÔNG phạt vượt quá giá trị thiết bị (originalPrice) dù trễ rất lâu', async () => {
+    it('hư hỏng: trừ phí bồi thường, lưu biên bản + ảnh, máy chuyển bảo trì kèm phiếu', async () => {
+      prisma.booking.findUnique.mockResolvedValue(ongoing);
+
+      await service.confirmReturn(
+        ongoing.id,
+        admin.userId,
+        {
+          condition: DeviceCondition.damaged,
+          damageDescription: 'Nứt màn hình góc phải',
+          damageFee: 3_000_000,
+        },
+        [file],
+      );
+
+      expect(lastBookingUpdate().data).toEqual(
+        expect.objectContaining({
+          damageFeeAmount: 3_000_000,
+          depositRefundAmount: 7_000_000,
+        }),
+      );
+      expect(prisma.bookingInspection.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          type: 'return',
+          condition: DeviceCondition.damaged,
+          damageDescription: 'Nứt màn hình góc phải',
+          images: ['https://img/0.jpg'],
+        }),
+      });
+      expect(prisma.device.update).toHaveBeenCalledWith({
+        where: { id: deviceId },
+        data: { status: DeviceStatus.maintenance },
+      });
+      expect(prisma.maintenance.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          deviceId,
+          issue: 'Trả máy – Hư hỏng: Nứt màn hình góc phải',
+        }),
+      });
+      expect(realtimeGateway.emitDeviceStatusChanged).toHaveBeenCalledWith({
+        deviceId,
+        status: DeviceStatus.maintenance,
+      });
+    });
+
+    it('trễ hạn + hư hỏng vượt tiền cọc: hoàn 0, không hoàn cọc, lưu tiền khách còn nợ', async () => {
+      prisma.booking.findUnique.mockResolvedValue({
+        ...ongoing,
+        depositAmount: '1000000',
+        endTime: new Date(Date.now() - 12 * 3600 * 1000),
+      });
+
+      await service.confirmReturn(
+        ongoing.id,
+        admin.userId,
+        {
+          condition: DeviceCondition.missing_accessories,
+          damageDescription: 'Mất sạc',
+          damageFee: 1_200_000,
+        },
+        [file],
+      );
+
+      // 1.000.000 − 16.000 − 1.200.000 = −216.000
+      expect(lastBookingUpdate().data).toEqual(
+        expect.objectContaining({
+          lateFeeAmount: 16_000,
+          damageFeeAmount: 1_200_000,
+          depositRefundAmount: 0,
+          amountOwed: 216_000,
+          depositRefundStatus: DepositRefundStatus.not_refunded,
+          depositRefundDueAt: null,
+        }),
+      );
+    });
+
+    it('nguyên vẹn thì bỏ qua số tiền bồi thường gửi kèm', async () => {
+      prisma.booking.findUnique.mockResolvedValue(ongoing);
+
+      await service.confirmReturn(
+        ongoing.id,
+        admin.userId,
+        { condition: DeviceCondition.intact, damageFee: 500_000 },
+        [],
+      );
+
+      expect(lastBookingUpdate().data).toEqual(
+        expect.objectContaining({ damageFeeAmount: 0 }),
+      );
+    });
+
+    it.each([
+      ['thiếu mô tả', { damageFee: 100_000 }, [file], 'mô tả hư hỏng'],
+      [
+        'thiếu số tiền',
+        { damageDescription: 'Trầy' },
+        [file],
+        'số tiền bồi thường',
+      ],
+      [
+        'thiếu ảnh minh chứng',
+        { damageDescription: 'Trầy', damageFee: 100_000 },
+        [],
+        'ảnh minh chứng',
+      ],
+      [
+        'bồi thường vượt giá trị thiết bị',
+        { damageDescription: 'Mất máy', damageFee: 25_000_000 },
+        [file],
+        'vượt quá giá trị thiết bị',
+      ],
+    ])(
+      'hư hỏng nhưng %s → chặn, không ghi gì',
+      async (_label, extra, files, message) => {
+        prisma.booking.findUnique.mockResolvedValue(ongoing);
+
+        await expect(
+          service.confirmReturn(
+            ongoing.id,
+            admin.userId,
+            { condition: DeviceCondition.damaged, ...extra },
+            files,
+          ),
+        ).rejects.toThrow(message);
+        expect(prisma.booking.update).not.toHaveBeenCalled();
+        expect(prisma.device.update).not.toHaveBeenCalled();
+      },
+    );
+
+    it('chỉ nhận lại máy cho đơn đang thuê', async () => {
+      prisma.booking.findUnique.mockResolvedValue({
+        ...ongoing,
+        status: BookingStatus.confirmed,
+      });
+
+      await expect(
+        service.confirmReturn(
+          ongoing.id,
+          admin.userId,
+          { condition: DeviceCondition.intact },
+          [],
+        ),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+  });
+
+  describe('previewReturn', () => {
+    it('xem trước bảng khấu trừ bằng đúng công thức quyết toán', async () => {
       prisma.booking.findUnique.mockResolvedValue({
         ...baseBooking,
         status: BookingStatus.ongoing,
-        // Trễ 10 ngày -> tổng phạt leo thang chưa chặn sẽ rất lớn
-        endTime: new Date(Date.now() - 10 * 24 * 3600 * 1000),
+        depositAmount: '1000000',
+        endTime: new Date(Date.now() - 12 * 3600 * 1000),
       });
-      prisma.booking.update.mockResolvedValue({});
-      // originalPrice THẤP để chắc chắn vượt cap chỉ với vài ngày trễ.
-      prisma.device.update.mockResolvedValue(baseDevice);
-      const lowValueDevice = { ...baseDevice, originalPrice: '10000' };
-      prisma.device.findUniqueOrThrow.mockResolvedValue(lowValueDevice);
 
-      await service.complete(baseBooking.id);
+      await expect(
+        service.previewReturn(baseBooking.id, 1_200_000),
+      ).resolves.toEqual({
+        depositAmount: 1_000_000,
+        lateFee: 16_000,
+        damageFee: 1_200_000,
+        totalDeductions: 1_216_000,
+        refundAmount: 0,
+        amountOwed: 216_000,
+      });
+    });
+  });
 
-      expect(prisma.booking.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ lateFeeAmount: 10000 }),
-        }),
+  describe('markDepositRefunded — hoàn cọc thủ công', () => {
+    it('pending → refunded, lưu mã giao dịch, đánh dấu payment, báo khách', async () => {
+      prisma.booking.findUnique.mockResolvedValue({
+        ...baseBooking,
+        status: BookingStatus.completed,
+        depositRefundStatus: DepositRefundStatus.pending,
+        depositRefundAmount: '9000000',
+      });
+
+      await service.markDepositRefunded(
+        baseBooking.id,
+        admin.userId,
+        ' FT123 ',
       );
+
+      expect(prisma.booking.update).toHaveBeenCalledWith({
+        where: { id: baseBooking.id },
+        data: expect.objectContaining({
+          depositRefundStatus: DepositRefundStatus.refunded,
+          depositRefundTxnRef: 'FT123',
+          depositRefundedById: admin.userId,
+          depositRefundedAt: expect.any(Date),
+        }),
+      });
+      expect(paymentsService.markDepositPaymentRefunded).toHaveBeenCalledWith(
+        baseBooking.id,
+      );
+      expect(notificationsService.create).toHaveBeenCalledWith(
+        baseBooking.userId,
+        expect.objectContaining({ type: 'booking_deposit_refunded' }),
+      );
+    });
+
+    it('chặn khi đơn không có khoản cọc chờ hoàn (đã hoàn / không hoàn)', async () => {
+      prisma.booking.findUnique.mockResolvedValue({
+        ...baseBooking,
+        depositRefundStatus: DepositRefundStatus.refunded,
+      });
+
+      await expect(
+        service.markDepositRefunded(baseBooking.id, admin.userId, 'FT1'),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(prisma.booking.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getFinancialStats', () => {
+    it('tách riêng tiền thuê, phí trễ hạn, phí hư hỏng, tiền cọc đang giữ', async () => {
+      prisma.booking.aggregate
+        .mockResolvedValueOnce({ _sum: { totalPrice: '1500000' } })
+        .mockResolvedValueOnce({
+          _sum: {
+            lateFeeAmount: '48000',
+            damageFeeAmount: '3000000',
+            amountOwed: '216000',
+          },
+        })
+        .mockResolvedValueOnce({ _sum: { depositAmount: '20000000' } })
+        .mockResolvedValueOnce({ _sum: { depositRefundAmount: '7000000' } });
+      prisma.booking.count.mockResolvedValueOnce(2).mockResolvedValueOnce(1);
+
+      await expect(service.getFinancialStats()).resolves.toEqual({
+        rentalRevenue: 1_500_000,
+        lateFees: 48_000,
+        damageFees: 3_000_000,
+        depositHeld: 27_000_000,
+        amountOwed: 216_000,
+        pendingRefundCount: 2,
+        overdueRefundCount: 1,
+      });
     });
   });
 
@@ -878,9 +1262,10 @@ describe('BookingsService', () => {
       expect(result.refundPercentage).toBe(100);
     });
 
-    it('tính đúng refundAmount = depositAmount * refundPercentage', async () => {
+    it('tính đúng refundAmount = depositAmount * refundPercentage (đơn đã thu cọc)', async () => {
       const booking = {
         ...baseBooking,
+        status: BookingStatus.confirmed,
         depositAmount: '9000',
         startTime: new Date(Date.now() + 10 * 3600 * 1000),
       };
@@ -893,6 +1278,92 @@ describe('BookingsService', () => {
       const result = await service.cancel(booking.id, customer, {});
 
       expect(result.refundAmount).toBe('4500.00');
+    });
+  });
+
+  describe('cancel — hoàn cọc thủ công + giải phóng thiết bị', () => {
+    it('đơn đã thu cọc: đặt "chờ hoàn" kèm hạn 3 ngày làm việc, KHÔNG tự đánh dấu đã hoàn', async () => {
+      const booking = {
+        ...baseBooking,
+        status: BookingStatus.confirmed,
+        depositAmount: '9000',
+        startTime: new Date(Date.now() + 30 * 3600 * 1000),
+      };
+      prisma.booking.findUnique.mockResolvedValue(booking);
+      prisma.booking.update.mockResolvedValue(booking);
+
+      await service.cancel(booking.id, customer, {});
+
+      expect(prisma.booking.update).toHaveBeenCalledWith({
+        where: { id: booking.id },
+        data: expect.objectContaining({
+          status: BookingStatus.cancelled,
+          depositRefundAmount: 9000,
+          depositRefundStatus: DepositRefundStatus.pending,
+          depositRefundDueAt: expect.any(Date),
+        }),
+      });
+      expect(paymentsService.markDepositPaymentRefunded).not.toHaveBeenCalled();
+    });
+
+    it('đơn đã thu cọc nhưng huỷ sát giờ (0%): "không hoàn cọc"', async () => {
+      const booking = {
+        ...baseBooking,
+        status: BookingStatus.confirmed,
+        startTime: new Date(Date.now() + 2 * 3600 * 1000),
+      };
+      prisma.booking.findUnique.mockResolvedValue(booking);
+      prisma.booking.update.mockResolvedValue(booking);
+
+      await service.cancel(booking.id, customer, {});
+
+      expect(prisma.booking.update).toHaveBeenCalledWith({
+        where: { id: booking.id },
+        data: expect.objectContaining({
+          depositRefundStatus: DepositRefundStatus.not_refunded,
+          depositRefundDueAt: null,
+        }),
+      });
+    });
+
+    it('đơn chưa thu cọc (pending): không động tới trạng thái hoàn cọc', async () => {
+      prisma.booking.findUnique.mockResolvedValue(baseBooking);
+      prisma.booking.update.mockResolvedValue(baseBooking);
+
+      await service.cancel(baseBooking.id, customer, {});
+
+      const data = prisma.booking.update.mock.calls[0][0].data;
+      expect(data).not.toHaveProperty('depositRefundStatus');
+    });
+
+    it('khách KHÔNG tự huỷ được đơn đang thuê (đang giữ máy)', async () => {
+      prisma.booking.findUnique.mockResolvedValue({
+        ...baseBooking,
+        status: BookingStatus.ongoing,
+      });
+
+      await expect(
+        service.cancel(baseBooking.id, customer, {}),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.booking.update).not.toHaveBeenCalled();
+    });
+
+    it('staff/admin huỷ đơn đang thuê: thiết bị về available + phát realtime + xoá cache', async () => {
+      const booking = { ...baseBooking, status: BookingStatus.ongoing };
+      prisma.booking.findUnique.mockResolvedValue(booking);
+      prisma.booking.update.mockResolvedValue(booking);
+
+      await service.cancel(booking.id, admin, { reason: 'Khách đổi ý' });
+
+      expect(prisma.device.update).toHaveBeenCalledWith({
+        where: { id: deviceId },
+        data: { status: DeviceStatus.available },
+      });
+      expect(realtimeGateway.emitDeviceStatusChanged).toHaveBeenCalledWith({
+        deviceId,
+        status: DeviceStatus.available,
+      });
+      expect(devicesCacheService.invalidateAll).toHaveBeenCalled();
     });
   });
 

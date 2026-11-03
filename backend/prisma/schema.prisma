@@ -43,6 +43,38 @@ enum PaymentStatus {
   refunded
 }
 
+// Hình thức thu tiền thuê tại quầy khi giao máy (VNPay chỉ thu tiền cọc).
+enum RentalPaymentMethod {
+  cash
+  bank_transfer
+}
+
+// Trạng thái hoàn cọc — tách khỏi BookingStatus để đơn đã trả máy/đã huỷ vẫn
+// theo dõi được khoản cọc còn phải chuyển khoản lại cho khách.
+//   none          — chưa tới bước hoàn cọc (chưa thu cọc / đang thuê / đơn cũ)
+//   pending       — chờ nhân viên chuyển khoản (hạn: DEPOSIT_REFUND_BUSINESS_DAYS)
+//   refunded      — đã chuyển khoản, có mã giao dịch
+//   not_refunded  — không hoàn (huỷ sát giờ, hoặc phí trễ/hư hỏng ≥ tiền cọc)
+enum DepositRefundStatus {
+  none
+  pending
+  refunded
+  not_refunded
+}
+
+// Biên bản kiểm tra thiết bị. Phiên sau có thể thêm loại (VD đổi máy giữa kỳ
+// thuê) chỉ bằng 1 giá trị enum mới, không đổi cấu trúc bảng.
+enum InspectionType {
+  handover
+  return
+}
+
+enum DeviceCondition {
+  intact
+  damaged
+  missing_accessories
+}
+
 enum MaintenanceStatus {
   open
   in_progress
@@ -178,11 +210,9 @@ model Booking {
   contractContent  String?   @map("contract_content") @db.Text
   contractSigned   Boolean   @default(false) @map("contract_signed")
   contractSignedAt DateTime? @map("contract_signed_at")
-  // Phí trễ hạn leo thang — tính TRONG complete() nếu trả sau `endTime`, CỘNG
-  // thẳng vào `totalPrice` (giữ nguyên ý nghĩa "tổng tiền phải trả") NHƯNG lưu
-  // riêng số tiền phạt ở đây để hiển thị tách bạch cho khách/admin (xem
-  // BookingsService.calculateLateFee()). Mặc định 0 — tuyệt đại đa số booking
-  // trả đúng hạn không có phí này.
+  // Phí trễ hạn leo thang — tính khi nhân viên xác nhận trả máy (confirmReturn)
+  // nếu trả sau `endTime`, TRỪ vào tiền cọc. `totalPrice` chỉ là tiền thuê
+  // (từ 03/11 không còn cộng phí trễ vào — migration đã tách lại cho đơn cũ).
   lateFeeAmount  Decimal       @default(0) @map("late_fee_amount") @db.Decimal(10, 2)
   // Ai đã xác nhận/huỷ đơn (staff/admin hoặc chính khách) — để thông báo hiển
   // thị đúng "Đã xác nhận bởi ..." và trạng thái thật khi nhiều admin cùng thấy
@@ -191,16 +221,54 @@ model Booking {
   confirmedById      String?   @map("confirmed_by_id")
   cancelledById      String?   @map("cancelled_by_id")
   cancellationReason String?   @map("cancellation_reason") @db.Text
+  // Tiền thuê (`totalPrice`) thu tại quầy khi giao máy — nhân viên bấm "Đã thu
+  // tiền thuê". Không cho chuyển `ongoing` nếu chưa thu (xem BookingsService.start()).
+  rentalPaid          Boolean              @default(false) @map("rental_paid")
+  rentalPaidAt        DateTime?            @map("rental_paid_at")
+  rentalPaymentMethod RentalPaymentMethod? @map("rental_payment_method")
+  rentalCollectedById String?              @map("rental_collected_by_id")
+  // Quyết toán khi trả máy: tiền hoàn cọc = cọc − phí trễ hạn − phí hư hỏng.
+  // Âm thì hoàn 0 và lưu phần thiếu vào `amountOwed` (khách còn nợ).
+  returnedAt          DateTime?            @map("returned_at")
+  damageFeeAmount     Decimal              @default(0) @map("damage_fee_amount") @db.Decimal(12, 2)
+  amountOwed          Decimal              @default(0) @map("amount_owed") @db.Decimal(12, 2)
+  depositRefundStatus DepositRefundStatus  @default(none) @map("deposit_refund_status")
+  depositRefundAmount Decimal              @default(0) @map("deposit_refund_amount") @db.Decimal(12, 2)
+  depositRefundDueAt  DateTime?            @map("deposit_refund_due_at")
+  depositRefundedAt   DateTime?            @map("deposit_refunded_at")
+  depositRefundTxnRef String?              @map("deposit_refund_txn_ref")
+  depositRefundedById String?              @map("deposit_refunded_by_id")
   createdAt      DateTime      @default(now()) @map("created_at")
 
-  user     User      @relation(fields: [userId], references: [id])
-  device   Device    @relation(fields: [deviceId], references: [id])
-  payments Payment[]
-  review   Review?
+  user        User                @relation(fields: [userId], references: [id])
+  device      Device              @relation(fields: [deviceId], references: [id])
+  payments    Payment[]
+  review      Review?
+  inspections BookingInspection[]
 
   @@index([deviceId, startTime, endTime], map: "idx_bookings_device_time")
   @@index([userId], map: "idx_bookings_user")
+  @@index([depositRefundStatus, depositRefundDueAt], map: "idx_bookings_deposit_refund")
   @@map("bookings")
+}
+
+// Biên bản giao máy / nhận lại máy: ảnh tình trạng thiết bị (Cloudinary) + ghi
+// chú. Ảnh lúc giao và lúc trả đặt cạnh nhau để làm căn cứ tính phí hư hỏng.
+model BookingInspection {
+  id                String           @id @default(uuid())
+  bookingId         String           @map("booking_id")
+  type              InspectionType
+  images            String[]
+  notes             String?          @db.Text
+  condition         DeviceCondition  @default(intact)
+  damageDescription String?          @map("damage_description") @db.Text
+  performedById     String           @map("performed_by_id")
+  createdAt         DateTime         @default(now()) @map("created_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@unique([bookingId, type], map: "uq_booking_inspections_booking_type")
+  @@map("booking_inspections")
 }
 
 model Payment {
