@@ -36,13 +36,18 @@ interface DeviceFormMutationResult {
 }
 
 type FieldErrors = Partial<
-  Record<"name" | "categoryId" | "pricePerHour" | "pricePerDay" | "originalPrice" | "images", string>
+  Record<
+    "name" | "categoryId" | "pricePerHour" | "pricePerDay" | "originalPrice" | "images" | "serialNumber" | "accessories",
+    string
+  >
 >;
 
 // Đồng bộ ĐÚNG số tối thiểu backend validate (`@ArrayMinSize(5)` ở
 // CreateDeviceDto/UpdateDeviceDto) — chặn ở FE để UX rõ ràng hơn, nhưng
 // backend mới là lớp chặn thật (xem CLAUDE.md nguyên tắc bảo mật/nghiệp vụ).
 const MIN_DEVICE_IMAGES = 5;
+// Khớp SERIAL_PATTERN ở backend (create-device.dto.ts).
+const SERIAL_PATTERN = /^[A-Za-z0-9][A-Za-z0-9\-/ ]{2,59}$/;
 
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
@@ -89,6 +94,11 @@ export function DeviceForm({ device }: { device?: Device }) {
     device?.detailedDescription ?? "",
   );
   const [status, setStatus] = useState(device?.status ?? "available");
+  const [serialNumber, setSerialNumber] = useState(device?.serialNumber ?? "");
+  const [brand, setBrand] = useState(device?.brand ?? "");
+  const [accessories, setAccessories] = useState<{ name: string; quantity: string }[]>(() =>
+    (device?.accessories ?? []).map((a) => ({ name: a.name, quantity: String(a.quantity) })),
+  );
   const [specValues, setSpecValues] = useState(() => initialSpecState(device).values);
   const [extraSpecs, setExtraSpecs] = useState(() => initialSpecState(device).extras);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -207,6 +217,16 @@ export function DeviceForm({ device }: { device?: Device }) {
     if (!pricePerDay || Number.isNaN(dayNumber) || dayNumber < 0) {
       errors.pricePerDay = "Giá theo ngày không hợp lệ";
     }
+    if (!SERIAL_PATTERN.test(serialNumber.trim())) {
+      errors.serialNumber = "Nhập số serial/IMEI in trên máy (3–60 ký tự: chữ, số, dấu gạch ngang)";
+    }
+    if (
+      accessories.some(
+        (a) => !a.name.trim() || !Number.isInteger(Number(a.quantity)) || Number(a.quantity) < 1 || Number(a.quantity) > 99,
+      )
+    ) {
+      errors.accessories = "Mỗi phụ kiện cần tên và số lượng từ 1 đến 99";
+    }
     const originalNumber = Number(originalPrice);
     if (!originalPrice || Number.isNaN(originalNumber) || originalNumber < 0) {
       errors.originalPrice = "Giá gốc không hợp lệ";
@@ -234,6 +254,9 @@ export function DeviceForm({ device }: { device?: Device }) {
       pricePerDay: Number(pricePerDay),
       originalPrice: Number(originalPrice),
       detailedDescription: detailedDescription.trim() || undefined,
+      serialNumber: serialNumber.trim(),
+      brand: brand.trim() || undefined,
+      accessories: accessories.map((a) => ({ name: a.name.trim(), quantity: Number(a.quantity) })),
       specSheet: buildSpecSheet(specTemplate, specValues, [
         ...orphanSpecs.map(([label, value]) => ({ label, value })),
         ...extraSpecs,
@@ -343,6 +366,74 @@ export function DeviceForm({ device }: { device?: Device }) {
           </p>
           <FieldError message={fieldErrors.originalPrice} />
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="device-serial">Số serial / IMEI</Label>
+          <Input
+            id="device-serial"
+            value={serialNumber}
+            onChange={(e) => setSerialNumber(e.target.value)}
+            placeholder="In trên máy hoặc hộp, VD: C02XK1ABJG5H"
+            aria-invalid={!!fieldErrors.serialNumber}
+          />
+          <FieldError message={fieldErrors.serialNumber} />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="device-brand">Hãng sản xuất</Label>
+          <Input id="device-brand" value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="VD: Apple" />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2 rounded-xl border border-border/60 p-4">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <Label>Phụ kiện giao kèm</Label>
+            <p className="text-xs text-muted-foreground">In thành bảng trong hợp đồng và biên bản giao nhận.</p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setAccessories((list) => [...list, { name: "", quantity: "1" }])}
+          >
+            Thêm phụ kiện
+          </Button>
+        </div>
+        {accessories.map((accessory, index) => (
+          <div key={index} className="flex items-center gap-2">
+            <Input
+              aria-label={`Tên phụ kiện ${index + 1}`}
+              value={accessory.name}
+              onChange={(e) =>
+                setAccessories((list) => list.map((a, i) => (i === index ? { ...a, name: e.target.value } : a)))
+              }
+              placeholder="VD: Bộ sạc (củ + cáp)"
+            />
+            <Input
+              aria-label={`Số lượng phụ kiện ${index + 1}`}
+              className="w-20"
+              inputMode="numeric"
+              value={accessory.quantity}
+              onChange={(e) =>
+                setAccessories((list) =>
+                  list.map((a, i) => (i === index ? { ...a, quantity: e.target.value.replace(/\D/g, "") } : a)),
+                )
+              }
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              aria-label={`Xoá phụ kiện ${index + 1}`}
+              onClick={() => setAccessories((list) => list.filter((_, i) => i !== index))}
+            >
+              Xoá
+            </Button>
+          </div>
+        ))}
+        <FieldError message={fieldErrors.accessories} />
       </div>
 
       <div className="flex flex-col gap-1.5">

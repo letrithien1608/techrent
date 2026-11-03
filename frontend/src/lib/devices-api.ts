@@ -39,6 +39,16 @@ export interface Device {
   reviewCount: number;
   /** Ngừng kinh doanh — ẩn khỏi trang khách, chặn đặt mới (vẫn giữ lịch sử đơn). */
   isDiscontinued?: boolean;
+  /** Số serial/IMEI (in trong hợp đồng thuê). */
+  serialNumber?: string | null;
+  brand?: string | null;
+  /** Phụ kiện giao kèm — bảng phụ kiện trong hợp đồng/biên bản. */
+  accessories?: DeviceAccessory[];
+}
+
+export interface DeviceAccessory {
+  name: string;
+  quantity: number;
 }
 
 export interface PaginatedDevices {

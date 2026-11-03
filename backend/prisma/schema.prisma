@@ -190,6 +190,14 @@ model Device {
   // bản tự do dài hơn, hiển thị riêng ở trang chi tiết. Nullable vì không bắt
   // buộc (thiết bị cũ trước khi có field này không có).
   detailedDescription String?   @map("detailed_description") @db.Text
+  // Số serial/IMEI của máy cụ thể — in trong hợp đồng thuê để xác định đúng
+  // tài sản. Bắt buộc khi admin tạo/sửa (DTO); nullable ở DB chỉ để không phá
+  // dữ liệu cũ (migration đã backfill số mẫu cho thiết bị có sẵn).
+  serialNumber  String?      @unique(map: "uq_devices_serial_number") @map("serial_number")
+  // Hãng sản xuất (VD "Sony") — in trong hợp đồng; model in theo tên thiết bị.
+  brand         String?
+  // Phụ kiện giao kèm: [{ name, quantity }] — bảng phụ kiện trong hợp đồng/biên bản.
+  accessories   Json         @default("[]")
   createdAt     DateTime     @default(now()) @map("created_at")
   // Denormalize từ Review (qua Booking.deviceId) — tính lại mỗi khi có review
   // mới trong ReviewsService.create() (cùng transaction với tạo review), KHÔNG

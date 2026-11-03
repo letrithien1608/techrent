@@ -1,5 +1,5 @@
 import { api } from "./api-client";
-import type { Category, Device, DeviceStatus, SpecSheetEntry } from "./devices-api";
+import type { Category, Device, DeviceAccessory, DeviceStatus, SpecSheetEntry } from "./devices-api";
 import type { UserRole } from "@/stores/auth-store";
 
 // ---- Thiết bị (CRUD, admin only) ----
@@ -15,6 +15,9 @@ export interface DevicePayload {
   originalPrice: number;
   status?: DeviceStatus;
   images?: string[];
+  serialNumber: string;
+  brand?: string;
+  accessories?: DeviceAccessory[];
 }
 
 export async function createDevice(payload: DevicePayload): Promise<Device> {

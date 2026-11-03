@@ -9,11 +9,19 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Matches,
+  MaxLength,
   Min,
   MinLength,
   ValidateNested,
 } from 'class-validator';
 import { SpecSheetEntryDto } from './spec-sheet-entry.dto';
+import { AccessoryDto } from './accessory.dto';
+
+/** Serial/IMEI: 3–60 ký tự chữ, số, gạch ngang, gạch chéo, khoảng trắng. */
+export const SERIAL_PATTERN = /^[A-Za-z0-9][A-Za-z0-9\-/ ]{2,59}$/;
+export const SERIAL_MESSAGE =
+  'Số serial/IMEI cần 3–60 ký tự (chữ, số, dấu gạch ngang)';
 
 export class CreateDeviceDto {
   @ApiProperty({ example: 'MacBook Pro 14" M3' })
@@ -24,6 +32,28 @@ export class CreateDeviceDto {
   @ApiProperty({ description: 'ID danh mục thiết bị' })
   @IsUUID()
   categoryId: string;
+
+  @ApiProperty({
+    example: 'C02XK1ABJG5H',
+    description: 'Số serial/IMEI in trên máy — in trong hợp đồng thuê',
+  })
+  @IsString()
+  @Matches(SERIAL_PATTERN, { message: SERIAL_MESSAGE })
+  serialNumber: string;
+
+  @ApiPropertyOptional({ example: 'Apple', description: 'Hãng sản xuất' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  brand?: string;
+
+  @ApiPropertyOptional({ type: [AccessoryDto] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(30)
+  @ValidateNested({ each: true })
+  @Type(() => AccessoryDto)
+  accessories?: AccessoryDto[];
 
   @ApiPropertyOptional({
     description:

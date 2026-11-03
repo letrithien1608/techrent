@@ -48,7 +48,12 @@ describe('DevicesCacheService', () => {
     });
 
     it('cùng 1 tổ hợp filter luôn ra ĐÚNG 1 cache key (deterministic)', () => {
-      const filter = { page: 2, limit: 10, categoryId: 'cat-1', sort: 'price_asc' };
+      const filter = {
+        page: 2,
+        limit: 10,
+        categoryId: 'cat-1',
+        sort: 'price_asc',
+      };
       expect(service.buildKey(filter)).toBe(service.buildKey({ ...filter }));
     });
   });

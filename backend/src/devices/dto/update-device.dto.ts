@@ -10,14 +10,39 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Matches,
+  MaxLength,
   Min,
   MinLength,
   ValidateNested,
 } from 'class-validator';
 import { SpecSheetEntryDto } from './spec-sheet-entry.dto';
+import { AccessoryDto } from './accessory.dto';
+import { SERIAL_MESSAGE, SERIAL_PATTERN } from './create-device.dto';
 import { DeviceStatus } from '../../generated/prisma/client';
 
 export class UpdateDeviceDto {
+  // Có gửi thì phải hợp lệ (không cho xoá trắng serial đã có).
+  @ApiPropertyOptional({ description: 'Số serial/IMEI' })
+  @IsOptional()
+  @IsString()
+  @Matches(SERIAL_PATTERN, { message: SERIAL_MESSAGE })
+  serialNumber?: string;
+
+  @ApiPropertyOptional({ description: 'Hãng sản xuất' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  brand?: string;
+
+  @ApiPropertyOptional({ type: [AccessoryDto] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(30)
+  @ValidateNested({ each: true })
+  @Type(() => AccessoryDto)
+  accessories?: AccessoryDto[];
+
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()

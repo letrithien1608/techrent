@@ -1,0 +1,214 @@
+{
+  "Laptop": [
+    {
+      "name": "Bộ sạc (củ + cáp)",
+      "quantity": 1
+    },
+    {
+      "name": "Túi chống sốc",
+      "quantity": 1
+    }
+  ],
+  "Máy ảnh": [
+    {
+      "name": "Pin",
+      "quantity": 2
+    },
+    {
+      "name": "Sạc pin",
+      "quantity": 1
+    },
+    {
+      "name": "Dây đeo",
+      "quantity": 1
+    },
+    {
+      "name": "Nắp body",
+      "quantity": 1
+    },
+    {
+      "name": "Thẻ nhớ",
+      "quantity": 1
+    }
+  ],
+  "Flycam": [
+    {
+      "name": "Bộ điều khiển",
+      "quantity": 1
+    },
+    {
+      "name": "Pin",
+      "quantity": 3
+    },
+    {
+      "name": "Sạc",
+      "quantity": 1
+    },
+    {
+      "name": "Cánh quạt dự phòng",
+      "quantity": 2
+    },
+    {
+      "name": "Túi đựng",
+      "quantity": 1
+    }
+  ],
+  "Camera hành động": [
+    {
+      "name": "Pin",
+      "quantity": 2
+    },
+    {
+      "name": "Cáp sạc",
+      "quantity": 1
+    },
+    {
+      "name": "Ngàm gắn",
+      "quantity": 1
+    },
+    {
+      "name": "Thẻ nhớ",
+      "quantity": 1
+    }
+  ],
+  "Gimbal & chống rung": [
+    {
+      "name": "Cáp sạc",
+      "quantity": 1
+    },
+    {
+      "name": "Chân tripod mini",
+      "quantity": 1
+    },
+    {
+      "name": "Túi đựng",
+      "quantity": 1
+    }
+  ],
+  "Kính thực tế ảo": [
+    {
+      "name": "Tay cầm",
+      "quantity": 2
+    },
+    {
+      "name": "Cáp sạc",
+      "quantity": 1
+    },
+    {
+      "name": "Củ sạc",
+      "quantity": 1
+    }
+  ],
+  "Máy tính bảng": [
+    {
+      "name": "Bộ sạc (củ + cáp)",
+      "quantity": 1
+    },
+    {
+      "name": "Ốp bảo vệ",
+      "quantity": 1
+    }
+  ],
+  "Màn hình di động": [
+    {
+      "name": "Cáp USB-C",
+      "quantity": 1
+    },
+    {
+      "name": "Cáp HDMI",
+      "quantity": 1
+    },
+    {
+      "name": "Bao da/chân đế",
+      "quantity": 1
+    }
+  ],
+  "Máy chiếu": [
+    {
+      "name": "Dây nguồn",
+      "quantity": 1
+    },
+    {
+      "name": "Điều khiển từ xa",
+      "quantity": 1
+    },
+    {
+      "name": "Cáp HDMI",
+      "quantity": 1
+    }
+  ],
+  "Máy chơi game": [
+    {
+      "name": "Tay cầm",
+      "quantity": 2
+    },
+    {
+      "name": "Dây nguồn",
+      "quantity": 1
+    },
+    {
+      "name": "Cáp HDMI",
+      "quantity": 1
+    }
+  ],
+  "Máy chơi game cầm tay": [
+    {
+      "name": "Bộ sạc",
+      "quantity": 1
+    },
+    {
+      "name": "Túi đựng",
+      "quantity": 1
+    }
+  ],
+  "Phụ kiện gaming": [
+    {
+      "name": "Cáp kết nối",
+      "quantity": 1
+    },
+    {
+      "name": "Hộp đựng",
+      "quantity": 1
+    }
+  ],
+  "Thiết bị livestream": [
+    {
+      "name": "Cáp kết nối",
+      "quantity": 1
+    },
+    {
+      "name": "Chân đế/ngàm",
+      "quantity": 1
+    }
+  ],
+  "Thiết bị mạng": [
+    {
+      "name": "Bộ nguồn",
+      "quantity": 1
+    },
+    {
+      "name": "Cáp mạng",
+      "quantity": 1
+    }
+  ],
+  "Thiết bị thu âm": [
+    {
+      "name": "Cáp kết nối",
+      "quantity": 1
+    },
+    {
+      "name": "Chân/giá đỡ",
+      "quantity": 1
+    }
+  ],
+  "Thiết bị âm thanh": [
+    {
+      "name": "Dây nguồn/cáp sạc",
+      "quantity": 1
+    },
+    {
+      "name": "Cáp âm thanh",
+      "quantity": 1
+    }
+  ]
+}

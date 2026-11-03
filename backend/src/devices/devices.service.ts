@@ -4,6 +4,13 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { Device, DeviceStatus } from '../generated/prisma/client';
 import { DevicesCacheService } from './devices-cache.service';
+import { translateUniqueConstraintError } from '../common/prisma-error.util';
+
+/** Phụ kiện giao kèm (cột JSON `accessories`). */
+export interface DeviceAccessory {
+  name: string;
+  quantity: number;
+}
 import { DeviceSort } from './dto/list-devices-query.dto';
 import { flattenSpecSheet, type SpecSheetEntry } from './spec-sheet.util';
 
@@ -124,21 +131,30 @@ export class DevicesService {
     pricePerDay: number;
     originalPrice: number;
     images?: string[];
+    serialNumber: string;
+    brand?: string;
+    accessories?: DeviceAccessory[];
   }): Promise<Device> {
     await this.assertCategoryExists(data.categoryId);
 
-    const created = await this.prisma.device.create({
-      data: {
-        name: data.name,
-        categoryId: data.categoryId,
-        ...specColumns(data),
-        detailedDescription: data.detailedDescription,
-        pricePerHour: data.pricePerHour,
-        pricePerDay: data.pricePerDay,
-        originalPrice: data.originalPrice,
-        images: data.images ?? [],
-      },
-    });
+    const created = await this.withSerialConflict(() =>
+      this.prisma.device.create({
+        data: {
+          name: data.name,
+          categoryId: data.categoryId,
+          serialNumber: data.serialNumber.trim(),
+          brand: data.brand?.trim() || null,
+          accessories: (data.accessories ??
+            []) as unknown as Prisma.InputJsonValue,
+          ...specColumns(data),
+          detailedDescription: data.detailedDescription,
+          pricePerHour: data.pricePerHour,
+          pricePerDay: data.pricePerDay,
+          originalPrice: data.originalPrice,
+          images: data.images ?? [],
+        },
+      }),
+    );
     await this.devicesCacheService.invalidateAll();
     return created;
   }
@@ -156,6 +172,9 @@ export class DevicesService {
       originalPrice?: number;
       status?: DeviceStatus;
       images?: string[];
+      serialNumber?: string;
+      brand?: string;
+      accessories?: DeviceAccessory[];
     },
   ): Promise<Device> {
     await this.findByIdOrThrow(id);
@@ -163,13 +182,22 @@ export class DevicesService {
       await this.assertCategoryExists(data.categoryId);
     }
 
-    const updated = await this.prisma.device.update({
-      where: { id },
-      data: {
-        ...withoutSpecs(data),
-        ...specColumns(data),
-      },
-    });
+    const { accessories, serialNumber, ...rest } = data;
+    const updated = await this.withSerialConflict(() =>
+      this.prisma.device.update({
+        where: { id },
+        data: {
+          ...withoutSpecs(rest),
+          ...specColumns(rest),
+          ...(serialNumber !== undefined
+            ? { serialNumber: serialNumber.trim() }
+            : {}),
+          ...(accessories !== undefined
+            ? { accessories: accessories as unknown as Prisma.InputJsonValue }
+            : {}),
+        },
+      }),
+    );
 
     // Bất kỳ field nào sửa ở đây đều có thể hiện trên danh sách (tên/giá/
     // status/ảnh đại diện) — invalidate cache toàn bộ danh sách, đơn giản
@@ -188,6 +216,17 @@ export class DevicesService {
     }
 
     return updated;
+  }
+
+  /** Serial trùng thiết bị khác (unique ở DB) → 409 tiếng Việt thay vì 500. */
+  private async withSerialConflict<T>(run: () => Promise<T>): Promise<T> {
+    try {
+      return await run();
+    } catch (error) {
+      throw translateUniqueConstraintError(error, {
+        serial_number: 'Số serial/IMEI này đã được dùng cho thiết bị khác',
+      });
+    }
   }
 
   async remove(id: string): Promise<void> {

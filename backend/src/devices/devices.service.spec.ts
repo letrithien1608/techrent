@@ -1,6 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Device, DeviceStatus } from '../generated/prisma/client';
+import { Device, DeviceStatus, Prisma } from '../generated/prisma/client';
 import { DevicesService } from './devices.service';
 
 describe('DevicesService', () => {
@@ -41,6 +41,9 @@ describe('DevicesService', () => {
     reviewCount: 0,
     isDiscontinued: false,
     discontinuedAt: null,
+    serialNumber: 'C02XK1ABJG5H',
+    brand: 'Apple',
+    accessories: [],
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
   };
 
@@ -205,6 +208,7 @@ describe('DevicesService', () => {
 
       await expect(
         service.create({
+          serialNumber: 'SN-TEST-1',
           name: 'X',
           categoryId: 'ghost-cat',
           pricePerHour: 1000,
@@ -223,6 +227,7 @@ describe('DevicesService', () => {
       prisma.device.create.mockResolvedValue(baseDevice);
 
       await service.create({
+        serialNumber: 'SN-TEST-1',
         name: 'MacBook Pro 14" M3',
         categoryId: 'cat-1',
         pricePerHour: 50000,
@@ -247,6 +252,7 @@ describe('DevicesService', () => {
       ];
 
       await service.create({
+        serialNumber: 'SN-TEST-1',
         name: 'MacBook Pro 14" M3',
         categoryId: 'cat-1',
         pricePerHour: 50000,
@@ -413,6 +419,7 @@ describe('DevicesService', () => {
       prisma.device.create.mockResolvedValue(baseDevice);
 
       await service.create({
+        serialNumber: 'SN-TEST-1',
         name: 'X',
         categoryId: 'cat-1',
         pricePerHour: 1000,
@@ -441,6 +448,49 @@ describe('DevicesService', () => {
       await service.remove(baseDevice.id);
 
       expect(devicesCacheService.invalidateAll).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('serial/IMEI trùng thiết bị khác → 409 tiếng Việt (không lộ lỗi Prisma)', async () => {
+    prisma.category.findUnique.mockResolvedValue({ id: 'cat-1' });
+    prisma.device.create.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: '7.10.0',
+        meta: { target: ['serial_number'] },
+      }),
+    );
+    await expect(
+      service.create({
+        serialNumber: 'C02XK1ABJG5H',
+        name: 'MacBook',
+        categoryId: 'cat-1',
+        pricePerHour: 1,
+        pricePerDay: 1,
+        originalPrice: 1,
+      }),
+    ).rejects.toThrow('Số serial/IMEI này đã được dùng cho thiết bị khác');
+  });
+
+  it('lưu serial (cắt khoảng trắng), hãng và phụ kiện khi tạo thiết bị', async () => {
+    prisma.category.findUnique.mockResolvedValue({ id: 'cat-1' });
+    prisma.device.create.mockResolvedValue(baseDevice);
+    await service.create({
+      serialNumber: '  C02XK1ABJG5H ',
+      brand: 'Apple',
+      accessories: [{ name: 'Bộ sạc', quantity: 1 }],
+      name: 'MacBook',
+      categoryId: 'cat-1',
+      pricePerHour: 1,
+      pricePerDay: 1,
+      originalPrice: 1,
+    });
+    expect(prisma.device.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        serialNumber: 'C02XK1ABJG5H',
+        brand: 'Apple',
+        accessories: [{ name: 'Bộ sạc', quantity: 1 }],
+      }),
     });
   });
 });

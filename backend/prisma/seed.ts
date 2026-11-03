@@ -6,6 +6,7 @@ import {
   flattenSpecSheet,
   type SpecTemplateGroup,
 } from '../src/devices/spec-sheet.util';
+import { createHash } from 'crypto';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { readManifest, slugify, uploadedUrls } from '../scripts/device-images/manifest-store';
@@ -786,6 +787,24 @@ async function findOrCreateCategory(input: { name: string; description: string }
   return prisma.category.create({ data: { ...input, specTemplate } });
 }
 
+// Phụ kiện mặc định theo danh mục (cùng bảng với migration 20261104090000).
+const DEFAULT_ACCESSORIES: Record<string, { name: string; quantity: number }[]> = JSON.parse(
+  readFileSync(join(__dirname, 'seed-data/default-accessories.json'), 'utf8'),
+);
+
+/**
+ * Serial MẪU (ổn định theo tên máy để seed chạy lại không đổi số), hãng = từ đầu
+ * tiên của tên, phụ kiện theo danh mục. Cửa hàng thật phải nhập đúng serial in
+ * trên máy ở trang sửa thiết bị.
+ */
+function deviceIdentity(name: string, categoryName: string) {
+  return {
+    serialNumber: `TR-${createHash('md5').update(name).digest('hex').slice(0, 10).toUpperCase()}`,
+    brand: name.split(' ')[0],
+    accessories: (DEFAULT_ACCESSORIES[categoryName] ?? []) as unknown as Prisma.InputJsonValue,
+  };
+}
+
 async function seedDevice(categoryId: string, categoryName: string, device: DeviceSeed) {
   // Thiết bị có trong manifest ảnh → dùng đúng danh sách ảnh đã upload (rỗng nếu
   // chưa tìm được ảnh đúng model — không dùng ảnh sai cho đủ). Không có → giữ nguyên.
@@ -812,7 +831,15 @@ async function seedDevice(categoryId: string, categoryName: string, device: Devi
   if (existing) {
     await prisma.device.update({
       where: { id: existing.id },
-      data: { name: device.name, ...specFields, ...(images ? { images } : {}) },
+      data: {
+        name: device.name,
+        ...specFields,
+        ...(images ? { images } : {}),
+        // Chỉ điền khi còn trống — không ghi đè serial admin đã nhập thật.
+        ...(existing.serialNumber
+          ? {}
+          : deviceIdentity(device.name, categoryName)),
+      },
     });
     const renamed = existing.name !== device.name ? ` (đổi tên từ "${existing.name}")` : '';
     console.log(`  🔄 Đồng bộ ${device.name}${renamed} — ${specSheet.length} thông số`);
@@ -823,6 +850,7 @@ async function seedDevice(categoryId: string, categoryName: string, device: Devi
     data: {
       name: device.name,
       categoryId,
+      ...deviceIdentity(device.name, categoryName),
       ...specFields,
       pricePerHour: device.pricePerHour,
       pricePerDay: device.pricePerDay,
