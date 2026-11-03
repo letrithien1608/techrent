@@ -36,9 +36,9 @@ describe('translateUniqueConstraintError', () => {
   it('trả nguyên lỗi gốc nếu KHÔNG phải P2002', () => {
     const otherError = new Error('lỗi khác không liên quan');
 
-    expect(
-      translateUniqueConstraintError(otherError, { phone: 'x' }),
-    ).toBe(otherError);
+    expect(translateUniqueConstraintError(otherError, { phone: 'x' })).toBe(
+      otherError,
+    );
   });
 
   it('trả nguyên lỗi gốc nếu P2002 nhưng target không khớp field nào đã khai báo', () => {

@@ -233,7 +233,7 @@ describe('PaymentsService', () => {
       );
     });
 
-    it('thanh toán thành công: sinh hợp đồng với CCCD MASKED', async () => {
+    it('thanh toán thành công: PaymentsModule KHÔNG tự sinh hợp đồng (BookingsModule lo)', async () => {
       prisma.payment.findFirst.mockResolvedValue({
         id: 'payment-1',
         bookingId,
@@ -246,10 +246,7 @@ describe('PaymentsService', () => {
 
       await service.handleIpn(buildQuery());
 
-      expect(prisma.booking.update).toHaveBeenCalledWith({
-        where: { id: bookingId },
-        data: { contractContent: expect.stringContaining('********0000') },
-      });
+      expect(prisma.booking.update).not.toHaveBeenCalled();
     });
 
     it('KHÔNG tạo thông báo trùng nếu updateMany không đổi gì (đã confirmed từ trước, race hiếm)', async () => {

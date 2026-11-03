@@ -46,6 +46,11 @@ describe('BookingsService', () => {
   let ttlQueue: { add: jest.Mock; getJob: jest.Mock };
   let paymentsService: { markDepositPaymentRefunded: jest.Mock };
   let uploadService: { uploadInspectionImages: jest.Mock };
+  let contractService: {
+    saveSnapshot: jest.Mock;
+    renderForPrint: jest.Mock;
+    renderPdf: jest.Mock;
+  };
   let usersService: { findByIdOrThrow: jest.Mock; revealCccd: jest.Mock };
   let realtimeGateway: { emitDeviceStatusChanged: jest.Mock };
   let notificationsService: { create: jest.Mock; createForRoles: jest.Mock };
@@ -140,6 +145,11 @@ describe('BookingsService', () => {
     paymentsService = {
       markDepositPaymentRefunded: jest.fn().mockResolvedValue(undefined),
     };
+    contractService = {
+      saveSnapshot: jest.fn().mockResolvedValue(undefined),
+      renderForPrint: jest.fn().mockResolvedValue('<html>hợp đồng</html>'),
+      renderPdf: jest.fn().mockResolvedValue(Buffer.from('%PDF')),
+    };
     uploadService = {
       uploadInspectionImages: jest
         .fn()
@@ -181,6 +191,7 @@ describe('BookingsService', () => {
       notificationsService as any,
       devicesCacheService as any,
       uploadService as any,
+      contractService as any,
     );
   });
 
@@ -555,7 +566,7 @@ describe('BookingsService', () => {
       );
     });
 
-    it('confirm() sinh và lưu hợp đồng với CCCD dạng MASKED', async () => {
+    it('confirm() lưu bản hợp đồng (CCCD che) qua ContractService', async () => {
       prisma.booking.findUnique.mockResolvedValue({
         ...baseBooking,
         status: BookingStatus.pending,
@@ -568,19 +579,10 @@ describe('BookingsService', () => {
 
       await service.confirm(baseBooking.id);
 
-      expect(prisma.booking.update).toHaveBeenCalledWith({
-        where: { id: baseBooking.id },
-        data: { contractContent: expect.stringContaining('********0000') },
-      });
-      const contractCall = prisma.booking.update.mock.calls.find(
-        (call) => 'contractContent' in call[0].data,
-      );
-      expect(contractCall![0].data.contractContent).not.toContain(
-        '001234000000',
-      );
+      expect(contractService.saveSnapshot).toHaveBeenCalledWith(baseBooking.id);
     });
 
-    it('confirm() không hỏng việc xác nhận dù sinh hợp đồng thất bại', async () => {
+    it('confirm() không hỏng việc xác nhận dù lưu hợp đồng thất bại', async () => {
       prisma.booking.findUnique.mockResolvedValue({
         ...baseBooking,
         status: BookingStatus.pending,
@@ -590,7 +592,7 @@ describe('BookingsService', () => {
         status: BookingStatus.confirmed,
       });
       ttlQueue.getJob.mockResolvedValue(null);
-      prisma.device.findUniqueOrThrow.mockRejectedValue(new Error('DB down'));
+      contractService.saveSnapshot.mockRejectedValue(new Error('DB down'));
 
       const result = await service.confirm(baseBooking.id);
 
@@ -1165,26 +1167,31 @@ describe('BookingsService', () => {
   });
 
   describe('getContractForPrint', () => {
-    it('sinh hợp đồng với CCCD giải mã ĐẦY ĐỦ (khác bản lưu masked)', async () => {
+    it('trả HTML bản in (dựng bởi ContractService, kèm người in) + trạng thái ký', async () => {
       prisma.booking.findUnique.mockResolvedValue(baseBooking);
 
-      const result = await service.getContractForPrint(baseBooking.id);
-
-      expect(usersService.revealCccd).toHaveBeenCalledWith(
-        baseBooking.userId,
-        '5',
+      const result = await service.getContractForPrint(
+        baseBooking.id,
+        admin.userId,
       );
-      expect(result.content).toContain('001234000000');
-      expect(result.content).not.toContain('********0000');
-      expect(result.signed).toBe(false);
+
+      expect(contractService.renderForPrint).toHaveBeenCalledWith(
+        baseBooking.id,
+        admin.userId,
+      );
+      expect(result).toEqual({
+        html: '<html>hợp đồng</html>',
+        signed: false,
+        signedAt: null,
+      });
     });
 
     it('ném NotFoundException nếu booking không tồn tại', async () => {
       prisma.booking.findUnique.mockResolvedValue(null);
 
-      await expect(service.getContractForPrint('ghost')).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      await expect(
+        service.getContractForPrint('ghost', admin.userId),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
   });
 

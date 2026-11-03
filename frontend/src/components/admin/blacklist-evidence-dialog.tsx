@@ -111,9 +111,9 @@ export function BlacklistEvidenceDialog({ user }: { user: AdminUser }) {
                       >
                         {status.label}
                       </span>
-                      {/* Chỉ các booking ĐÃ confirmed/chuyển tiếp mới có hợp đồng
-                       * (xem contract-template.util.ts) — pending chưa có gì để xem. */}
-                      {booking.contractContent && (
+                      {/* Đơn đã xác nhận trở đi mới có hợp đồng (trang hợp đồng tự
+                       * dựng lại bản mới nhất từ dữ liệu đơn). */}
+                      {["confirmed", "ongoing", "completed", "lost"].includes(booking.status) && (
                         <Button
                           variant="ghost"
                           size="icon-sm"

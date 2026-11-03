@@ -389,12 +389,8 @@ export class BookingIssuesService {
       DeviceStatus.rented,
     );
     const updated = await this.bookingsService.findByIdOrThrow(booking.id);
-    // Hợp đồng ghi tên máy mới; trạng thái ký giữ nguyên (nhân viên in lại nếu cần).
-    try {
-      await this.bookingsService.generateAndSaveContract(updated);
-    } catch {
-      // Không làm hỏng việc đổi máy — admin vẫn in lại được từ trang hợp đồng.
-    }
+    // Hợp đồng ghi máy mới + Phụ lục đổi thiết bị (trạng thái ký giữ nguyên).
+    await this.bookingsService.refreshContractSnapshot(booking.id);
     await this.bookingsService.notifyCustomer(updated, {
       kind: 'issue_resolved',
       resolution: 'swapped',
@@ -457,6 +453,7 @@ export class BookingIssuesService {
       booking.deviceId,
       DeviceStatus.maintenance,
     );
+    await this.bookingsService.refreshContractSnapshot(booking.id);
     await this.bookingsService.notifyCustomer(booking, {
       kind: 'issue_resolved',
       resolution: 'ended_early',

@@ -61,7 +61,7 @@ export interface Booking {
   totalPrice: string;
   depositAmount: string;
   createdAt: string;
-  /** Bản MASKED CCCD, tự sinh khi booking chuyển `confirmed` — `null` trước đó. */
+  /** Bản hợp đồng HTML (CCCD che) lưu ở các mốc xác nhận/giao/trả/đổi máy — `null` nếu chưa có. */
   contractContent?: string | null;
   contractSigned?: boolean;
   contractSignedAt?: string | null;
@@ -98,7 +98,8 @@ export interface Booking {
 }
 
 export interface BookingContract {
-  content: string;
+  /** Trang HTML hoàn chỉnh (CSS in A4 + font nhúng) — hiển thị trong iframe. */
+  html: string;
   signed: boolean;
   signedAt: string | null;
 }
@@ -281,6 +282,12 @@ export async function fetchContractForPrint(
   id: string,
 ): Promise<BookingContract> {
   const { data } = await api.get<BookingContract>(`/bookings/${id}/contract`);
+  return data;
+}
+
+/** PDF sinh phía server (sạch, không header/footer trình duyệt). */
+export async function downloadContractPdf(id: string): Promise<Blob> {
+  const { data } = await api.get<Blob>(`/bookings/${id}/contract/pdf`, { responseType: "blob" });
   return data;
 }
 

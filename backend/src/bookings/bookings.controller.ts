@@ -8,11 +8,14 @@ import {
   Patch,
   Post,
   Query,
+  Res,
+  StreamableFile,
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { Throttle, minutes } from '@nestjs/throttler';
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -188,12 +191,28 @@ export class BookingsController {
     return this.bookingsService.cancel(id, user, dto);
   }
 
-  // Admin/staff "Xem/In hợp đồng" — CCCD giải mã đầy đủ để in giấy, KHÔNG lưu
-  // lại (xem BookingsService.getContractForPrint()).
+  // Xem/In hợp đồng (HTML hoàn chỉnh) — CCCD đầy đủ, sinh tạm, KHÔNG lưu lại.
   @Roles(Role.staff, Role.admin)
   @Get(':id/contract')
-  getContract(@Param('id') id: string) {
-    return this.bookingsService.getContractForPrint(id);
+  getContract(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    return this.bookingsService.getContractForPrint(id, user.userId);
+  }
+
+  // PDF sinh phía server: sạch, không header/footer trình duyệt.
+  @Roles(Role.staff, Role.admin)
+  @Get(':id/contract/pdf')
+  async getContractPdf(
+    @Param('id') id: string,
+    @CurrentUser() user: RequestUser,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const pdf = await this.bookingsService.getContractPdf(id, user.userId);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="hop-dong-${id.slice(0, 8).toUpperCase()}.pdf"`,
+      'Cache-Control': 'no-store',
+    });
+    return new StreamableFile(pdf);
   }
 
   @Roles(Role.staff, Role.admin)

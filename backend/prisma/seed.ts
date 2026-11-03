@@ -792,6 +792,16 @@ const DEFAULT_ACCESSORIES: Record<string, { name: string; quantity: number }[]> 
   readFileSync(join(__dirname, 'seed-data/default-accessories.json'), 'utf8'),
 );
 
+// Tên dòng sản phẩm → hãng (cùng bảng với migration 20261104093000).
+const BRAND_ALIASES: Record<string, string> = {
+  MacBook: 'Apple',
+  iPad: 'Apple',
+  iPhone: 'Apple',
+  PlayStation: 'Sony',
+  Steam: 'Valve',
+  Xbox: 'Microsoft',
+};
+
 /**
  * Serial MẪU (ổn định theo tên máy để seed chạy lại không đổi số), hãng = từ đầu
  * tiên của tên, phụ kiện theo danh mục. Cửa hàng thật phải nhập đúng serial in
@@ -800,7 +810,7 @@ const DEFAULT_ACCESSORIES: Record<string, { name: string; quantity: number }[]> 
 function deviceIdentity(name: string, categoryName: string) {
   return {
     serialNumber: `TR-${createHash('md5').update(name).digest('hex').slice(0, 10).toUpperCase()}`,
-    brand: name.split(' ')[0],
+    brand: BRAND_ALIASES[name.split(' ')[0]] ?? name.split(' ')[0],
     accessories: (DEFAULT_ACCESSORIES[categoryName] ?? []) as unknown as Prisma.InputJsonValue,
   };
 }

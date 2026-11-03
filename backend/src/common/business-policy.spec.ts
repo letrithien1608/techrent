@@ -2,6 +2,7 @@ import {
   addBusinessDays,
   calculateLostDeviceDebt,
   calculateUnusedRentalRefund,
+  describeRentalPricing,
   isEquivalentValue,
   calculateDeposit,
   calculateDepositSettlement,
@@ -253,5 +254,53 @@ describe('business-policy', () => {
     expect(isEquivalentValue(20_000_000, 24_000_000)).toBe(true);
     expect(isEquivalentValue(20_000_000, 16_000_000)).toBe(true);
     expect(isEquivalentValue(20_000_000, 24_000_001)).toBe(false);
+  });
+
+  describe('describeRentalPricing (số giờ/ngày thuê in trong hợp đồng)', () => {
+    const start = new Date('2026-11-05T02:00:00Z');
+    it('đơn 9 tiếng tính theo giờ', () => {
+      expect(
+        describeRentalPricing(
+          60_000,
+          450_000,
+          start,
+          new Date('2026-11-05T11:00:00Z'),
+        ),
+      ).toEqual({
+        unit: 'hour',
+        quantity: 9,
+        unitPrice: 60_000,
+        total: 540_000,
+        totalHours: 9,
+      });
+    });
+
+    it('đơn 2 ngày 9 giờ tính tròn lên 3 ngày, giữ tổng số giờ thật', () => {
+      expect(
+        describeRentalPricing(
+          60_000,
+          450_000,
+          start,
+          new Date('2026-11-07T11:00:00Z'),
+        ),
+      ).toEqual({
+        unit: 'day',
+        quantity: 3,
+        unitPrice: 450_000,
+        total: 1_350_000,
+        totalHours: 57,
+      });
+    });
+
+    it('đúng 24 giờ vẫn tính theo giờ', () => {
+      expect(
+        describeRentalPricing(
+          60_000,
+          450_000,
+          start,
+          new Date('2026-11-06T02:00:00Z'),
+        ).unit,
+      ).toBe('hour');
+    });
   });
 });

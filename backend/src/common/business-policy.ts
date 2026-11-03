@@ -1,5 +1,5 @@
 // Nguồn sự thật DUY NHẤT cho các con số chính sách thuê thiết bị — dùng chung
-// cho nghiệp vụ (BookingsService), mẫu hợp đồng (contract-template.util.ts) và
+// cho nghiệp vụ (BookingsService), mẫu hợp đồng (bookings/contract/contract-html.ts) và
 // Trợ lý AI (KnowledgeService điền vào kho kiến thức lúc runtime). Đổi số ở đây
 // thì cả 3 nơi tự đổi theo, không có bản chép tay nào bị lệch.
 //
@@ -112,17 +112,52 @@ export function calculateLateFee(
   );
 }
 
+export interface RentalPricing {
+  /** Tính theo giờ (≤ HOURLY_PRICING_MAX_HOURS) hay theo ngày. */
+  unit: 'hour' | 'day';
+  /** Số giờ/ngày tính tiền (đã làm tròn lên). */
+  quantity: number;
+  unitPrice: number;
+  total: number;
+  /** Tổng thời lượng thuê thực, làm tròn lên theo giờ. */
+  totalHours: number;
+}
+
+/** Diễn giải cách tính tiền thuê — dùng cho hợp đồng; `calculateRentalPrice` dùng lại đúng hàm này. */
+export function describeRentalPricing(
+  pricePerHour: number,
+  pricePerDay: number,
+  start: Date,
+  end: Date,
+): RentalPricing {
+  const durationMs = end.getTime() - start.getTime();
+  const totalHours = Math.ceil(durationMs / HOUR_MS);
+  if (durationMs <= HOURLY_PRICING_MAX_HOURS * HOUR_MS) {
+    return {
+      unit: 'hour',
+      quantity: totalHours,
+      unitPrice: pricePerHour,
+      total: pricePerHour * totalHours,
+      totalHours,
+    };
+  }
+  const days = Math.ceil(durationMs / DAY_MS);
+  return {
+    unit: 'day',
+    quantity: days,
+    unitPrice: pricePerDay,
+    total: pricePerDay * days,
+    totalHours,
+  };
+}
+
 export function calculateRentalPrice(
   pricePerHour: number,
   pricePerDay: number,
   start: Date,
   end: Date,
 ): number {
-  const durationMs = end.getTime() - start.getTime();
-  if (durationMs <= HOURLY_PRICING_MAX_HOURS * HOUR_MS) {
-    return pricePerHour * Math.ceil(durationMs / HOUR_MS);
-  }
-  return pricePerDay * Math.ceil(durationMs / DAY_MS);
+  return describeRentalPricing(pricePerHour, pricePerDay, start, end).total;
 }
 
 /** Đổi tỷ lệ 0.5 → "50%" để chèn vào văn bản (hợp đồng, kho kiến thức AI). */

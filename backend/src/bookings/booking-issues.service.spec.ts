@@ -120,7 +120,7 @@ describe('BookingIssuesService', () => {
       notifyStaff: jest.fn().mockResolvedValue(undefined),
       notifyCustomer: jest.fn().mockResolvedValue(undefined),
       afterDeviceStatusChanged: jest.fn().mockResolvedValue(undefined),
-      generateAndSaveContract: jest.fn().mockResolvedValue(undefined),
+      refreshContractSnapshot: jest.fn().mockResolvedValue(undefined),
     };
     service = new BookingIssuesService(
       prisma,

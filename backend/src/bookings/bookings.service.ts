@@ -50,7 +50,7 @@ import {
   HOUR_MS,
   RETURN_DAMAGE_MIN_PHOTOS,
 } from '../common/business-policy';
-import { buildContractContent } from './contract-template.util';
+import { ContractService } from './contract/contract.service';
 
 export { BOOKING_TTL_QUEUE, BOOKING_TTL_JOB };
 
@@ -151,6 +151,7 @@ export class BookingsService {
     private readonly notificationsService: NotificationsService,
     private readonly devicesCacheService: DevicesCacheService,
     private readonly uploadService: UploadService,
+    private readonly contractService: ContractService,
   ) {}
 
   /**
@@ -469,101 +470,44 @@ export class BookingsService {
       );
     }
 
-    // Sinh hợp đồng ngay khi booking được xác nhận — lỗi ở đây KHÔNG được làm
-    // hỏng việc confirm (cùng pattern try/catch với TTL/notification ở trên).
-    // Admin vẫn có thể bấm lại "Xem/In hợp đồng" sau nếu bước này lỗi tạm thời,
-    // vì getContractForPrint() tự sinh lại nội dung mỗi lần gọi, không phụ
-    // thuộc việc contractContent đã được lưu từ bước này hay chưa.
-    try {
-      await this.generateAndSaveContract(updated);
-    } catch (error) {
-      this.logger.warn(
-        `Không sinh được hợp đồng cho booking ${id}: ${(error as Error).message}`,
-      );
-    }
-
+    await this.refreshContractSnapshot(id);
     return updated;
   }
 
   /**
-   * Sinh nội dung hợp đồng (CCCD dạng MASKED, an toàn để lưu lâu dài trong DB)
-   * và lưu vào `Booking.contractContent`. Gọi từ CẢ 2 đường dẫn tới trạng thái
-   * `confirmed` — `confirm()` ở trên VÀ `PaymentsService.confirmBookingAfterPayment()`
-   * (xem file đó — lặp lại logic này vì 2 module không import chéo nhau, đúng
-   * nguyên tắc kiến trúc 1 chiều Payments→Bookings đã có từ Tuần 7).
+   * Lưu bản hợp đồng (CCCD CHE) vào `Booking.contractContent` ở các mốc xác
+   * nhận, giao máy, trả máy, đổi máy — lỗi KHÔNG làm hỏng thao tác chính (trang
+   * in/PDF luôn dựng lại hợp đồng mới nhất mỗi lần gọi).
    */
-  async generateAndSaveContract(booking: Booking): Promise<void> {
-    const [device, user] = await Promise.all([
-      this.prisma.device.findUniqueOrThrow({
-        where: { id: booking.deviceId },
-      }),
-      this.usersService.findByIdOrThrow(booking.userId),
-    ]);
-    const content = buildContractContent({
-      bookingId: booking.id,
-      createdAt: booking.createdAt,
-      startTime: booking.startTime,
-      endTime: booking.endTime,
-      totalPrice: Number(booking.totalPrice),
-      depositAmount: Number(booking.depositAmount),
-      customerName: user.name,
-      customerCccd: user.cccdMasked ?? '(chưa có trong hồ sơ)',
-      customerPhone: user.phone,
-      deviceName: device.name,
-      deviceCondition: device.detailedDescription,
-      deviceOriginalPrice: Number(device.originalPrice),
-      devicePricePerDay: Number(device.pricePerDay),
-    });
-    await this.prisma.booking.update({
-      where: { id: booking.id },
-      data: { contractContent: content },
-    });
+  async refreshContractSnapshot(bookingId: string): Promise<void> {
+    try {
+      await this.contractService.saveSnapshot(bookingId);
+    } catch (error) {
+      this.logger.warn(
+        `Không lưu được bản hợp đồng cho booking ${bookingId}: ${(error as Error).message}`,
+      );
+    }
   }
 
   /**
-   * Sinh bản hợp đồng để IN — CCCD giải mã ĐẦY ĐỦ (khác bản lưu trong
-   * `contractContent`, luôn là bản masked). Hợp đồng in ra giấy cho khách ký
-   * tay cần đúng số CCCD để có giá trị pháp lý — khác mục đích hiển thị trên
-   * web (chỉ cần masked). KHÔNG BAO GIỜ lưu lại bản đầy đủ này, chỉ sinh tạm
-   * mỗi lần gọi — admin/staff only (xem `@Roles` ở controller).
+   * Bản hợp đồng để xem/in/tải PDF — CCCD ĐẦY ĐỦ (giấy ký tay cần đúng số
+   * CCCD), sinh tạm mỗi lần gọi, KHÔNG lưu lại; chỉ staff/admin (`@Roles`).
    */
-  async getContractForPrint(id: string): Promise<{
-    content: string;
-    signed: boolean;
-    signedAt: Date | null;
-  }> {
+  async getContractForPrint(
+    id: string,
+    actorId: string,
+  ): Promise<{ html: string; signed: boolean; signedAt: Date | null }> {
     const booking = await this.findByIdOrThrow(id);
-    const [device, user] = await Promise.all([
-      this.prisma.device.findUniqueOrThrow({
-        where: { id: booking.deviceId },
-      }),
-      this.usersService.findByIdOrThrow(booking.userId),
-    ]);
-    const encryptionKey = this.configService.get<string>('CCCD_ENCRYPTION_KEY');
-    const fullCccd = await this.usersService.revealCccd(
-      booking.userId,
-      encryptionKey!,
-    );
-    const content = buildContractContent({
-      bookingId: booking.id,
-      createdAt: booking.createdAt,
-      startTime: booking.startTime,
-      endTime: booking.endTime,
-      totalPrice: Number(booking.totalPrice),
-      depositAmount: Number(booking.depositAmount),
-      customerName: user.name,
-      customerCccd: fullCccd,
-      customerPhone: user.phone,
-      deviceName: device.name,
-      deviceCondition: device.detailedDescription,
-      deviceOriginalPrice: Number(device.originalPrice),
-      devicePricePerDay: Number(device.pricePerDay),
-    });
+    const html = await this.contractService.renderForPrint(id, actorId);
     return {
-      content,
+      html,
       signed: booking.contractSigned,
       signedAt: booking.contractSignedAt,
     };
+  }
+
+  getContractPdf(id: string, actorId: string): Promise<Buffer> {
+    return this.contractService.renderPdf(id, actorId);
   }
 
   /** Nhân viên đánh dấu đã/chưa ký tay — KHÔNG lưu ảnh hợp đồng đã ký (ngoài phạm vi). */
@@ -686,6 +630,7 @@ export class BookingsService {
     ]);
     await this.afterDeviceStatusChanged(booking.deviceId, DeviceStatus.rented);
     await this.notifyCustomer(booking, { kind: 'ongoing' });
+    await this.refreshContractSnapshot(id);
     return updated;
   }
 
@@ -812,6 +757,7 @@ export class BookingsService {
       refundAmount: settlement.refundAmount,
       amountOwed: settlement.amountOwed,
     });
+    await this.refreshContractSnapshot(id);
     return this.findByIdWithDeviceOrThrow(id);
   }
 

@@ -61,7 +61,9 @@ function collectPossibleConstraintStrings(
   return values.flatMap((value) => {
     if (typeof value === 'string') return [value.toLowerCase()];
     if (Array.isArray(value)) {
-      return value.filter((v): v is string => typeof v === 'string').map((v) => v.toLowerCase());
+      return value
+        .filter((v): v is string => typeof v === 'string')
+        .map((v) => v.toLowerCase());
     }
     return [];
   });
