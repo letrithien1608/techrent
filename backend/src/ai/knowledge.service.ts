@@ -6,7 +6,10 @@ import {
   calculateDeposit,
   calculateDepositSettlement,
   calculateLateFeeForDays,
+  calculateLostDeviceDebt,
   calculateRefundPercentage,
+  calculateUnusedRentalRefund,
+  DAY_MS,
   DEFAULT_BOOKING_TTL_MINUTES,
   DEPOSIT_RATIO,
   DEPOSIT_REFUND_BUSINESS_DAYS,
@@ -14,7 +17,10 @@ import {
   HANDOVER_MIN_PHOTOS,
   HOURLY_PRICING_MAX_HOURS,
   LATE_FEE_DAILY_RATIO,
+  LOST_DEVICE_MAX_CLAIM_RATIO,
+  LOST_SUSPECT_OVERDUE_DAYS,
   REFUND_TIERS,
+  REPLACEMENT_VALUE_TOLERANCE,
 } from '../common/business-policy';
 import { DeviceStatus } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -72,11 +78,6 @@ export function formatVnd(value: number): string {
   return `${Math.round(value).toLocaleString('vi-VN')}đ`;
 }
 
-/**
- * Giá trị điền vào placeholder `{{...}}` trong kho kiến thức — TÍNH TỪ hằng số/
- * hàm của business-policy.ts, không chép tay, nên đổi chính sách ở code là
- * Trợ lý AI tự nói theo.
- */
 /** "cọc 15.000.000đ, trả trễ 1 ngày (phạt 80.000đ) và hư hỏng 1.000.000đ → hoàn 13.920.000đ" — tính bằng hàm nghiệp vụ. */
 function settlementExample(pricePerDay: number): string {
   const deposit = calculateDeposit(DEPOSIT_EXAMPLE_PRICE);
@@ -93,6 +94,40 @@ function settlementExample(pricePerDay: number): string {
   );
 }
 
+/** Thuê 4 ngày, máy hỏng sau 1 ngày → kết thúc sớm, hoàn tiền thuê phần chưa dùng. */
+function earlyEndExample(pricePerDay: number): string {
+  const totalPrice = pricePerDay * 4;
+  const refund = calculateUnusedRentalRefund({
+    totalPrice,
+    startTime: new Date(0),
+    endTime: new Date(4 * DAY_MS),
+    endedAt: new Date(DAY_MS),
+  });
+  return `thuê 4 ngày tiền thuê ${formatVnd(totalPrice)}, máy hỏng sau 1 ngày và kết thúc sớm thì hoàn ${formatVnd(refund)} tiền thuê cùng toàn bộ tiền cọc.`;
+}
+
+/** Máy giá trị 30tr, cọc 15tr, quá hạn (N+1) ngày rồi xác nhận mất. */
+function lostExample(pricePerDay: number): string {
+  const days = LOST_SUSPECT_OVERDUE_DAYS + 1;
+  const deposit = calculateDeposit(DEPOSIT_EXAMPLE_PRICE);
+  const { lateFee, amountOwed } = calculateLostDeviceDebt({
+    originalPrice: DEPOSIT_EXAMPLE_PRICE,
+    depositAmount: deposit,
+    lateFee: calculateLateFeeForDays(days, pricePerDay, DEPOSIT_EXAMPLE_PRICE),
+  });
+  return (
+    `thiết bị giá trị ${formatVnd(DEPOSIT_EXAMPLE_PRICE)}, tiền cọc ${formatVnd(deposit)}, ` +
+    `quá hạn ${days} ngày (phí trễ hạn ${formatVnd(lateFee)}) rồi bị xác nhận mất: cửa hàng giữ ` +
+    `${formatVnd(deposit)} tiền cọc và khách còn nợ ${formatVnd(DEPOSIT_EXAMPLE_PRICE)} − ` +
+    `${formatVnd(deposit)} + ${formatVnd(lateFee)} = ${formatVnd(amountOwed)}.`
+  );
+}
+
+/**
+ * Giá trị điền vào placeholder `{{...}}` trong kho kiến thức — TÍNH TỪ hằng số/
+ * hàm của business-policy.ts, không chép tay, nên đổi chính sách ở code là
+ * Trợ lý AI tự nói theo.
+ */
 export function buildPolicyValues(ttlMinutes: number): Record<string, string> {
   const [fullTier, partialTier] = REFUND_TIERS;
   const examplePrice = LATE_FEE_EXAMPLE_PRICE_PER_DAY;
@@ -127,6 +162,11 @@ export function buildPolicyValues(ttlMinutes: number): Record<string, string> {
     DEPOSIT_REFUND_BUSINESS_DAYS: String(DEPOSIT_REFUND_BUSINESS_DAYS),
     HANDOVER_MIN_PHOTOS: String(HANDOVER_MIN_PHOTOS),
     SETTLEMENT_EXAMPLE: settlementExample(examplePrice),
+    LOST_SUSPECT_OVERDUE_DAYS: String(LOST_SUSPECT_OVERDUE_DAYS),
+    LOST_MAX_CLAIM_PERCENT: formatPercent(LOST_DEVICE_MAX_CLAIM_RATIO),
+    REPLACEMENT_TOLERANCE_PERCENT: formatPercent(REPLACEMENT_VALUE_TOLERANCE),
+    EARLY_END_EXAMPLE: earlyEndExample(examplePrice),
+    LOST_EXAMPLE: lostExample(examplePrice),
     // Chỉ dùng cho bộ eval (đáp án P8) — cùng ví dụ với SETTLEMENT_EXAMPLE.
     SETTLEMENT_EXAMPLE_REFUND: formatVnd(
       calculateDepositSettlement({

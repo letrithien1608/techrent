@@ -10,10 +10,21 @@ export interface RentalPolicy {
   depositRefundBusinessDays: number;
   handoverMinPhotos: number;
   storePickupOnly: boolean;
+  lostSuspectOverdueDays: number;
+  lostDeviceMaxClaimRatio: number;
+  replacementValueTolerance: number;
   examples: {
     deposit: { originalPrice: number; deposit: number };
     lateFee: { pricePerDay: number; byDays: { days: number; total: number }[] };
     refund: { hoursBeforeStart: number; percentage: number }[];
+    earlyEnd: { totalPrice: number; daysUsed: number; rentalRefund: number };
+    lost: {
+      originalPrice: number;
+      depositAmount: number;
+      overdueDays: number;
+      lateFee: number;
+      amountOwed: number;
+    };
     settlement: {
       depositAmount: number;
       lateFee: number;

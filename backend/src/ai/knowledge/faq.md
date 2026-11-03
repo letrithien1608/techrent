@@ -40,7 +40,7 @@ Có. Hợp đồng tự lập khi đơn được xác nhận; khi nhận máy, n
 Hiện hệ thống chưa có chương trình giảm giá. Giá thuê áp dụng đúng như hiển thị trên trang thiết bị.
 
 ## Tại sao tôi không đặt thuê được?
-Các lý do thường gặp: chưa bổ sung số CCCD, chưa nộp đủ ảnh xác thực danh tính, khung giờ đã có người đặt, thiết bị đang bảo trì, hoặc tài khoản đã bị chặn. Thông báo lỗi sẽ chỉ rõ nguyên nhân.
+Các lý do thường gặp: chưa bổ sung số CCCD, chưa nộp đủ ảnh xác thực danh tính, còn khoản nợ chưa thanh toán, khung giờ đã có người đặt, thiết bị đang bảo trì, hoặc tài khoản đã bị chặn. Thông báo lỗi sẽ chỉ rõ nguyên nhân.
 
 ## Thông tin CCCD của tôi có an toàn không?
 Số CCCD được mã hoá khi lưu, chỉ hiển thị 4 số cuối. Ảnh xác thực lưu riêng tư, chỉ quản trị viên xem được qua link có hạn 5 phút. TechRent không yêu cầu bạn gửi CCCD, mật khẩu hay OTP qua chat.
@@ -62,6 +62,15 @@ Không. TechRent không giao hàng tận nơi — bạn nhận và trả máy tr
 
 ## Tiền bồi thường hư hỏng lớn hơn tiền cọc thì sao?
 Khi trả máy, phí trễ hạn và tiền bồi thường hư hỏng được trừ vào tiền cọc. Nếu tổng khoản trừ lớn hơn tiền cọc, bạn không được hoàn cọc và phần còn thiếu được ghi thành khoản nợ. Bạn phải thanh toán hết khoản nợ này tại cửa hàng (tiền mặt hoặc chuyển khoản) trước khi được đặt thuê tiếp; số nợ hiển thị ở trang Tài khoản và trang chi tiết đơn.
+
+## Máy bị lỗi khi đang thuê thì báo ở đâu?
+Vào "Đơn của tôi", mở đơn đang thuê và bấm "Báo lỗi thiết bị", mô tả lỗi và gửi kèm ảnh/video. Lỗi do thiết bị: cửa hàng đổi máy tương đương hoặc kết thúc sớm, hoàn tiền thuê phần chưa dùng và hoàn đủ cọc. Lỗi do người thuê: chi phí sửa trừ vào cọc khi trả máy.
+
+## Không trả máy đúng hạn thì sao?
+Bị tính phí trễ hạn leo thang. Quá hạn từ {{LOST_SUSPECT_OVERDUE_DAYS}} ngày, đơn bị đánh dấu nghi mất thiết bị; nếu cửa hàng xác nhận mất thì giữ toàn bộ tiền cọc, bạn phải trả thêm phần còn thiếu của giá trị máy cộng phí trễ hạn, và tài khoản bị đưa vào danh sách đen.
+
+## Tôi đang còn nợ, có thuê tiếp được không?
+Không. Khi còn nợ, hệ thống chặn đặt thuê mới và báo rõ số tiền. Bạn thanh toán tại cửa hàng (tiền mặt hoặc chuyển khoản, trả nhiều lần cũng được); trả hết nợ thì đặt thuê lại bình thường. Số nợ xem ở trang Tài khoản.
 
 ## Bao lâu thì nhận lại tiền cọc?
 Tiền cọc hoàn lại được chuyển khoản trong tối đa {{DEPOSIT_REFUND_BUSINESS_DAYS}} ngày làm việc (không tính thứ Bảy, Chủ nhật) kể từ khi trả máy hoặc huỷ đơn. Khi chuyển xong bạn nhận thông báo kèm mã giao dịch; trạng thái hoàn cọc xem ở trang chi tiết đơn.

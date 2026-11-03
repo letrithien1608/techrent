@@ -9,6 +9,8 @@ import {
   DEPOSIT_RATIO,
   DEPOSIT_REFUND_BUSINESS_DAYS,
   formatPercent,
+  LOST_DEVICE_MAX_CLAIM_RATIO,
+  LOST_SUSPECT_OVERDUE_DAYS,
   LATE_FEE_DAILY_RATIO,
   REFUND_TIERS,
 } from '../common/business-policy';
@@ -93,8 +95,9 @@ Bên B (Bên thuê):
   4. Bên A hoàn tiền cọc bằng chuyển khoản trong tối đa ${DEPOSIT_REFUND_BUSINESS_DAYS} ngày làm việc kể từ khi Bên B trả thiết bị hoặc đơn thuê bị huỷ.
 
 ĐIỀU 7 — XỬ LÝ KHI MẤT HOẶC CHIẾM GIỮ THIẾT BỊ
-  1. Nếu Bên B làm mất thiết bị hoặc cố ý không trả lại thiết bị sau khi đã được Bên A yêu cầu bằng văn bản/tin nhắn/điện thoại, Bên A có quyền yêu cầu bồi thường toàn bộ giá trị thiết bị nêu tại Điều 2.
-  2. Nếu Bên B có hành vi chiếm giữ thiết bị trái phép sau thời hạn thuê mà không hoàn trả hoặc không liên hệ với Bên A, Bên A có quyền trình báo cơ quan công an có thẩm quyền và/hoặc khởi kiện tại Toà án nhân dân có thẩm quyền để bảo vệ quyền lợi hợp pháp của mình.
+  1. Nếu Bên B làm mất thiết bị hoặc không trả lại thiết bị quá ${LOST_SUSPECT_OVERDUE_DAYS} ngày kể từ hạn trả mà không liên hệ được, Bên A có quyền xác nhận mất thiết bị: giữ toàn bộ tiền cọc và yêu cầu Bên B thanh toán phần còn thiếu = giá trị thiết bị nêu tại Điều 2 − tiền cọc + phí trễ hạn; tổng số tiền Bên A yêu cầu (gồm tiền cọc) không vượt quá ${formatPercent(LOST_DEVICE_MAX_CLAIM_RATIO)} giá trị thiết bị. Bên B bị tạm khoá đặt thuê cho tới khi thanh toán hết khoản nợ.
+  2. Nếu thiết bị gặp lỗi trong thời gian thuê, Bên B báo ngay cho Bên A (kèm ảnh/video), không tự tháo hoặc sửa. Lỗi do thiết bị: Bên A đổi thiết bị tương đương hoặc kết thúc hợp đồng sớm và hoàn tiền thuê phần thời gian chưa sử dụng cùng toàn bộ tiền cọc. Lỗi do Bên B: chi phí sửa chữa được trừ vào tiền cọc khi trả thiết bị.
+  3. Nếu Bên B có hành vi chiếm giữ thiết bị trái phép sau thời hạn thuê mà không hoàn trả hoặc không liên hệ với Bên A, Bên A có quyền trình báo cơ quan công an có thẩm quyền và/hoặc khởi kiện tại Toà án nhân dân có thẩm quyền để bảo vệ quyền lợi hợp pháp của mình.
 
 ĐIỀU 8 — ĐIỀU KHOẢN CHUNG
   1. Hai bên cam kết thực hiện đúng các điều khoản đã thoả thuận trong hợp đồng này.

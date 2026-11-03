@@ -335,6 +335,53 @@
         "được hoàn đủ cọc",
         "không phải trả thêm"
       ]
+    },
+    {
+      "id": "I1",
+      "group": "sự cố",
+      "question": "Máy ảnh mình đang thuê bị lỗi không lấy nét được thì phải làm sao?",
+      "mustInclude": [
+        "Báo lỗi thiết bị",
+        "đổi máy|kết thúc sớm"
+      ],
+      "mustNotInclude": [
+        "mang đi sửa ở"
+      ]
+    },
+    {
+      "id": "I2",
+      "group": "sự cố",
+      "question": "Máy hỏng giữa chừng do lỗi thiết bị thì có được hoàn tiền thuê những ngày chưa dùng không?",
+      "mustInclude": [
+        "hoàn",
+        "chưa dùng|chưa sử dụng"
+      ],
+      "mustNotInclude": [
+        "không được hoàn tiền thuê"
+      ]
+    },
+    {
+      "id": "L1",
+      "group": "chính sách",
+      "question": "Nếu mình giữ máy quá hạn lâu mà không trả thì sao?",
+      "mustInclude": [
+        "{{LOST_SUSPECT_OVERDUE_DAYS}} ngày",
+        "giữ toàn bộ|danh sách đen"
+      ],
+      "mustNotInclude": []
+    },
+    {
+      "id": "N1",
+      "group": "chính sách",
+      "question": "Mình đang còn nợ cửa hàng thì có đặt thuê tiếp được không?",
+      "mustInclude": [
+        "không|chưa thể",
+        "thanh toán"
+      ],
+      "mustNotInclude": [
+        "vẫn đặt được",
+        "vẫn có thể đặt"
+      ]
     }
   ]
 }

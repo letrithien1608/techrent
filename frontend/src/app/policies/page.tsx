@@ -9,6 +9,8 @@ import {
   RotateCcw,
   ShieldCheck,
   Store,
+  TriangleAlert,
+  SearchX,
   Wallet,
   WifiOff,
   type LucideIcon,
@@ -185,6 +187,55 @@ function PolicyContent({ policy }: { policy: RentalPolicy }) {
           .
         </p>
       </PolicyCard>
+
+      {/* Các trường phiên 2 (03/11) — ẩn nếu bản cache cũ của API chưa có. */}
+      {examples.earlyEnd && examples.lost && (
+        <>
+          <PolicyCard icon={TriangleAlert} title="Máy gặp lỗi khi đang thuê">
+            <p>
+              Bấm <strong>&quot;Báo lỗi thiết bị&quot;</strong> ở trang chi tiết đơn, mô tả lỗi và gửi kèm ảnh/video.
+              Vui lòng không tự tháo hoặc mang máy đi sửa.
+            </p>
+            <ul className="list-disc space-y-1 pl-5">
+              <li>
+                <strong>Lỗi do thiết bị:</strong> đổi máy cùng loại, giá trị tương đương (chênh tối đa{" "}
+                {pct(policy.replacementValueTolerance)}), thời hạn thuê giữ nguyên — hoặc kết thúc sớm, hoàn tiền thuê
+                phần chưa dùng và hoàn đủ tiền cọc.
+              </li>
+              <li>
+                <strong>Lỗi do người thuê:</strong> chi phí sửa chữa được trừ vào tiền cọc khi trả máy.
+              </li>
+            </ul>
+            <ExampleTable
+              rows={[
+                [`Tiền thuê 4 ngày (ví dụ)`, formatVnd(examples.earlyEnd.totalPrice)],
+                [`Máy hỏng sau ${examples.earlyEnd.daysUsed} ngày → hoàn tiền thuê`, formatVnd(examples.earlyEnd.rentalRefund)],
+              ]}
+            />
+          </PolicyCard>
+
+          <PolicyCard icon={SearchX} title="Không trả máy & khoản nợ">
+            <p>
+              Quá hạn trả <strong className="text-primary">{policy.lostSuspectOverdueDays} ngày</strong> mà không trả
+              máy, đơn bị đánh dấu nghi mất thiết bị và cửa hàng liên hệ bạn. Nếu cửa hàng xác nhận mất: giữ toàn bộ
+              tiền cọc, bạn nợ thêm giá trị máy − tiền cọc + phí trễ hạn (tổng không quá{" "}
+              {pct(policy.lostDeviceMaxClaimRatio)} giá trị máy) và tài khoản bị đưa vào danh sách đen.
+            </p>
+            <ExampleTable
+              rows={[
+                ["Giá trị máy (ví dụ)", formatVnd(examples.lost.originalPrice)],
+                ["Tiền cọc bị giữ", formatVnd(examples.lost.depositAmount)],
+                [`Phí trễ hạn (${examples.lost.overdueDays} ngày)`, formatVnd(examples.lost.lateFee)],
+                ["Khoản nợ phải trả", formatVnd(examples.lost.amountOwed)],
+              ]}
+            />
+            <p className="text-sm text-muted-foreground">
+              Khi còn nợ (kể cả khi phí trễ hạn/hư hỏng lớn hơn tiền cọc lúc trả máy), bạn không thể đặt thuê mới cho
+              tới khi thanh toán hết tại cửa hàng. Khoản nợ hiển thị ở trang Tài khoản.
+            </p>
+          </PolicyCard>
+        </>
+      )}
 
       <PolicyCard icon={AlarmClock} title="Phí trả thiết bị trễ hạn">
         <p>

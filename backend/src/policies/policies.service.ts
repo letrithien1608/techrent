@@ -5,6 +5,12 @@ import {
   calculateLateFeeForDays,
   calculateRefundPercentage,
   calculateDepositSettlement,
+  calculateLostDeviceDebt,
+  calculateUnusedRentalRefund,
+  DAY_MS,
+  LOST_DEVICE_MAX_CLAIM_RATIO,
+  LOST_SUSPECT_OVERDUE_DAYS,
+  REPLACEMENT_VALUE_TOLERANCE,
   DEFAULT_BOOKING_TTL_MINUTES,
   DEPOSIT_RATIO,
   DEPOSIT_REFUND_BUSINESS_DAYS,
@@ -42,6 +48,9 @@ export class PoliciesService {
       depositRefundBusinessDays: DEPOSIT_REFUND_BUSINESS_DAYS,
       handoverMinPhotos: HANDOVER_MIN_PHOTOS,
       storePickupOnly: STORE_PICKUP_ONLY,
+      lostSuspectOverdueDays: LOST_SUSPECT_OVERDUE_DAYS,
+      lostDeviceMaxClaimRatio: LOST_DEVICE_MAX_CLAIM_RATIO,
+      replacementValueTolerance: REPLACEMENT_VALUE_TOLERANCE,
       examples: {
         deposit: {
           originalPrice: EXAMPLE_ORIGINAL_PRICE,
@@ -75,6 +84,32 @@ export class PoliciesService {
               Number.MAX_VALUE,
             ),
             damageFee: EXAMPLE_DAMAGE_FEE,
+          }),
+        },
+        // Thuê 4 ngày, máy hỏng sau 1 ngày → kết thúc sớm.
+        earlyEnd: {
+          totalPrice: EXAMPLE_PRICE_PER_DAY * 4,
+          daysUsed: 1,
+          rentalRefund: calculateUnusedRentalRefund({
+            totalPrice: EXAMPLE_PRICE_PER_DAY * 4,
+            startTime: new Date(0),
+            endTime: new Date(4 * DAY_MS),
+            endedAt: new Date(DAY_MS),
+          }),
+        },
+        // Không trả máy, quá hạn LOST_SUSPECT_OVERDUE_DAYS + 1 ngày.
+        lost: {
+          originalPrice: EXAMPLE_ORIGINAL_PRICE,
+          depositAmount: calculateDeposit(EXAMPLE_ORIGINAL_PRICE),
+          overdueDays: LOST_SUSPECT_OVERDUE_DAYS + 1,
+          ...calculateLostDeviceDebt({
+            originalPrice: EXAMPLE_ORIGINAL_PRICE,
+            depositAmount: calculateDeposit(EXAMPLE_ORIGINAL_PRICE),
+            lateFee: calculateLateFeeForDays(
+              LOST_SUSPECT_OVERDUE_DAYS + 1,
+              EXAMPLE_PRICE_PER_DAY,
+              EXAMPLE_ORIGINAL_PRICE,
+            ),
           }),
         },
         refund: [30, 10, 3].map((hoursBeforeStart) => ({

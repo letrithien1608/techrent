@@ -9,6 +9,9 @@
 - Huỷ đơn: trước giờ nhận máy từ {{REFUND_FULL_HOURS}} giờ trở lên hoàn {{REFUND_FULL_PERCENT}} cọc; từ {{REFUND_PARTIAL_HOURS}} đến dưới {{REFUND_FULL_HOURS}} giờ hoàn {{REFUND_PARTIAL_PERCENT}}; dưới {{REFUND_PARTIAL_HOURS}} giờ hoặc đã nhận máy thì không hoàn, trừ khi lỗi thuộc về cửa hàng.
 - Trả máy trễ bị phạt leo thang: {{LATE_FEE_RULE}}
 - Phải xác thực danh tính (số CCCD + ảnh CCCD 2 mặt + ảnh chân dung) trước khi đặt thuê.
+- Máy lỗi khi đang thuê: bấm "Báo lỗi thiết bị" ở chi tiết đơn; lỗi do thiết bị thì đổi máy tương đương hoặc kết thúc sớm hoàn tiền, lỗi do người thuê thì chi phí sửa trừ vào cọc.
+- Quá hạn trả {{LOST_SUSPECT_OVERDUE_DAYS}} ngày bị đánh dấu nghi mất thiết bị; nếu cửa hàng xác nhận mất thì giữ toàn bộ cọc, khách nợ phần còn thiếu và bị đưa vào danh sách đen.
+- Khách còn nợ không đặt thuê được cho tới khi thanh toán hết tại cửa hàng.
 
 ## Tiền đặt cọc
 - Tiền cọc = {{DEPOSIT_RATE}} giá trị tài sản (giá gốc) của thiết bị. Giá trị này hiển thị ở trang chi tiết thiết bị, dòng "Giá trị tài sản".
@@ -66,6 +69,23 @@
 - Ví dụ thiết bị giá thuê {{LATE_FEE_EXAMPLE_PRICE_PER_DAY}}/ngày: trễ 1 ngày phạt {{LATE_FEE_EXAMPLE_1DAY}}; trễ 2 ngày phạt tổng {{LATE_FEE_EXAMPLE_2DAYS}}; trễ 3 ngày phạt tổng {{LATE_FEE_EXAMPLE_3DAYS}}.
 - Phí trễ hạn được trừ vào tiền cọc khi trả máy và hiển thị riêng trong bảng khấu trừ ở chi tiết đơn.
 - Nếu biết mình sẽ trả muộn, hãy liên hệ nhân viên càng sớm càng tốt.
+
+## Máy gặp lỗi khi đang thuê
+- Bấm "Báo lỗi thiết bị" ở trang chi tiết đơn đang thuê, mô tả lỗi (bắt buộc) và gửi kèm ảnh/video.
+- Lỗi do thiết bị: cửa hàng đổi máy cùng danh mục, giá trị tương đương (chênh tối đa {{REPLACEMENT_TOLERANCE_PERCENT}}), còn trống lịch; thời hạn thuê giữ nguyên, bạn đến cửa hàng nhận máy thay thế.
+- Nếu không đổi được máy: kết thúc sớm, hoàn tiền thuê theo phần thời gian chưa dùng (làm tròn xuống nghìn đồng) và hoàn đủ tiền cọc, chuyển khoản trong tối đa {{DEPOSIT_REFUND_BUSINESS_DAYS}} ngày làm việc. Ví dụ: {{EARLY_END_EXAMPLE}}
+- Lỗi do người thuê (rơi vỡ, vào nước...): chi phí sửa chữa được ghi vào đơn và trừ vào tiền cọc khi trả máy.
+
+## Không trả máy (nghi mất thiết bị)
+- Quá hạn trả từ {{LOST_SUSPECT_OVERDUE_DAYS}} ngày, hệ thống tự đánh dấu đơn "nghi mất thiết bị", báo nhân viên và gửi cảnh báo cho bạn.
+- Nếu cửa hàng xác nhận mất thiết bị: giữ toàn bộ tiền cọc; bạn nợ thêm = giá trị thiết bị − tiền cọc + phí trễ hạn, tổng cửa hàng đòi (gồm tiền cọc) không vượt quá {{LOST_MAX_CLAIM_PERCENT}} giá trị thiết bị. Ví dụ: {{LOST_EXAMPLE}}
+- Tài khoản bị đưa vào danh sách đen kèm bằng chứng (hợp đồng, hồ sơ xác thực danh tính, biên bản giao máy).
+
+## Khoản nợ chưa thanh toán
+- Khoản nợ phát sinh khi phí trễ hạn + phí hư hỏng lớn hơn tiền cọc lúc trả máy, hoặc khi xác nhận mất thiết bị.
+- Khi còn nợ, bạn KHÔNG đặt thuê mới được; thông báo lỗi ghi rõ số tiền còn nợ.
+- Thanh toán tại cửa hàng bằng tiền mặt hoặc chuyển khoản, có thể trả nhiều lần; nhân viên bấm "Đã thu nợ" và bạn nhận thông báo số còn lại.
+- Số nợ hiển thị ở trang "Tài khoản của tôi" và trang "Đơn của tôi".
 
 ## Danh sách đen
 - Khách làm mất thiết bị, cố ý không trả hoặc không liên lạc được sau thời hạn thuê có thể bị đưa vào danh sách đen.
