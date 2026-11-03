@@ -31,6 +31,26 @@ export interface BookingInspection {
   createdAt: string;
 }
 
+export type IssueResolution = "swapped" | "ended_early" | "customer_fault";
+
+/** Báo lỗi thiết bị giữa kỳ thuê + kết quả xử lý. */
+export interface DeviceIssueReport {
+  id: string;
+  bookingId: string;
+  deviceId: string;
+  description: string;
+  /** URL ảnh/video Cloudinary — video có "/video/upload/". */
+  media: string[];
+  status: "open" | "resolved";
+  resolution: IssueResolution | null;
+  resolutionNote: string | null;
+  repairCost: string;
+  replacementDeviceId: string | null;
+  rentalRefundAmount: string;
+  resolvedAt: string | null;
+  createdAt: string;
+}
+
 export interface Booking {
   id: string;
   userId: string;
@@ -62,6 +82,15 @@ export interface Booking {
   depositRefundTxnRef?: string | null;
   /** Chỉ có ở `GET /bookings/:id`. */
   inspections?: BookingInspection[];
+  issueReports?: DeviceIssueReport[];
+  /** Chi phí sửa do lỗi của khách (ghi khi xử lý báo lỗi) — trừ vào cọc khi trả máy. */
+  repairFeeAmount?: string;
+  /** Tiền thuê hoàn lại khi kết thúc sớm do lỗi thiết bị. */
+  rentalRefundAmount?: string;
+  suspectedLostAt?: string | null;
+  lostConfirmedAt?: string | null;
+  debtPaidAmount?: string;
+  isDemo?: boolean;
   /** Chỉ có ở `GET /bookings` và `GET /bookings/:id` (BookingsService trả kèm include) */
   device?: BookingDeviceSummary;
   /** Khách thuê (tên + SĐT) — nhân viên dùng để liên hệ hoàn cọc. */
@@ -187,6 +216,7 @@ export interface ReturnPreview {
   depositAmount: number;
   lateFee: number;
   damageFee: number;
+  repairFee: number;
   totalDeductions: number;
   refundAmount: number;
   amountOwed: number;
@@ -262,5 +292,61 @@ export async function setContractSigned(
     `/bookings/${id}/contract/signed`,
     { signed },
   );
+  return data;
+}
+
+// ---- Báo lỗi thiết bị giữa kỳ thuê ----
+
+export async function reportIssue(bookingId: string, description: string, files: File[]): Promise<DeviceIssueReport> {
+  const form = new FormData();
+  form.append("description", description);
+  files.forEach((file) => form.append("media", file));
+  const { data } = await api.post<DeviceIssueReport>(`/bookings/${bookingId}/issues`, form);
+  return data;
+}
+
+export interface IssueReportWithBooking extends DeviceIssueReport {
+  booking: Booking;
+}
+
+export async function fetchIssueReports(params: {
+  status?: "open" | "resolved";
+  page?: number;
+  limit?: number;
+}): Promise<{ data: IssueReportWithBooking[]; meta: PaginatedBookings["meta"] }> {
+  const { data } = await api.get("/issue-reports", { params });
+  return data;
+}
+
+export interface ReplacementCandidate {
+  id: string;
+  name: string;
+  images: string[];
+  originalPrice: number;
+  pricePerDay: number;
+}
+
+export async function fetchReplacementCandidates(bookingId: string): Promise<ReplacementCandidate[]> {
+  const { data } = await api.get<ReplacementCandidate[]>(`/bookings/${bookingId}/replacement-candidates`);
+  return data;
+}
+
+export async function resolveIssue(
+  reportId: string,
+  input: {
+    resolution: IssueResolution;
+    replacementDeviceId?: string;
+    repairCost?: number;
+    note?: string;
+    files?: File[];
+  },
+): Promise<IssueReportWithBooking> {
+  const form = new FormData();
+  form.append("resolution", input.resolution);
+  if (input.replacementDeviceId) form.append("replacementDeviceId", input.replacementDeviceId);
+  if (input.repairCost !== undefined) form.append("repairCost", String(input.repairCost));
+  if (input.note) form.append("note", input.note);
+  (input.files ?? []).forEach((file) => form.append("images", file));
+  const { data } = await api.post<IssueReportWithBooking>(`/issue-reports/${reportId}/resolve`, form);
   return data;
 }

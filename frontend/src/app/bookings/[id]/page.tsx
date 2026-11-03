@@ -14,6 +14,8 @@ import { CancelBookingDialog } from "@/components/bookings/cancel-booking-dialog
 import { BookingStatusTimeline } from "@/components/bookings/booking-status-timeline";
 import { DepositSettlementTable } from "@/components/bookings/deposit-settlement-table";
 import { InspectionComparison } from "@/components/bookings/inspection-comparison";
+import { IssueEvents } from "@/components/bookings/issue-events";
+import { ReportIssueDialog } from "@/components/bookings/report-issue-dialog";
 import { BOOKING_TTL_MINUTES, fetchBookingById } from "@/lib/bookings-api";
 import { BOOKING_STATUS_LABEL } from "@/lib/booking-format";
 import { formatDateTimeVi, formatVnd } from "@/lib/device-format";
@@ -147,6 +149,13 @@ export default function BookingDetailPage() {
           <BookingStatusTimeline booking={booking} />
         </div>
 
+        {!!booking.issueReports?.length && (
+          <div className="mt-6 border-t border-border/60 pt-5">
+            <h2 className="mb-3 text-sm font-semibold">Báo lỗi &amp; đổi máy</h2>
+            <IssueEvents reports={booking.issueReports} />
+          </div>
+        )}
+
         <div className="mt-6 border-t border-border/60 pt-5">
           <h2 className="mb-3 text-sm font-semibold">Tiền thuê &amp; tiền cọc</h2>
           <DepositSettlementTable booking={booking} />
@@ -189,6 +198,19 @@ export default function BookingDetailPage() {
             Bạn đang thuê thiết bị này. Hạn trả: <strong>{formatDateTimeVi(booking.endTime)}</strong> — mang máy
             đến cửa hàng để nhân viên kiểm tra và quyết toán tiền cọc. Trả trễ sẽ bị trừ phí trễ hạn vào cọc.
           </p>
+        )}
+        {booking.status === "ongoing" && (
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            {booking.issueReports?.some((r) => r.status === "open") ? (
+              <p className="text-sm text-amber-400">Bạn có 1 báo lỗi đang chờ cửa hàng xử lý.</p>
+            ) : (
+              <ReportIssueDialog
+                bookingId={booking.id}
+                onReported={() => queryClient.invalidateQueries({ queryKey: ["booking", params.id] })}
+              />
+            )}
+            <span className="text-xs text-muted-foreground">Máy gặp lỗi khi đang thuê? Báo ngay để được hỗ trợ.</span>
+          </div>
         )}
         {booking.status === "completed" && (
           <p className="mt-6 border-t border-border/60 pt-6 text-sm text-muted-foreground">

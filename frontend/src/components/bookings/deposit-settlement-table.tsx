@@ -34,7 +34,10 @@ function Line({
 export function DepositSettlementTable({ booking }: { booking: Booking }) {
   const lateFee = Number(booking.lateFeeAmount ?? 0);
   const damageFee = Number(booking.damageFeeAmount ?? 0);
-  const owed = Number(booking.amountOwed ?? 0);
+  const repairFee = Number(booking.repairFeeAmount ?? 0);
+  const rentalRefund = Number(booking.rentalRefundAmount ?? 0);
+  const owed = Number(booking.amountOwed ?? 0) - Number(booking.debtPaidAmount ?? 0);
+  const debtPaid = Number(booking.debtPaidAmount ?? 0);
   const refundStatus = booking.depositRefundStatus ?? "none";
   const settled = refundStatus !== "none";
   const returned = booking.status === "completed" && !!booking.returnedAt && settled;
@@ -66,7 +69,20 @@ export function DepositSettlementTable({ booking }: { booking: Booking }) {
               value={damageFee > 0 ? `−${formatVnd(damageFee)}` : formatVnd(0)}
               tone={damageFee > 0 ? "text-destructive" : undefined}
             />
+            {repairFee > 0 && (
+              <Line label="− Chi phí sửa (lỗi do người thuê)" value={`−${formatVnd(repairFee)}`} tone="text-destructive" />
+            )}
           </>
+        )}
+        {!returned && repairFee > 0 && (
+          <Line
+            label="Chi phí sửa sẽ trừ vào cọc khi trả máy"
+            value={`−${formatVnd(repairFee)}`}
+            tone="text-destructive"
+          />
+        )}
+        {booking.status === "lost" && (
+          <Line label="Tiền cọc cửa hàng giữ lại (mất thiết bị)" value={formatVnd(booking.depositAmount)} tone="text-destructive" />
         )}
         {settled && (
           <Line
@@ -76,6 +92,10 @@ export function DepositSettlementTable({ booking }: { booking: Booking }) {
             strong
           />
         )}
+        {rentalRefund > 0 && (
+          <Line label="Tiền thuê hoàn lại (kết thúc sớm)" value={formatVnd(rentalRefund)} tone="text-emerald-400" strong />
+        )}
+        {debtPaid > 0 && <Line label="Đã thanh toán nợ" value={formatVnd(debtPaid)} />}
         {owed > 0 && (
           <Line label="Khách còn nợ cửa hàng" value={formatVnd(owed)} tone="text-destructive" strong />
         )}

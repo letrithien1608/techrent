@@ -75,6 +75,36 @@ export class UploadService {
     );
   }
 
+  /**
+   * Ảnh/video khách gửi khi báo lỗi thiết bị — `resource_type: 'auto'` để
+   * Cloudinary tự nhận ảnh hay video, gửi bằng stream (video có thể vài chục
+   * MB, không đổi sang base64 như ảnh nhỏ). URL video có "/video/upload/".
+   */
+  async uploadIssueMedia(
+    files: { buffer: Buffer; mimetype: string }[],
+    bookingId: string,
+  ): Promise<string[]> {
+    const folder = `techrent/issues/${bookingId}`;
+    return Promise.all(
+      files.map(
+        (file) =>
+          new Promise<string>((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream(
+              { folder, resource_type: 'auto' },
+              (error, result) => {
+                if (error || !result) {
+                  reject(error ?? new Error('Upload Cloudinary thất bại'));
+                  return;
+                }
+                resolve(result.secure_url);
+              },
+            );
+            stream.end(file.buffer);
+          }),
+      ),
+    );
+  }
+
   private uploadDataUri(
     source: string,
     publicId?: string,

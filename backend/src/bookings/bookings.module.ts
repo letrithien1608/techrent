@@ -7,6 +7,8 @@ import { UploadModule } from '../upload/upload.module';
 import { UsersModule } from '../users/users.module';
 import { BookingTtlProcessor } from './bookings.processor';
 import { BookingsController } from './bookings.controller';
+import { BookingIssuesController } from './booking-issues.controller';
+import { BookingIssuesService } from './booking-issues.service';
 import { BookingsService, BOOKING_TTL_QUEUE } from './bookings.service';
 
 @Module({
@@ -18,8 +20,8 @@ import { BookingsService, BOOKING_TTL_QUEUE } from './bookings.service';
     DevicesModule,
     UploadModule,
   ],
-  controllers: [BookingsController],
-  providers: [BookingsService, BookingTtlProcessor],
+  controllers: [BookingsController, BookingIssuesController],
+  providers: [BookingsService, BookingIssuesService, BookingTtlProcessor],
   exports: [BookingsService],
 })
 export class BookingsModule {}

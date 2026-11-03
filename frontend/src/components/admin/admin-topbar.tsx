@@ -24,6 +24,8 @@ const SECTION_LABEL: [prefix: string, label: string][] = [
   ["/admin/users", "Người dùng"],
   ["/admin/blacklist", "Danh sách đen"],
   ["/admin/refunds", "Hoàn cọc"],
+  ["/admin/issues", "Báo lỗi thiết bị"],
+  ["/admin/debts", "Công nợ"],
 ];
 
 /** "Quản trị › Đơn thuê › Chi tiết đơn" — suy ra từ đường dẫn (và ?bookingId= khi mở chi tiết đơn). */

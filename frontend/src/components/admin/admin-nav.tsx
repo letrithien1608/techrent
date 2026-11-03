@@ -6,6 +6,8 @@ import { useMutation } from "@tanstack/react-query";
 import { Menu } from "@base-ui/react/menu";
 import {
   Banknote,
+  HandCoins,
+  TriangleAlert,
   ChevronsUpDown,
   ClipboardList,
   Home,
@@ -40,6 +42,8 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { href: "/admin/categories", label: "Danh mục", icon: Tags },
   { href: "/admin/bookings", label: "Đơn thuê", icon: ClipboardList },
   { href: "/admin/refunds", label: "Hoàn cọc", icon: Banknote },
+  { href: "/admin/issues", label: "Báo lỗi", icon: TriangleAlert },
+  { href: "/admin/debts", label: "Công nợ", icon: HandCoins },
   { href: "/admin/reviews", label: "Đánh giá", icon: MessageSquareText },
   { href: "/admin/maintenance", label: "Bảo trì", icon: Wrench },
   { href: "/admin/users", label: "Người dùng", icon: Users, adminOnly: true },

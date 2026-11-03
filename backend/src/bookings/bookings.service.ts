@@ -85,6 +85,7 @@ const bookingDetail = {
   include: {
     ...bookingWithDevice.include,
     inspections: { orderBy: { createdAt: 'asc' } },
+    issueReports: { orderBy: { createdAt: 'asc' } },
   },
 } satisfies Prisma.BookingDefaultArgs;
 
@@ -469,7 +470,7 @@ export class BookingsService {
    * (xem file đó — lặp lại logic này vì 2 module không import chéo nhau, đúng
    * nguyên tắc kiến trúc 1 chiều Payments→Bookings đã có từ Tuần 7).
    */
-  private async generateAndSaveContract(booking: Booking): Promise<void> {
+  async generateAndSaveContract(booking: Booking): Promise<void> {
     const [device, user] = await Promise.all([
       this.prisma.device.findUniqueOrThrow({
         where: { id: booking.deviceId },
@@ -724,6 +725,7 @@ export class BookingsService {
       depositAmount: Number(booking.depositAmount),
       lateFee,
       damageFee,
+      repairFee: Number(booking.repairFeeAmount ?? 0),
     });
     const images = files.length
       ? await this.uploadService.uploadInspectionImages(
@@ -802,6 +804,7 @@ export class BookingsService {
     depositAmount: number;
     lateFee: number;
     damageFee: number;
+    repairFee: number;
     totalDeductions: number;
     refundAmount: number;
     amountOwed: number;
@@ -817,11 +820,18 @@ export class BookingsService {
       Number(device.originalPrice),
     );
     const depositAmount = Number(booking.depositAmount);
+    const repairFee = Number(booking.repairFeeAmount ?? 0);
     return {
       depositAmount,
       lateFee,
       damageFee,
-      ...calculateDepositSettlement({ depositAmount, lateFee, damageFee }),
+      repairFee,
+      ...calculateDepositSettlement({
+        depositAmount,
+        lateFee,
+        damageFee,
+        repairFee,
+      }),
     };
   }
 
@@ -857,7 +867,10 @@ export class BookingsService {
     }
     await this.notifyCustomer(booking, {
       kind: 'deposit_refunded',
-      amount: Number(booking.depositRefundAmount),
+      // Gồm cả tiền thuê hoàn lại khi kết thúc sớm do lỗi thiết bị (chuyển cùng lúc).
+      amount:
+        Number(booking.depositRefundAmount) +
+        Number(booking.rentalRefundAmount ?? 0),
       transactionRef: txnRef,
     });
     return updated;
@@ -957,7 +970,7 @@ export class BookingsService {
   }
 
   /** Mọi thay đổi Device.status: phát realtime + xoá cache danh sách thiết bị. */
-  private async afterDeviceStatusChanged(
+  async afterDeviceStatusChanged(
     deviceId: string,
     status: DeviceStatus,
   ): Promise<void> {
@@ -966,7 +979,7 @@ export class BookingsService {
   }
 
   /** Thông báo cho khách — lỗi tạo thông báo không làm hỏng thao tác chính. */
-  private async notifyCustomer(
+  async notifyCustomer(
     booking: Booking,
     event: BookingNotificationKind,
   ): Promise<void> {
@@ -978,6 +991,23 @@ export class BookingsService {
     } catch (error) {
       this.logger.warn(
         `Không tạo được thông báo "${event.kind}" cho booking ${booking.id}: ${(error as Error).message}`,
+      );
+    }
+  }
+
+  /** Thông báo cho mọi staff/admin — lỗi không làm hỏng thao tác chính. */
+  async notifyStaff(
+    bookingId: string,
+    event: BookingNotificationKind,
+  ): Promise<void> {
+    try {
+      await this.notificationsService.createForRoles(
+        [Role.staff, Role.admin],
+        await this.notificationContent(bookingId, event, 'staff'),
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Không tạo được thông báo "${event.kind}" cho staff/admin (booking ${bookingId}): ${(error as Error).message}`,
       );
     }
   }

@@ -112,7 +112,24 @@ export type BookingNotificationKind =
       refundAmount: number;
       amountOwed: number;
     }
-  | { kind: 'deposit_refunded'; amount: number; transactionRef: string };
+  | { kind: 'deposit_refunded'; amount: number; transactionRef: string }
+  | { kind: 'issue_reported'; reportId: string; description: string }
+  | {
+      kind: 'issue_resolved';
+      resolution: 'swapped' | 'ended_early' | 'customer_fault';
+      replacementDeviceName?: string;
+      rentalRefund?: number;
+      depositRefund?: number;
+      repairCost?: number;
+      note?: string | null;
+    }
+  | { kind: 'suspected_lost'; overdueDays: number }
+  | { kind: 'lost'; amountOwed: number; lateFee: number }
+  | { kind: 'debt_paid'; amount: number; remaining: number };
+
+function truncate(text: string, max: number): string {
+  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+}
 
 const RENTAL_PAYMENT_METHOD_LABEL = {
   cash: 'tiền mặt',
@@ -237,6 +254,80 @@ export function buildBookingNotification(
           ...base.metadata,
           refundAmount: event.amount,
           transactionRef: event.transactionRef,
+        },
+      };
+    case 'issue_reported':
+      return {
+        ...base,
+        type: 'issue_reported',
+        title: 'Khách báo lỗi thiết bị',
+        message: `${booking.user.name} báo lỗi ${booking.device.name} (đơn ${code}): ${truncate(event.description, 120)}`,
+        link: `/admin/issues?reportId=${event.reportId}`,
+        metadata: { ...base.metadata, reportId: event.reportId },
+      };
+    case 'issue_resolved': {
+      const outcome =
+        event.resolution === 'swapped'
+          ? `Cửa hàng đổi cho bạn máy ${event.replacementDeviceName ?? 'tương đương'}, vui lòng đến cửa hàng để nhận máy thay thế. Thời hạn thuê giữ nguyên.`
+          : event.resolution === 'ended_early'
+            ? `Đơn kết thúc sớm: hoàn ${formatVnd(event.rentalRefund ?? 0)} tiền thuê phần chưa dùng và ${formatVnd(event.depositRefund ?? 0)} tiền cọc, chuyển khoản ${REFUND_DEADLINE}.`
+            : `Lỗi được xác định do quá trình sử dụng. Chi phí sửa ${formatVnd(event.repairCost ?? 0)} sẽ được trừ vào tiền cọc khi bạn trả máy.`;
+      return {
+        ...base,
+        type: 'issue_resolved',
+        title: 'Đã xử lý báo lỗi thiết bị',
+        message: `Báo lỗi ${booking.device.name} (đơn ${code}) đã được xử lý. ${outcome}${event.note ? ` Ghi chú: ${event.note}.` : ''}`,
+        metadata: {
+          ...base.metadata,
+          resolution: event.resolution,
+          ...(event.rentalRefund !== undefined
+            ? { rentalRefund: event.rentalRefund }
+            : {}),
+          ...(event.repairCost !== undefined
+            ? { repairCost: event.repairCost }
+            : {}),
+        },
+      };
+    }
+    case 'suspected_lost':
+      return audience === 'staff'
+        ? {
+            ...base,
+            type: 'booking_suspected_lost',
+            title: 'Nghi mất thiết bị',
+            message: `Đơn ${code} – ${booking.user.name} quá hạn trả ${booking.device.name} ${event.overdueDays} ngày. Cần liên hệ khách hoặc xác nhận mất thiết bị.`,
+          }
+        : {
+            ...base,
+            type: 'booking_overdue',
+            title: 'Đơn thuê đã quá hạn trả',
+            message: `Bạn đã quá hạn trả ${booking.device.name} (đơn ${code}) ${event.overdueDays} ngày. Vui lòng mang máy đến cửa hàng ngay; nếu không, cửa hàng sẽ xác nhận mất thiết bị, giữ toàn bộ tiền cọc và ghi nợ phần còn lại.`,
+          };
+    case 'lost':
+      return {
+        ...base,
+        type: 'booking_lost',
+        title: 'Đã xác nhận mất thiết bị',
+        message: `Đơn ${code} – ${booking.device.name} đã được xác nhận mất thiết bị. Cửa hàng giữ toàn bộ tiền cọc ${formatVnd(booking.depositAmount)}; bạn còn nợ ${formatVnd(event.amountOwed)} (gồm phí trễ hạn ${formatVnd(event.lateFee)}). Tài khoản của bạn bị tạm khoá đặt thuê.`,
+        metadata: {
+          ...base.metadata,
+          amountOwed: event.amountOwed,
+          lateFee: event.lateFee,
+        },
+      };
+    case 'debt_paid':
+      return {
+        ...base,
+        type: 'debt_paid',
+        title: 'Đã nhận thanh toán khoản nợ',
+        message:
+          event.remaining > 0
+            ? `Cửa hàng đã nhận ${formatVnd(event.amount)} cho khoản nợ của đơn ${code}. Bạn còn nợ ${formatVnd(event.remaining)}.`
+            : `Cửa hàng đã nhận ${formatVnd(event.amount)} — khoản nợ của đơn ${code} đã được thanh toán hết.`,
+        metadata: {
+          ...base.metadata,
+          amount: event.amount,
+          remaining: event.remaining,
         },
       };
   }

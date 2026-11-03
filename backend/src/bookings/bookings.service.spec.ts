@@ -929,6 +929,24 @@ describe('BookingsService', () => {
       );
     });
 
+    it('trừ thêm chi phí sửa đã ghi khi báo lỗi (lỗi do khách) vào cọc', async () => {
+      prisma.booking.findUnique.mockResolvedValue({
+        ...ongoing,
+        repairFeeAmount: '1500000',
+      });
+
+      await service.confirmReturn(
+        ongoing.id,
+        admin.userId,
+        { condition: DeviceCondition.intact },
+        [],
+      );
+
+      expect(lastBookingUpdate().data).toEqual(
+        expect.objectContaining({ depositRefundAmount: 8_500_000 }),
+      );
+    });
+
     it('nguyên vẹn thì bỏ qua số tiền bồi thường gửi kèm', async () => {
       prisma.booking.findUnique.mockResolvedValue(ongoing);
 
@@ -1014,6 +1032,7 @@ describe('BookingsService', () => {
         depositAmount: 1_000_000,
         lateFee: 16_000,
         damageFee: 1_200_000,
+        repairFee: 0,
         totalDeductions: 1_216_000,
         refundAmount: 0,
         amountOwed: 216_000,

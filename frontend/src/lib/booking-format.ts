@@ -61,3 +61,17 @@ export function isRefundOverdue(booking: Pick<Booking, "depositRefundStatus" | "
     new Date(booking.depositRefundDueAt).getTime() < now
   );
 }
+
+export const ISSUE_RESOLUTION_LABEL: Record<
+  import("./bookings-api").IssueResolution,
+  string
+> = {
+  swapped: "Đổi máy tương đương",
+  ended_early: "Kết thúc sớm, hoàn tiền",
+  customer_fault: "Lỗi do người thuê",
+};
+
+/** URL Cloudinary dạng video ("/video/upload/"). */
+export function isVideoUrl(url: string): boolean {
+  return url.includes("/video/upload/");
+}

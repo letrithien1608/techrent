@@ -8,6 +8,9 @@ interface Props {
   onFilesSelected: (files: FileList | null) => void;
   hint?: string;
   className?: string;
+  /** Mặc định chỉ ảnh; báo lỗi thiết bị cho phép cả video. */
+  accept?: string;
+  label?: string;
 }
 
 /**
@@ -15,7 +18,13 @@ interface Props {
  * DeviceImageManager (thêm ảnh ở trang sửa) — cùng hành vi kéo-thả +
  * bấm-để-chọn, chỉ khác `hint` hiển thị.
  */
-export function ImageDropzone({ onFilesSelected, hint, className }: Props) {
+export function ImageDropzone({
+  onFilesSelected,
+  hint,
+  className,
+  accept = "image/*",
+  label = "Kéo thả ảnh vào đây, hoặc bấm để chọn",
+}: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -65,13 +74,13 @@ export function ImageDropzone({ onFilesSelected, hint, className }: Props) {
         )}
       />
       <p className="text-sm font-medium text-foreground">
-        Kéo thả ảnh vào đây, hoặc bấm để chọn
+        {label}
       </p>
       {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept={accept}
         multiple
         hidden
         onChange={(event) => {

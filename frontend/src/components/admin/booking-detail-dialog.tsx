@@ -17,6 +17,7 @@ import { KycImagesViewer } from "@/components/admin/kyc-images-viewer";
 import { BookingStatusTimeline } from "@/components/bookings/booking-status-timeline";
 import { DepositSettlementTable } from "@/components/bookings/deposit-settlement-table";
 import { InspectionComparison } from "@/components/bookings/inspection-comparison";
+import { IssueEvents } from "@/components/bookings/issue-events";
 import { fetchBookingById, type Booking } from "@/lib/bookings-api";
 import { BOOKING_STATUS_LABEL } from "@/lib/booking-format";
 import { formatDateTimeVi } from "@/lib/device-format";
@@ -99,6 +100,12 @@ export function BookingDetailDialog({
         <div className="border-t border-border/60 pt-4">
           <BookingStatusTimeline booking={detail} />
         </div>
+        {!!detail.issueReports?.length && (
+          <div className="border-t border-border/60 pt-4">
+            <h3 className="mb-2 text-sm font-semibold">Báo lỗi &amp; đổi máy</h3>
+            <IssueEvents reports={detail.issueReports} />
+          </div>
+        )}
         <div className="border-t border-border/60 pt-4">
           <h3 className="mb-2 text-sm font-semibold">Tiền thuê &amp; tiền cọc</h3>
           <DepositSettlementTable booking={detail} />

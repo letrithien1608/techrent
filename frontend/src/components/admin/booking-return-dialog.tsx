@@ -230,6 +230,13 @@ export function BookingReturnDialog({ booking, onChanged }: { booking: Booking; 
                 value={preview.damageFee > 0 ? `−${formatVnd(preview.damageFee)}` : formatVnd(0)}
                 tone={preview.damageFee > 0 ? "text-destructive" : undefined}
               />
+              {preview.repairFee > 0 && (
+                <Row
+                  label="− Chi phí sửa đã ghi (lỗi do khách)"
+                  value={`−${formatVnd(preview.repairFee)}`}
+                  tone="text-destructive"
+                />
+              )}
               <Row label="Hoàn lại cho khách" value={formatVnd(preview.refundAmount)} tone="text-emerald-400" strong />
               {preview.amountOwed > 0 && (
                 <Row label="Khách còn nợ" value={formatVnd(preview.amountOwed)} tone="text-destructive" strong />
