@@ -21,6 +21,8 @@ enum DeviceStatus {
   rented
   maintenance
   broken
+  // Khách không trả máy, admin xác nhận mất — kèm isDiscontinued để ẩn khỏi trang khách.
+  lost
 }
 
 enum BookingStatus {
@@ -29,6 +31,8 @@ enum BookingStatus {
   ongoing
   completed
   cancelled
+  // Trạng thái cuối khi admin xác nhận khách không trả máy (mất thiết bị).
+  lost
 }
 
 enum PaymentMethod {
@@ -73,6 +77,21 @@ enum DeviceCondition {
   intact
   damaged
   missing_accessories
+}
+
+// Báo lỗi thiết bị giữa kỳ thuê (khách gửi từ đơn đang thuê).
+enum IssueReportStatus {
+  open
+  resolved
+}
+
+//   swapped        — lỗi do thiết bị, đổi sang máy tương đương
+//   ended_early    — lỗi do thiết bị, kết thúc sớm: hoàn tiền thuê phần chưa dùng + đủ cọc
+//   customer_fault — lỗi do khách: ghi chi phí sửa, trừ vào cọc khi trả máy
+enum IssueResolution {
+  swapped
+  ended_early
+  customer_fault
 }
 
 enum MaintenanceStatus {
@@ -238,6 +257,17 @@ model Booking {
   depositRefundedAt   DateTime?            @map("deposit_refunded_at")
   depositRefundTxnRef String?              @map("deposit_refund_txn_ref")
   depositRefundedById String?              @map("deposit_refunded_by_id")
+  // Chi phí sửa chữa do lỗi của khách (ghi khi xử lý báo lỗi) — trừ vào cọc khi trả máy.
+  repairFeeAmount     Decimal              @default(0) @map("repair_fee_amount") @db.Decimal(12, 2)
+  // Tiền thuê hoàn lại khi kết thúc sớm do lỗi thiết bị — chuyển khoản cùng khoản hoàn cọc.
+  rentalRefundAmount  Decimal              @default(0) @map("rental_refund_amount") @db.Decimal(12, 2)
+  // Quá hạn trả LOST_SUSPECT_OVERDUE_DAYS ngày → job đánh dấu nghi mất; admin xác nhận → status `lost`.
+  suspectedLostAt     DateTime?            @map("suspected_lost_at")
+  lostConfirmedAt     DateTime?            @map("lost_confirmed_at")
+  // Đã thu được bao nhiêu trong `amountOwed` — còn nợ = amountOwed − debtPaidAmount.
+  debtPaidAmount      Decimal              @default(0) @map("debt_paid_amount") @db.Decimal(12, 2)
+  // Đơn dữ liệu mẫu (prisma/seed-reviews.ts, tài khoản demo.review*) — loại khỏi mọi thống kê.
+  isDemo              Boolean              @default(false) @map("is_demo")
   createdAt      DateTime      @default(now()) @map("created_at")
 
   user        User                @relation(fields: [userId], references: [id])
@@ -245,6 +275,8 @@ model Booking {
   payments    Payment[]
   review      Review?
   inspections BookingInspection[]
+  issueReports DeviceIssueReport[]
+  debtPayments DebtPayment[]
 
   @@index([deviceId, startTime, endTime], map: "idx_bookings_device_time")
   @@index([userId], map: "idx_bookings_user")
@@ -354,4 +386,50 @@ model Notification {
   // filter lẫn order, cùng pattern idx_payments_booking_id/idx_maintenance_device_status.
   @@index([userId, createdAt], map: "idx_notifications_user_id_created_at")
   @@map("notifications")
+}
+
+// Khách báo lỗi thiết bị giữa kỳ thuê + cách nhân viên xử lý.
+model DeviceIssueReport {
+  id                     String             @id @default(uuid())
+  bookingId              String             @map("booking_id")
+  reportedById           String             @map("reported_by_id")
+  // Thiết bị tại thời điểm báo lỗi (đơn có thể đã đổi sang máy khác sau đó).
+  deviceId               String             @map("device_id")
+  description            String             @db.Text
+  // URL ảnh/video Cloudinary (video có "/video/upload/" trong URL).
+  media                  String[]
+  status                 IssueReportStatus  @default(open)
+  resolution             IssueResolution?
+  resolutionNote         String?            @map("resolution_note") @db.Text
+  repairCost             Decimal            @default(0) @map("repair_cost") @db.Decimal(12, 2)
+  replacementDeviceId    String?            @map("replacement_device_id")
+  // Ảnh biên bản giao máy cũ (trước khi đổi máy) — biên bản giao máy được thay bằng ảnh máy mới.
+  previousHandoverImages String[]           @map("previous_handover_images")
+  rentalRefundAmount     Decimal            @default(0) @map("rental_refund_amount") @db.Decimal(12, 2)
+  resolvedById           String?            @map("resolved_by_id")
+  resolvedAt             DateTime?          @map("resolved_at")
+  createdAt              DateTime           @default(now()) @map("created_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@index([status, createdAt], map: "idx_issue_reports_status")
+  @@index([bookingId], map: "idx_issue_reports_booking")
+  @@map("device_issue_reports")
+}
+
+// Lịch sử thu nợ (nhân viên bấm "Đã thu nợ"), mỗi lần thu gắn với 1 đơn.
+model DebtPayment {
+  id            String              @id @default(uuid())
+  bookingId     String              @map("booking_id")
+  userId        String              @map("user_id")
+  amount        Decimal             @db.Decimal(12, 2)
+  method        RentalPaymentMethod
+  note          String?             @db.Text
+  collectedById String              @map("collected_by_id")
+  createdAt     DateTime            @default(now()) @map("created_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@index([userId], map: "idx_debt_payments_user")
+  @@map("debt_payments")
 }

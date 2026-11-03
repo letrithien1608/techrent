@@ -60,5 +60,8 @@ TechRent hiện KHÔNG cho thuê PC, máy tính để bàn và mini PC (thiết 
 ## Có giao hàng tận nơi không?
 Không. TechRent không giao hàng tận nơi — bạn nhận và trả máy trực tiếp tại cửa hàng để nhân viên đối chiếu CCCD gốc và ký hợp đồng cùng bạn.
 
+## Tiền bồi thường hư hỏng lớn hơn tiền cọc thì sao?
+Khi trả máy, phí trễ hạn và tiền bồi thường hư hỏng được trừ vào tiền cọc. Nếu tổng khoản trừ lớn hơn tiền cọc, bạn không được hoàn cọc và phần còn thiếu được ghi thành khoản nợ. Bạn phải thanh toán hết khoản nợ này tại cửa hàng (tiền mặt hoặc chuyển khoản) trước khi được đặt thuê tiếp; số nợ hiển thị ở trang Tài khoản và trang chi tiết đơn.
+
 ## Bao lâu thì nhận lại tiền cọc?
 Tiền cọc hoàn lại được chuyển khoản trong tối đa {{DEPOSIT_REFUND_BUSINESS_DAYS}} ngày làm việc (không tính thứ Bảy, Chủ nhật) kể từ khi trả máy hoặc huỷ đơn. Khi chuyển xong bạn nhận thông báo kèm mã giao dịch; trạng thái hoàn cọc xem ở trang chi tiết đơn.

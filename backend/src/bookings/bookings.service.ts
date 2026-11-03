@@ -23,6 +23,7 @@ import {
   DeviceCondition,
   DeviceStatus,
   InspectionType,
+  IssueReportStatus,
   Prisma,
   RentalPaymentMethod,
   Role,
@@ -102,18 +103,24 @@ const CONDITION_LABEL: Record<DeviceCondition, string> = {
 };
 
 export interface FinancialStats {
-  /** Tiền thuê đã thu tại quầy. */
+  /** Tiền thuê đã thu tại quầy (trừ phần đã hoàn khi kết thúc sớm). */
   rentalRevenue: number;
-  /** Phí trễ hạn đã khấu trừ khi trả máy. */
+  /** Phí trễ hạn đã khấu trừ (trả máy / mất máy). */
   lateFees: number;
-  /** Phí bồi thường hư hỏng/thiếu phụ kiện. */
+  /** Phí hư hỏng/thiếu phụ kiện + chi phí sửa do lỗi của khách. */
   damageFees: number;
   /** Tiền cọc cửa hàng đang giữ (đơn đang hiệu lực + khoản chờ hoàn). */
   depositHeld: number;
-  /** Tổng tiền khách còn nợ (khấu trừ vượt tiền cọc). */
-  amountOwed: number;
+  /** Tiền khách còn nợ chưa thu. */
+  outstandingDebt: number;
+  /** Tiền nợ đã thu. */
+  debtCollected: number;
   pendingRefundCount: number;
   overdueRefundCount: number;
+  /** Đơn đang thuê bị đánh dấu nghi mất (quá hạn lâu, chờ admin xác nhận). */
+  suspectedLostCount: number;
+  lostDeviceCount: number;
+  openIssueCount: number;
 }
 
 export interface PaginatedResult<T> {
@@ -339,6 +346,7 @@ export class BookingsService {
       status?: BookingStatus;
       userId?: string;
       depositRefundStatus?: DepositRefundStatus;
+      excludeDemo?: boolean;
     },
   ): Promise<PaginatedResult<BookingWithDevice>> {
     // customer LUÔN bị ép lọc theo chính userId của họ — filter.userId (nếu
@@ -354,6 +362,7 @@ export class BookingsService {
       ...(filter.depositRefundStatus
         ? { depositRefundStatus: filter.depositRefundStatus }
         : {}),
+      ...(filter.excludeDemo ? { isDemo: false } : {}),
     };
     // Danh sách chờ hoàn cọc: hạn gần nhất (hoặc đã quá hạn) lên đầu.
     const orderBy: Prisma.BookingOrderByWithRelationInput =
@@ -860,46 +869,90 @@ export class BookingsService {
    * riêng tiền thuê / phí trễ hạn / phí hư hỏng / tiền cọc đang giữ.
    */
   async getFinancialStats(now = new Date()): Promise<FinancialStats> {
-    const pendingRefund = { depositRefundStatus: DepositRefundStatus.pending };
-    const [rental, settled, heldActive, heldPending, pending, overdue] =
-      await this.prisma.$transaction([
-        this.prisma.booking.aggregate({
-          where: { rentalPaid: true },
-          _sum: { totalPrice: true },
-        }),
-        this.prisma.booking.aggregate({
-          where: { status: BookingStatus.completed },
-          _sum: {
-            lateFeeAmount: true,
-            damageFeeAmount: true,
-            amountOwed: true,
-          },
-        }),
-        this.prisma.booking.aggregate({
-          where: {
-            status: { in: [BookingStatus.confirmed, BookingStatus.ongoing] },
-          },
-          _sum: { depositAmount: true },
-        }),
-        this.prisma.booking.aggregate({
-          where: pendingRefund,
-          _sum: { depositRefundAmount: true },
-        }),
-        this.prisma.booking.count({ where: pendingRefund }),
-        this.prisma.booking.count({
-          where: { ...pendingRefund, depositRefundDueAt: { lt: now } },
-        }),
-      ]);
+    // Mọi số liệu tiền bỏ qua đơn dữ liệu mẫu (isDemo) để dùng được cho báo cáo.
+    const real = { isDemo: false };
+    const pendingRefund = {
+      ...real,
+      depositRefundStatus: DepositRefundStatus.pending,
+    };
+    const [
+      rental,
+      settled,
+      heldActive,
+      heldPending,
+      debt,
+      pending,
+      overdue,
+      suspectedLost,
+      lostDevices,
+      openIssues,
+    ] = await this.prisma.$transaction([
+      this.prisma.booking.aggregate({
+        where: { ...real, rentalPaid: true },
+        _sum: { totalPrice: true, rentalRefundAmount: true },
+      }),
+      this.prisma.booking.aggregate({
+        where: {
+          ...real,
+          status: { in: [BookingStatus.completed, BookingStatus.lost] },
+        },
+        _sum: {
+          lateFeeAmount: true,
+          damageFeeAmount: true,
+          repairFeeAmount: true,
+        },
+      }),
+      this.prisma.booking.aggregate({
+        where: {
+          ...real,
+          status: { in: [BookingStatus.confirmed, BookingStatus.ongoing] },
+        },
+        _sum: { depositAmount: true },
+      }),
+      this.prisma.booking.aggregate({
+        where: pendingRefund,
+        _sum: { depositRefundAmount: true },
+      }),
+      this.prisma.booking.aggregate({
+        where: { ...real, amountOwed: { gt: 0 } },
+        _sum: { amountOwed: true, debtPaidAmount: true },
+      }),
+      this.prisma.booking.count({ where: pendingRefund }),
+      this.prisma.booking.count({
+        where: { ...pendingRefund, depositRefundDueAt: { lt: now } },
+      }),
+      this.prisma.booking.count({
+        where: {
+          ...real,
+          status: BookingStatus.ongoing,
+          suspectedLostAt: { not: null },
+        },
+      }),
+      this.prisma.device.count({ where: { status: DeviceStatus.lost } }),
+      this.prisma.deviceIssueReport.count({
+        where: { status: IssueReportStatus.open },
+      }),
+    ]);
     return {
-      rentalRevenue: Number(rental._sum.totalPrice ?? 0),
+      rentalRevenue:
+        Number(rental._sum.totalPrice ?? 0) -
+        Number(rental._sum.rentalRefundAmount ?? 0),
       lateFees: Number(settled._sum.lateFeeAmount ?? 0),
-      damageFees: Number(settled._sum.damageFeeAmount ?? 0),
+      damageFees:
+        Number(settled._sum.damageFeeAmount ?? 0) +
+        Number(settled._sum.repairFeeAmount ?? 0),
       depositHeld:
         Number(heldActive._sum.depositAmount ?? 0) +
         Number(heldPending._sum.depositRefundAmount ?? 0),
-      amountOwed: Number(settled._sum.amountOwed ?? 0),
+      outstandingDebt:
+        Number(debt._sum.amountOwed ?? 0) -
+        Number(debt._sum.debtPaidAmount ?? 0),
+      debtCollected: Number(debt._sum.debtPaidAmount ?? 0),
       pendingRefundCount: pending,
       overdueRefundCount: overdue,
+      suspectedLostCount: suspectedLost,
+      lostDeviceCount: lostDevices,
+      openIssueCount: openIssues,
     };
   }
 

@@ -411,6 +411,7 @@ const DEVICE_STATUS_TEXT: Record<DeviceStatus, string> = {
   rented: 'đang có khách thuê (vẫn đặt được nếu chọn khung giờ khác còn trống)',
   maintenance: 'đang bảo trì, tạm không đặt được',
   broken: 'đang hỏng, tạm không đặt được',
+  lost: 'đã ngừng cho thuê',
 };
 
 const MAX_SPEC_ENTRIES = 4;

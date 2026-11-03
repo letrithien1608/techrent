@@ -138,6 +138,11 @@ export async function seedDemoReviews(prisma: PrismaClient): Promise<void> {
             status: BookingStatus.completed,
             totalPrice: Number(device.pricePerDay) * 2,
             depositAmount: calculateDeposit(Number(device.originalPrice)),
+            // Dữ liệu mẫu — loại khỏi mọi thống kê doanh thu (xem CLAUDE.md).
+            isDemo: true,
+            rentalPaid: true,
+            rentalPaidAt: startTime,
+            returnedAt: endTime,
             createdAt: new Date(startTime.getTime() - DAY),
           },
         });

@@ -1068,29 +1068,48 @@ describe('BookingsService', () => {
   });
 
   describe('getFinancialStats', () => {
-    it('tách riêng tiền thuê, phí trễ hạn, phí hư hỏng, tiền cọc đang giữ', async () => {
+    it('tách riêng các khoản tiền, BỎ đơn dữ liệu mẫu (isDemo) khỏi mọi số liệu', async () => {
       prisma.booking.aggregate
-        .mockResolvedValueOnce({ _sum: { totalPrice: '1500000' } })
+        .mockResolvedValueOnce({
+          _sum: { totalPrice: '1500000', rentalRefundAmount: '200000' },
+        })
         .mockResolvedValueOnce({
           _sum: {
             lateFeeAmount: '48000',
             damageFeeAmount: '3000000',
-            amountOwed: '216000',
+            repairFeeAmount: '500000',
           },
         })
         .mockResolvedValueOnce({ _sum: { depositAmount: '20000000' } })
-        .mockResolvedValueOnce({ _sum: { depositRefundAmount: '7000000' } });
-      prisma.booking.count.mockResolvedValueOnce(2).mockResolvedValueOnce(1);
+        .mockResolvedValueOnce({ _sum: { depositRefundAmount: '7000000' } })
+        .mockResolvedValueOnce({
+          _sum: { amountOwed: '1216000', debtPaidAmount: '1000000' },
+        });
+      prisma.booking.count
+        .mockResolvedValueOnce(2)
+        .mockResolvedValueOnce(1)
+        .mockResolvedValueOnce(1);
+      (prisma.device as any).count = jest.fn().mockResolvedValue(3);
+      (prisma as any).deviceIssueReport = {
+        count: jest.fn().mockResolvedValue(4),
+      };
 
       await expect(service.getFinancialStats()).resolves.toEqual({
-        rentalRevenue: 1_500_000,
+        rentalRevenue: 1_300_000,
         lateFees: 48_000,
-        damageFees: 3_000_000,
+        damageFees: 3_500_000,
         depositHeld: 27_000_000,
-        amountOwed: 216_000,
+        outstandingDebt: 216_000,
+        debtCollected: 1_000_000,
         pendingRefundCount: 2,
         overdueRefundCount: 1,
+        suspectedLostCount: 1,
+        lostDeviceCount: 3,
+        openIssueCount: 4,
       });
+      for (const [args] of prisma.booking.aggregate.mock.calls) {
+        expect(args.where).toMatchObject({ isDemo: false });
+      }
     });
   });
 

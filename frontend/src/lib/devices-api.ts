@@ -1,6 +1,6 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
-export type DeviceStatus = "available" | "rented" | "maintenance" | "broken";
+export type DeviceStatus = "available" | "rented" | "maintenance" | "broken" | "lost";
 export type DeviceSort = "newest" | "price_asc" | "price_desc";
 
 /** 1 dòng thông số kỹ thuật có cấu trúc (khớp backend spec-sheet.util.ts). */

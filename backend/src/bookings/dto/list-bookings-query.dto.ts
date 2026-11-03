@@ -1,6 +1,14 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import {
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsUUID,
+  Max,
+  Min,
+} from 'class-validator';
 import {
   BookingStatus,
   DepositRefundStatus,
@@ -42,4 +50,12 @@ export class ListBookingsQueryDto {
   @IsOptional()
   @IsEnum(DepositRefundStatus)
   depositRefundStatus?: DepositRefundStatus;
+
+  // Bỏ đơn dữ liệu mẫu (isDemo) — Dashboard dùng để số liệu dùng được cho báo cáo.
+  // Boolean query PHẢI dùng @Transform (xem CLAUDE.md mục 2).
+  @ApiPropertyOptional({ description: 'Bỏ đơn dữ liệu mẫu' })
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  excludeDemo?: boolean;
 }

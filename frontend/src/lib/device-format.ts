@@ -8,6 +8,7 @@ export const DEVICE_STATUS_LABEL: Record<
   rented: { label: "Đang cho thuê", className: "bg-amber-500/15 text-amber-400" },
   maintenance: { label: "Bảo trì", className: "bg-muted text-muted-foreground" },
   broken: { label: "Ngừng cho thuê", className: "bg-destructive/15 text-destructive" },
+  lost: { label: "Đã mất", className: "bg-red-500/20 text-red-300" },
 };
 
 export function formatVnd(value: string | number): string {

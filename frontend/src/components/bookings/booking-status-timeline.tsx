@@ -31,13 +31,13 @@ export const BOOKING_FLOW: {
 
 /** Dòng thời gian trạng thái đơn — ngang trên màn rộng, tự co chữ trên điện thoại. */
 export function BookingStatusTimeline({ booking }: { booking: TimelineBooking }) {
-  if (booking.status === "cancelled") {
+  if (booking.status === "cancelled" || booking.status === "lost") {
     return (
       <div className="flex items-center gap-2 text-sm text-red-300">
         <span className="flex size-6 items-center justify-center rounded-full bg-red-500/15">
           <X className="size-3.5" aria-hidden />
         </span>
-        Đơn đã huỷ
+        {booking.status === "lost" ? "Thiết bị không được trả — đã xác nhận mất" : "Đơn đã huỷ"}
       </div>
     );
   }

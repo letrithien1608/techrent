@@ -76,6 +76,7 @@ export class BookingsController {
       status: query.status,
       userId: query.userId,
       depositRefundStatus: query.depositRefundStatus,
+      excludeDemo: query.excludeDemo,
     });
   }
 

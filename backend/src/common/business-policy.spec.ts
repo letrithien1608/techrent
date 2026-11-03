@@ -1,5 +1,8 @@
 import {
   addBusinessDays,
+  calculateLostDeviceDebt,
+  calculateUnusedRentalRefund,
+  isEquivalentValue,
   calculateDeposit,
   calculateDepositSettlement,
   depositRefundDueAt,
@@ -172,5 +175,83 @@ describe('business-policy', () => {
         '2026-11-10T23:30:00.000Z',
       );
     });
+  });
+
+  it('quyết toán cọc trừ thêm chi phí sửa đã ghi khi báo lỗi (lỗi do khách)', () => {
+    expect(
+      calculateDepositSettlement({
+        depositAmount: 10_000_000,
+        lateFee: 0,
+        damageFee: 0,
+        repairFee: 1_500_000,
+      }),
+    ).toEqual({
+      totalDeductions: 1_500_000,
+      refundAmount: 8_500_000,
+      amountOwed: 0,
+    });
+  });
+
+  describe('calculateUnusedRentalRefund (kết thúc sớm)', () => {
+    const startTime = new Date('2026-11-01T00:00:00Z');
+    const endTime = new Date('2026-11-05T00:00:00Z'); // 4 ngày
+
+    it('dùng 1/4 thời gian → hoàn 3/4 tiền thuê, làm tròn xuống nghìn', () => {
+      expect(
+        calculateUnusedRentalRefund({
+          totalPrice: 1_000_500,
+          startTime,
+          endTime,
+          endedAt: new Date('2026-11-02T00:00:00Z'),
+        }),
+      ).toBe(750_000);
+    });
+
+    it('báo lỗi trước giờ bắt đầu → hoàn toàn bộ; sau hạn trả → hoàn 0', () => {
+      expect(
+        calculateUnusedRentalRefund({
+          totalPrice: 800_000,
+          startTime,
+          endTime,
+          endedAt: new Date('2026-10-31T00:00:00Z'),
+        }),
+      ).toBe(800_000);
+      expect(
+        calculateUnusedRentalRefund({
+          totalPrice: 800_000,
+          startTime,
+          endTime,
+          endedAt: new Date('2026-11-06T00:00:00Z'),
+        }),
+      ).toBe(0);
+    });
+  });
+
+  describe('calculateLostDeviceDebt (mất thiết bị)', () => {
+    it('nợ = giá trị máy − cọc + phí trễ hạn', () => {
+      expect(
+        calculateLostDeviceDebt({
+          originalPrice: 20_000_000,
+          depositAmount: 10_000_000,
+          lateFee: 1_000_000,
+        }),
+      ).toEqual({ lateFee: 1_000_000, amountOwed: 11_000_000 });
+    });
+
+    it('tổng đòi (cọc + nợ) không vượt 150% giá trị máy', () => {
+      expect(
+        calculateLostDeviceDebt({
+          originalPrice: 20_000_000,
+          depositAmount: 10_000_000,
+          lateFee: 20_000_000,
+        }),
+      ).toEqual({ lateFee: 10_000_000, amountOwed: 20_000_000 });
+    });
+  });
+
+  it('máy thay thế tương đương: lệch giá trị tối đa ±20%', () => {
+    expect(isEquivalentValue(20_000_000, 24_000_000)).toBe(true);
+    expect(isEquivalentValue(20_000_000, 16_000_000)).toBe(true);
+    expect(isEquivalentValue(20_000_000, 24_000_001)).toBe(false);
   });
 });

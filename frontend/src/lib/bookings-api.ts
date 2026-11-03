@@ -5,7 +5,8 @@ export type BookingStatus =
   | "confirmed"
   | "ongoing"
   | "completed"
-  | "cancelled";
+  | "cancelled"
+  | "lost";
 
 export interface BookingDeviceSummary {
   id: string;
@@ -124,6 +125,8 @@ export async function fetchBookings(
     /** Chỉ staff/admin dùng được thật — xem ListBookingsQueryDto backend. */
     userId?: string;
     depositRefundStatus?: DepositRefundStatus;
+    /** Bỏ đơn dữ liệu mẫu (chỉ có tác dụng với staff/admin). */
+    excludeDemo?: boolean;
   } = {},
 ): Promise<PaginatedBookings> {
   const { data } = await api.get<PaginatedBookings>("/bookings", { params });
@@ -228,9 +231,13 @@ export interface FinancialStats {
   lateFees: number;
   damageFees: number;
   depositHeld: number;
-  amountOwed: number;
+  outstandingDebt: number;
+  debtCollected: number;
   pendingRefundCount: number;
   overdueRefundCount: number;
+  suspectedLostCount: number;
+  lostDeviceCount: number;
+  openIssueCount: number;
 }
 
 export async function fetchFinancialStats(): Promise<FinancialStats> {

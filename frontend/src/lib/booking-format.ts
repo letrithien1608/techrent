@@ -15,6 +15,7 @@ export const BOOKING_STATUS_LABEL: Record<
   ongoing: { label: "Đang thuê", className: "bg-blue-500/15 text-blue-400" },
   completed: { label: "Đã trả máy", className: "bg-emerald-500/15 text-emerald-400" },
   cancelled: { label: "Đã huỷ", className: "bg-muted text-muted-foreground" },
+  lost: { label: "Mất thiết bị", className: "bg-red-500/20 text-red-300" },
 };
 
 /**

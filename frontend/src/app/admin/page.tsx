@@ -15,7 +15,11 @@ import {
 } from "recharts";
 import {
   AlarmClock,
+  AlertTriangle,
   Banknote,
+  BadgeAlert,
+  HandCoins,
+  SearchX,
   Boxes,
   DollarSign,
   Package,
@@ -41,9 +45,10 @@ import { fetchDevices } from "@/lib/devices-api";
 import { BOOKING_STATUS_LABEL } from "@/lib/booking-format";
 import { formatDateTimeVi, formatVnd } from "@/lib/device-format";
 
-// Tổng tiền (thuê, phí trễ hạn, phí hư hỏng, cọc đang giữ) lấy từ
+// Tổng tiền (thuê, phí trễ hạn, phí hư hỏng, cọc đang giữ, nợ) lấy từ
 // GET /bookings/stats (SQL trên toàn bộ đơn). Biểu đồ + xu hướng dựa trên
-// tiền thuê đã thu theo ngày thu, tính từ 100 đơn gần nhất.
+// tiền thuê đã thu theo ngày thu, tính từ 100 đơn gần nhất. Mọi số liệu
+// BỎ đơn dữ liệu mẫu (isDemo — tài khoản demo.review*) để dùng cho báo cáo.
 const CHART_DAYS = 14;
 // Giới hạn tối đa 1 lần gọi API cho phép (ràng buộc `@Max(100)` ở backend) —
 // đủ cho quy mô dữ liệu demo hiện tại (25 thiết bị), xem giới hạn đã ghi ở CLAUDE.md.
@@ -172,7 +177,7 @@ export default function AdminDashboardPage() {
 
   const bookingsQuery = useQuery({
     queryKey: ["admin", "bookings", "stats"],
-    queryFn: () => fetchBookings({ limit: STATS_FETCH_LIMIT }),
+    queryFn: () => fetchBookings({ limit: STATS_FETCH_LIMIT, excludeDemo: true }),
   });
 
   const financeQuery = useQuery({
@@ -330,6 +335,39 @@ export default function AdminDashboardPage() {
           label="Thiết bị cần bảo trì"
           value={String(stats.maintenance)}
           tone="bg-destructive/15 text-destructive"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Link href="/admin/debts" className="block rounded-2xl focus-visible:outline-2 focus-visible:outline-primary">
+          <StatCard
+            icon={HandCoins}
+            label="Tiền khách còn nợ"
+            value={formatVnd(finance.outstandingDebt)}
+            tone={finance.outstandingDebt > 0 ? "bg-destructive/15 text-destructive" : "bg-emerald-500/15 text-emerald-400"}
+          />
+        </Link>
+        <Link href="/admin/issues" className="block rounded-2xl focus-visible:outline-2 focus-visible:outline-primary">
+          <StatCard
+            icon={BadgeAlert}
+            label="Báo lỗi thiết bị chờ xử lý"
+            value={String(finance.openIssueCount)}
+            tone={finance.openIssueCount > 0 ? "bg-amber-500/15 text-amber-400" : "bg-muted text-muted-foreground"}
+          />
+        </Link>
+        <Link href="/admin/bookings?status=ongoing" className="block rounded-2xl focus-visible:outline-2 focus-visible:outline-primary">
+          <StatCard
+            icon={AlertTriangle}
+            label="Đơn nghi mất thiết bị"
+            value={String(finance.suspectedLostCount)}
+            tone={finance.suspectedLostCount > 0 ? "bg-destructive/15 text-destructive" : "bg-muted text-muted-foreground"}
+          />
+        </Link>
+        <StatCard
+          icon={SearchX}
+          label="Thiết bị đã mất"
+          value={String(finance.lostDeviceCount)}
+          tone="bg-slate-500/15 text-slate-300"
         />
       </div>
 

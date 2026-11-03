@@ -51,6 +51,21 @@ export const RETURN_DAMAGE_MIN_PHOTOS = 1;
  */
 export const STORE_PICKUP_ONLY = true;
 
+/** Quá hạn trả máy từ N ngày trở lên → hệ thống đánh dấu "nghi mất thiết bị" và báo nhân viên. */
+export const LOST_SUSPECT_OVERDUE_DAYS = 7;
+
+/**
+ * Khi xác nhận mất thiết bị: tổng cửa hàng đòi (tiền cọc giữ lại + nợ) không
+ * vượt quá N lần giá trị thiết bị — chặn phí trễ hạn cộng dồn vô hạn.
+ */
+export const LOST_DEVICE_MAX_CLAIM_RATIO = 1.5;
+
+/** Máy thay thế khi đổi máy: cùng danh mục, giá trị lệch tối đa ±N so với máy gốc. */
+export const REPLACEMENT_VALUE_TOLERANCE = 0.2;
+
+/** Tiền hoàn (thuê phần chưa dùng) làm tròn XUỐNG tới bội số này (VND). */
+export const REFUND_ROUNDING_VND = 1000;
+
 /** Múi giờ cửa hàng — dùng để xác định ngày làm việc (VN không có giờ mùa hè). */
 const STORE_UTC_OFFSET_MS = 7 * HOUR_MS;
 
@@ -125,15 +140,19 @@ export interface DepositSettlement {
 }
 
 /**
- * Quyết toán cọc khi trả máy: hoàn = cọc − phí trễ hạn − phí hư hỏng. Nếu ra
+ * Quyết toán cọc khi trả máy: hoàn = cọc − phí trễ hạn − phí hư hỏng (− chi phí
+ * sửa đã ghi khi báo lỗi). Nếu ra
  * số âm thì hoàn 0 và phần thiếu thành tiền khách còn nợ.
  */
 export function calculateDepositSettlement(input: {
   depositAmount: number;
   lateFee: number;
   damageFee: number;
+  /** Chi phí sửa do lỗi của khách đã ghi khi xử lý báo lỗi giữa kỳ thuê. */
+  repairFee?: number;
 }): DepositSettlement {
-  const totalDeductions = input.lateFee + input.damageFee;
+  const totalDeductions =
+    input.lateFee + input.damageFee + (input.repairFee ?? 0);
   const balance = input.depositAmount - totalDeductions;
   return {
     totalDeductions,
@@ -161,4 +180,56 @@ export function addBusinessDays(from: Date, days: number): Date {
 /** Hạn chót hoàn cọc tính từ thời điểm phát sinh nghĩa vụ hoàn (trả máy/huỷ đơn). */
 export function depositRefundDueAt(from: Date): Date {
   return addBusinessDays(from, DEPOSIT_REFUND_BUSINESS_DAYS);
+}
+
+/**
+ * Kết thúc sớm do lỗi thiết bị: hoàn tiền thuê theo tỷ lệ thời gian CHƯA dùng
+ * (tính từ lúc kết thúc tới hạn trả), làm tròn xuống REFUND_ROUNDING_VND.
+ */
+export function calculateUnusedRentalRefund(input: {
+  totalPrice: number;
+  startTime: Date;
+  endTime: Date;
+  endedAt: Date;
+}): number {
+  const total = input.endTime.getTime() - input.startTime.getTime();
+  if (total <= 0) return 0;
+  const used = Math.min(
+    Math.max(input.endedAt.getTime() - input.startTime.getTime(), 0),
+    total,
+  );
+  const refund = (input.totalPrice * (total - used)) / total;
+  return Math.floor(refund / REFUND_ROUNDING_VND) * REFUND_ROUNDING_VND;
+}
+
+/**
+ * Xác nhận mất thiết bị: giữ toàn bộ cọc, nợ = giá trị máy − cọc + phí trễ
+ * hạn, sao cho (cọc + nợ) ≤ LOST_DEVICE_MAX_CLAIM_RATIO × giá trị máy.
+ */
+export function calculateLostDeviceDebt(input: {
+  originalPrice: number;
+  depositAmount: number;
+  lateFee: number;
+}): { lateFee: number; amountOwed: number } {
+  const maxClaim = input.originalPrice * LOST_DEVICE_MAX_CLAIM_RATIO;
+  const lateFee = Math.max(
+    Math.min(input.lateFee, maxClaim - input.originalPrice),
+    0,
+  );
+  const amountOwed = Math.max(
+    input.originalPrice + lateFee - input.depositAmount,
+    0,
+  );
+  return { lateFee, amountOwed };
+}
+
+/** Giá trị máy thay thế có nằm trong khoảng tương đương với máy gốc không. */
+export function isEquivalentValue(
+  originalPrice: number,
+  candidatePrice: number,
+): boolean {
+  return (
+    Math.abs(candidatePrice - originalPrice) <=
+    originalPrice * REPLACEMENT_VALUE_TOLERANCE
+  );
 }

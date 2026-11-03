@@ -49,6 +49,7 @@ const FILTERS: { value: BookingStatus | "all"; label: string }[] = [
   { value: "ongoing", label: "Đang thuê" },
   { value: "completed", label: "Đã trả máy" },
   { value: "cancelled", label: "Đã huỷ" },
+  { value: "lost", label: "Mất thiết bị" },
 ];
 
 export default function AdminBookingsPage() {
@@ -84,9 +85,14 @@ function FocusedBookingDialog({ bookingId }: { bookingId: string }) {
 
 function AdminBookingsContent() {
   const queryClient = useQueryClient();
-  const focusBookingId = useSearchParams().get("bookingId");
+  const searchParams = useSearchParams();
+  const focusBookingId = searchParams.get("bookingId");
   const [page, setPage] = useState(1);
-  const [status, setStatus] = useState<BookingStatus | "all">("all");
+  // `?status=` từ thẻ Dashboard (VD đơn nghi mất → "Đang thuê").
+  const [status, setStatus] = useState<BookingStatus | "all">(() => {
+    const fromUrl = searchParams.get("status");
+    return FILTERS.some((f) => f.value === fromUrl) ? (fromUrl as BookingStatus) : "all";
+  });
 
   const bookingsQuery = useQuery({
     queryKey: ["admin", "bookings", page, status],
