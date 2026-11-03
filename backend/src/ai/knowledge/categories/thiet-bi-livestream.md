@@ -19,4 +19,4 @@
 - Stream Deck không nhận: Mở phần mềm Stream Deck, cắm trực tiếp vào máy, không qua hub.
 - Đèn không kết nối: Đảm bảo đèn và máy tính chung mạng Wi-Fi 2.4GHz, kết nối lại theo hướng dẫn hãng.
 - Hình tối hoặc nhòe: Tăng ánh sáng, bật tự động phơi sáng/lấy nét trong phần mềm.
-- Đã thử các cách trên mà vẫn lỗi: chụp ảnh/quay video hiện tượng và liên hệ nhân viên TechRent ngay trong thời gian thuê.
+- Đã thử các cách trên mà vẫn lỗi: chụp ảnh/quay video hiện tượng, vào "Đơn của tôi" bấm "Báo lỗi thiết bị" ngay trong thời gian thuê (không tự tháo/sửa). Lỗi do thiết bị: cửa hàng đổi máy tương đương hoặc kết thúc sớm, hoàn tiền thuê phần chưa dùng + hoàn đủ cọc; lỗi do người thuê: chi phí sửa trừ vào cọc khi trả máy.

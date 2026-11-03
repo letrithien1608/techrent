@@ -19,4 +19,4 @@
 - Wi-Fi yếu: Đặt router ở vị trí trung tâm, tránh tường dày và thiết bị gây nhiễu.
 - Không vào được trang quản trị: Kết nối trực tiếp bằng cáp LAN, kiểm tra đúng địa chỉ IP quản trị.
 - Kết nối chập chờn: Chuyển sang băng tần 5GHz hoặc đổi kênh Wi-Fi.
-- Đã thử các cách trên mà vẫn lỗi: chụp ảnh/quay video hiện tượng và liên hệ nhân viên TechRent ngay trong thời gian thuê.
+- Đã thử các cách trên mà vẫn lỗi: chụp ảnh/quay video hiện tượng, vào "Đơn của tôi" bấm "Báo lỗi thiết bị" ngay trong thời gian thuê (không tự tháo/sửa). Lỗi do thiết bị: cửa hàng đổi máy tương đương hoặc kết thúc sớm, hoàn tiền thuê phần chưa dùng + hoàn đủ cọc; lỗi do người thuê: chi phí sửa trừ vào cọc khi trả máy.

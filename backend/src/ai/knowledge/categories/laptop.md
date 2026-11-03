@@ -20,4 +20,4 @@
 - Không nhận màn hình ngoài: Kiểm tra cáp HDMI/USB-C, chọn đúng chế độ trình chiếu (Windows: phím Win + P; macOS: Cài đặt > Màn hình).
 - Không bắt được Wi-Fi: Bật/tắt Wi-Fi, quên mạng rồi kết nối lại, khởi động lại máy.
 - Bàn phím/touchpad không phản hồi: Khởi động lại máy; nếu vẫn lỗi chụp lại và báo nhân viên.
-- Đã thử các cách trên mà vẫn lỗi: chụp ảnh/quay video hiện tượng và liên hệ nhân viên TechRent ngay trong thời gian thuê.
+- Đã thử các cách trên mà vẫn lỗi: chụp ảnh/quay video hiện tượng, vào "Đơn của tôi" bấm "Báo lỗi thiết bị" ngay trong thời gian thuê (không tự tháo/sửa). Lỗi do thiết bị: cửa hàng đổi máy tương đương hoặc kết thúc sớm, hoàn tiền thuê phần chưa dùng + hoàn đủ cọc; lỗi do người thuê: chi phí sửa trừ vào cọc khi trả máy.

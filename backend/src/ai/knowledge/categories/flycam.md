@@ -20,4 +20,4 @@
 - Báo lỗi la bàn: Di chuyển ra xa vật kim loại rồi hiệu chỉnh la bàn theo hướng dẫn trên ứng dụng.
 - Không cất cánh được: Kiểm tra pin, tín hiệu GPS, khu vực cấm bay hiển thị trên ứng dụng.
 - Hình truyền về giật/mất: Bay gần hơn, tránh vật cản và vùng nhiễu sóng.
-- Đã thử các cách trên mà vẫn lỗi: chụp ảnh/quay video hiện tượng và liên hệ nhân viên TechRent ngay trong thời gian thuê.
+- Đã thử các cách trên mà vẫn lỗi: chụp ảnh/quay video hiện tượng, vào "Đơn của tôi" bấm "Báo lỗi thiết bị" ngay trong thời gian thuê (không tự tháo/sửa). Lỗi do thiết bị: cửa hàng đổi máy tương đương hoặc kết thúc sớm, hoàn tiền thuê phần chưa dùng + hoàn đủ cọc; lỗi do người thuê: chi phí sửa trừ vào cọc khi trả máy.

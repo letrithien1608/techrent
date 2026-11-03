@@ -19,4 +19,4 @@
 - Hình mờ: Chỉnh vòng lấy nét, đặt máy đúng khoảng cách tới màn chiếu.
 - Hình bị méo hình thang: Dùng chức năng keystone hoặc đặt máy thẳng góc với màn.
 - Máy tự tắt: Kiểm tra khe tản nhiệt có bị che, để máy nghỉ cho nguội.
-- Đã thử các cách trên mà vẫn lỗi: chụp ảnh/quay video hiện tượng và liên hệ nhân viên TechRent ngay trong thời gian thuê.
+- Đã thử các cách trên mà vẫn lỗi: chụp ảnh/quay video hiện tượng, vào "Đơn của tôi" bấm "Báo lỗi thiết bị" ngay trong thời gian thuê (không tự tháo/sửa). Lỗi do thiết bị: cửa hàng đổi máy tương đương hoặc kết thúc sớm, hoàn tiền thuê phần chưa dùng + hoàn đủ cọc; lỗi do người thuê: chi phí sửa trừ vào cọc khi trả máy.

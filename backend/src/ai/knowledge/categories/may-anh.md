@@ -19,4 +19,4 @@
 - Máy không lên nguồn: Kiểm tra pin đã sạc và lắp đúng chiều, đóng chặt nắp pin.
 - Ảnh bị mờ: Kiểm tra chế độ lấy nét (AF), tốc độ màn trập đủ nhanh, bật chống rung nếu có.
 - Ống kính không nhận: Tắt máy, tháo ra lắp lại ống kính đến khi khớp ngàm.
-- Đã thử các cách trên mà vẫn lỗi: chụp ảnh/quay video hiện tượng và liên hệ nhân viên TechRent ngay trong thời gian thuê.
+- Đã thử các cách trên mà vẫn lỗi: chụp ảnh/quay video hiện tượng, vào "Đơn của tôi" bấm "Báo lỗi thiết bị" ngay trong thời gian thuê (không tự tháo/sửa). Lỗi do thiết bị: cửa hàng đổi máy tương đương hoặc kết thúc sớm, hoàn tiền thuê phần chưa dùng + hoàn đủ cọc; lỗi do người thuê: chi phí sửa trừ vào cọc khi trả máy.

@@ -19,4 +19,4 @@
 - Báo lỗi thẻ nhớ: Dùng thẻ đúng chuẩn tốc độ, format thẻ trên máy.
 - Không kết nối ứng dụng: Bật Wi-Fi và Bluetooth trên điện thoại, khởi động lại máy quay.
 - Video bị rung: Bật chống rung trong cài đặt (HyperSmooth/RockSteady/FlowState).
-- Đã thử các cách trên mà vẫn lỗi: chụp ảnh/quay video hiện tượng và liên hệ nhân viên TechRent ngay trong thời gian thuê.
+- Đã thử các cách trên mà vẫn lỗi: chụp ảnh/quay video hiện tượng, vào "Đơn của tôi" bấm "Báo lỗi thiết bị" ngay trong thời gian thuê (không tự tháo/sửa). Lỗi do thiết bị: cửa hàng đổi máy tương đương hoặc kết thúc sớm, hoàn tiền thuê phần chưa dùng + hoàn đủ cọc; lỗi do người thuê: chi phí sửa trừ vào cọc khi trả máy.

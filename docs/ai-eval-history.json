@@ -145,5 +145,38 @@
       "I1 (1/3)",
       "L1 (1/3)"
     ]
+  },
+  {
+    "at": "2026-11-03T19:48:32.195Z",
+    "label": "Phiên 3/3: ví dụ mẫu + FAQ cho máy lỗi (đủ 3 hướng) và không trả máy (mốc 7 ngày)",
+    "passed": 95,
+    "total": 102,
+    "repeat": 3,
+    "failedIds": [
+      "P3 (2/3)",
+      "O2 (0/3)",
+      "I1 (0/3)"
+    ]
+  },
+  {
+    "at": "2026-11-03T20:07:22.381Z",
+    "label": "Phiên 3/3 (lần 2): sửa câu hướng dẫn lỗi cũ trong 16 file danh mục + FAQ",
+    "passed": 99,
+    "total": 102,
+    "repeat": 3,
+    "failedIds": [
+      "I1 (0/3)"
+    ]
+  },
+  {
+    "at": "2026-11-03T20:25:41.465Z",
+    "label": "Phiên 3/3 (lần 3): quy tắc 11 — máy lỗi luôn nêu đủ 3 hướng xử lý",
+    "passed": 99,
+    "total": 102,
+    "repeat": 3,
+    "failedIds": [
+      "O2 (1/3)",
+      "P8 (2/3)"
+    ]
   }
 ]

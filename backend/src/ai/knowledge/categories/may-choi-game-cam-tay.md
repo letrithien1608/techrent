@@ -21,4 +21,4 @@
 - Pin tụt nhanh: giảm độ sáng màn hình và giới hạn công suất (TDP) trong cài đặt.
 - Không xuất hình ra TV: dùng cáp/dock USB-C hỗ trợ xuất hình, chọn đúng nguồn vào trên TV.
 - Máy treo: giữ nút nguồn khoảng 10-12 giây để khởi động lại.
-- Đã thử các cách trên mà vẫn lỗi: chụp ảnh/quay video hiện tượng và liên hệ nhân viên TechRent ngay trong thời gian thuê.
+- Đã thử các cách trên mà vẫn lỗi: chụp ảnh/quay video hiện tượng, vào "Đơn của tôi" bấm "Báo lỗi thiết bị" ngay trong thời gian thuê (không tự tháo/sửa). Lỗi do thiết bị: cửa hàng đổi máy tương đương hoặc kết thúc sớm, hoàn tiền thuê phần chưa dùng + hoàn đủ cọc; lỗi do người thuê: chi phí sửa trừ vào cọc khi trả máy.

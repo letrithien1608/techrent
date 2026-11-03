@@ -19,4 +19,4 @@
 - Màn hình nhấp nháy: Cấp thêm nguồn điện riêng, thay cáp tốt hơn.
 - Độ phân giải sai: Chỉnh lại độ phân giải trong cài đặt hiển thị của laptop.
 - Smart Monitor không vào được Wi-Fi: Vào cài đặt mạng trên màn hình, kết nối lại Wi-Fi.
-- Đã thử các cách trên mà vẫn lỗi: chụp ảnh/quay video hiện tượng và liên hệ nhân viên TechRent ngay trong thời gian thuê.
+- Đã thử các cách trên mà vẫn lỗi: chụp ảnh/quay video hiện tượng, vào "Đơn của tôi" bấm "Báo lỗi thiết bị" ngay trong thời gian thuê (không tự tháo/sửa). Lỗi do thiết bị: cửa hàng đổi máy tương đương hoặc kết thúc sớm, hoàn tiền thuê phần chưa dùng + hoàn đủ cọc; lỗi do người thuê: chi phí sửa trừ vào cọc khi trả máy.

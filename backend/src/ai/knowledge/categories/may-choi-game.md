@@ -19,4 +19,4 @@
 - Tay cầm không kết nối: Cắm cáp USB vào máy rồi bấm nút giữa tay cầm; sạc tay cầm.
 - Máy báo cần cập nhật: Kết nối Wi-Fi và để máy cập nhật xong, không tắt ngang.
 - Switch không xuất hình ra TV: Đặt máy vào dock đúng chiều, cắm cả nguồn và HDMI vào dock.
-- Đã thử các cách trên mà vẫn lỗi: chụp ảnh/quay video hiện tượng và liên hệ nhân viên TechRent ngay trong thời gian thuê.
+- Đã thử các cách trên mà vẫn lỗi: chụp ảnh/quay video hiện tượng, vào "Đơn của tôi" bấm "Báo lỗi thiết bị" ngay trong thời gian thuê (không tự tháo/sửa). Lỗi do thiết bị: cửa hàng đổi máy tương đương hoặc kết thúc sớm, hoàn tiền thuê phần chưa dùng + hoàn đủ cọc; lỗi do người thuê: chi phí sửa trừ vào cọc khi trả máy.

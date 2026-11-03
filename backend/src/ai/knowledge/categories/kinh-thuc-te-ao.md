@@ -19,4 +19,4 @@
 - Tay cầm không nhận: Kiểm tra pin tay cầm, ghép đôi lại trong cài đặt.
 - Hình bị trôi/mất vùng chơi: Bật đèn phòng đủ sáng, thiết lập lại vùng chơi.
 - Kính không lên: Sạc ít nhất 30 phút rồi giữ nút nguồn.
-- Đã thử các cách trên mà vẫn lỗi: chụp ảnh/quay video hiện tượng và liên hệ nhân viên TechRent ngay trong thời gian thuê.
+- Đã thử các cách trên mà vẫn lỗi: chụp ảnh/quay video hiện tượng, vào "Đơn của tôi" bấm "Báo lỗi thiết bị" ngay trong thời gian thuê (không tự tháo/sửa). Lỗi do thiết bị: cửa hàng đổi máy tương đương hoặc kết thúc sớm, hoàn tiền thuê phần chưa dùng + hoàn đủ cọc; lỗi do người thuê: chi phí sửa trừ vào cọc khi trả máy.

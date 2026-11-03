@@ -25,7 +25,7 @@ Tiền cọc thanh toán online qua cổng VNPay ngay sau khi đặt. Tiền thu
 Có. Vào "Đơn của tôi", bấm "Huỷ đơn" với đơn đang "Chờ thanh toán" hoặc "Đã xác nhận". Hộp thoại sẽ hiện mức hoàn cọc ước tính trước khi bạn xác nhận.
 
 ## Máy bị lỗi khi đang thuê thì sao?
-Tự kiểm tra cơ bản (nguồn, cáp, khởi động lại), nếu vẫn lỗi thì chụp ảnh/quay video lỗi và liên hệ nhân viên TechRent ngay trong thời gian thuê để được hỗ trợ. Không tự tháo hoặc mang đi sửa nơi khác.
+Tự kiểm tra cơ bản (nguồn, cáp, khởi động lại); nếu vẫn lỗi, chụp ảnh/quay video rồi vào "Đơn của tôi" bấm "Báo lỗi thiết bị". Không tự tháo hoặc mang đi sửa nơi khác. Cửa hàng xử lý: lỗi do thiết bị thì đổi máy tương đương hoặc kết thúc sớm, hoàn tiền thuê phần chưa dùng và hoàn đủ cọc; lỗi do người thuê thì chi phí sửa trừ vào cọc khi trả máy.
 
 ## Làm hỏng hoặc mất thiết bị thì sao?
 Hỏng do bên thuê: bồi thường chi phí sửa chữa thực tế. Không sửa được hoặc mất: bồi thường 100% giá trị thiết bị. Cố ý không trả có thể bị đưa vào danh sách đen và bị trình báo cơ quan chức năng.
@@ -63,10 +63,13 @@ Không. TechRent không giao hàng tận nơi — bạn nhận và trả máy tr
 ## Tiền bồi thường hư hỏng lớn hơn tiền cọc thì sao?
 Khi trả máy, phí trễ hạn và tiền bồi thường hư hỏng được trừ vào tiền cọc. Nếu tổng khoản trừ lớn hơn tiền cọc, bạn không được hoàn cọc và phần còn thiếu được ghi thành khoản nợ. Bạn phải thanh toán hết khoản nợ này tại cửa hàng (tiền mặt hoặc chuyển khoản) trước khi được đặt thuê tiếp; số nợ hiển thị ở trang Tài khoản và trang chi tiết đơn.
 
-## Máy bị lỗi khi đang thuê thì báo ở đâu?
-Vào "Đơn của tôi", mở đơn đang thuê và bấm "Báo lỗi thiết bị", mô tả lỗi và gửi kèm ảnh/video. Lỗi do thiết bị: cửa hàng đổi máy tương đương hoặc kết thúc sớm, hoàn tiền thuê phần chưa dùng và hoàn đủ cọc. Lỗi do người thuê: chi phí sửa trừ vào cọc khi trả máy.
+## Máy bị lỗi khi đang thuê thì phải làm sao, báo ở đâu?
+Vào "Đơn của tôi", mở đơn đang thuê và bấm "Báo lỗi thiết bị", mô tả lỗi và gửi kèm ảnh/video; không tự tháo hay mang đi sửa. Cửa hàng xử lý theo 1 trong 3 hướng:
+- Lỗi do thiết bị: đổi máy tương đương (cùng loại, giá trị chênh tối đa {{REPLACEMENT_TOLERANCE_PERCENT}}), thời hạn thuê giữ nguyên.
+- Lỗi do thiết bị mà không có máy thay thế: kết thúc sớm, hoàn tiền thuê phần thời gian chưa dùng và hoàn đủ tiền cọc.
+- Lỗi do người thuê: chi phí sửa chữa được trừ vào tiền cọc khi trả máy.
 
-## Không trả máy đúng hạn thì sao?
+## Không trả máy đúng hạn, giữ máy quá hạn lâu thì sao?
 Bị tính phí trễ hạn leo thang. Quá hạn từ {{LOST_SUSPECT_OVERDUE_DAYS}} ngày, đơn bị đánh dấu nghi mất thiết bị; nếu cửa hàng xác nhận mất thì giữ toàn bộ tiền cọc, bạn phải trả thêm phần còn thiếu của giá trị máy cộng phí trễ hạn, và tài khoản bị đưa vào danh sách đen.
 
 ## Tôi đang còn nợ, có thuê tiếp được không?
