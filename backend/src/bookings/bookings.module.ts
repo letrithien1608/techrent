@@ -12,6 +12,8 @@ import { BookingIssuesService } from './booking-issues.service';
 import { BookingLossController } from './booking-loss.controller';
 import { BookingLossService } from './booking-loss.service';
 import { BookingOverdueProcessor } from './booking-overdue.processor';
+import { DebtsController } from './debts.controller';
+import { DebtsService } from './debts.service';
 import { BOOKING_OVERDUE_QUEUE } from './bookings.constants';
 import { BookingsService, BOOKING_TTL_QUEUE } from './bookings.service';
 
@@ -29,11 +31,13 @@ import { BookingsService, BOOKING_TTL_QUEUE } from './bookings.service';
     BookingsController,
     BookingIssuesController,
     BookingLossController,
+    DebtsController,
   ],
   providers: [
     BookingsService,
     BookingIssuesService,
     BookingLossService,
+    DebtsService,
     BookingTtlProcessor,
     BookingOverdueProcessor,
   ],

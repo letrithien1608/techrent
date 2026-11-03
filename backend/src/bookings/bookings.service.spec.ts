@@ -121,7 +121,7 @@ describe('BookingsService', () => {
         findMany: jest.fn(),
         count: jest.fn(),
         update: jest.fn(),
-        aggregate: jest.fn(),
+        aggregate: jest.fn().mockResolvedValue({ _sum: {} }),
       },
       device: { update: jest.fn(), findUniqueOrThrow: jest.fn() },
       bookingInspection: {
@@ -213,6 +213,38 @@ describe('BookingsService', () => {
 
     // Lớp chặn quan trọng nhất của KYC (mục 7 Roadmap) — kiểm tra CCCD TRƯỚC
     // cả validate thời gian, nên đặt lên đầu describe cho dễ đối chiếu.
+    it('chặn đặt thuê khi khách còn nợ, báo rõ số tiền', async () => {
+      prisma.booking.aggregate.mockResolvedValue({
+        _sum: { amountOwed: '1216000', debtPaidAmount: '1000000' },
+      });
+
+      await expect(
+        service.create(customer.userId, {
+          deviceId,
+          startTime: new Date(Date.now() + 3600_000).toISOString(),
+          endTime: new Date(Date.now() + 7200_000).toISOString(),
+        }),
+      ).rejects.toThrow('Bạn còn nợ 216.000đ');
+      expect(tx.booking.create).not.toHaveBeenCalled();
+    });
+
+    it('đã trả hết nợ → đặt thuê bình thường', async () => {
+      prisma.booking.aggregate.mockResolvedValue({
+        _sum: { amountOwed: '1216000', debtPaidAmount: '1216000' },
+      });
+      tx.device.findUnique.mockResolvedValue(baseDevice);
+      tx.booking.findFirst.mockResolvedValue(null);
+      tx.booking.create.mockResolvedValue(baseBooking);
+
+      await expect(
+        service.create(customer.userId, {
+          deviceId,
+          startTime: new Date(Date.now() + 3600_000).toISOString(),
+          endTime: new Date(Date.now() + 7200_000).toISOString(),
+        }),
+      ).resolves.toEqual(baseBooking);
+    });
+
     it('ném BadRequestException nếu user CHƯA có CCCD trong hồ sơ (cccdHash null)', async () => {
       usersService.findByIdOrThrow.mockResolvedValue({
         id: customer.userId,

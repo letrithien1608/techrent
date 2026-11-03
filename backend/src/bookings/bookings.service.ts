@@ -36,6 +36,7 @@ import { BOOKING_TTL_JOB, BOOKING_TTL_QUEUE } from './bookings.constants';
 import {
   type BookingNotificationKind,
   buildBookingNotification,
+  formatVnd,
 } from '../notifications/notification-templates';
 import {
   calculateDeposit,
@@ -86,6 +87,7 @@ const bookingDetail = {
     ...bookingWithDevice.include,
     inspections: { orderBy: { createdAt: 'asc' } },
     issueReports: { orderBy: { createdAt: 'asc' } },
+    debtPayments: { orderBy: { createdAt: 'asc' } },
   },
 } satisfies Prisma.BookingDefaultArgs;
 
@@ -174,6 +176,14 @@ export class BookingsService {
     if (user.isBlacklisted) {
       throw new ForbiddenException(
         'Tài khoản của bạn đã bị đưa vào danh sách đen và không thể đặt thuê. Vui lòng liên hệ cửa hàng để biết thêm chi tiết.',
+      );
+    }
+    // Còn nợ (quyết toán trả máy âm hoặc mất thiết bị) → phải thanh toán hết
+    // tại cửa hàng trước khi đặt thuê mới.
+    const outstandingDebt = await this.getOutstandingDebt(userId);
+    if (outstandingDebt > 0) {
+      throw new ForbiddenException(
+        `Bạn còn nợ ${formatVnd(outstandingDebt)} từ đơn thuê trước. Vui lòng thanh toán tại cửa hàng trước khi đặt thuê mới.`,
       );
     }
     if (!user.cccdHash) {
@@ -321,6 +331,18 @@ export class BookingsService {
     } catch (error) {
       throw this.translateOverlapError(error);
     }
+  }
+
+  /** Tổng nợ còn lại của 1 khách = Σ(amountOwed − debtPaidAmount). */
+  async getOutstandingDebt(userId: string): Promise<number> {
+    const sums = await this.prisma.booking.aggregate({
+      where: { userId, amountOwed: { gt: 0 } },
+      _sum: { amountOwed: true, debtPaidAmount: true },
+    });
+    return Math.max(
+      Number(sums._sum.amountOwed ?? 0) - Number(sums._sum.debtPaidAmount ?? 0),
+      0,
+    );
   }
 
   async checkAvailability(

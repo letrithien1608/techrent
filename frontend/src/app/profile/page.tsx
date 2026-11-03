@@ -1,5 +1,6 @@
 "use client";
 
+import { DebtNotice } from "@/components/bookings/debt-notice";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -101,6 +102,7 @@ export default function ProfilePage() {
 
       <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
         <ProfileHeaderCard user={user} profile={profileQuery.data} />
+        {user.role === "customer" && <DebtNotice className="mt-6" />}
 
         <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[240px_1fr]">
           <nav aria-label="Các mục tài khoản" className="hidden lg:block">

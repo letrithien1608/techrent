@@ -120,6 +120,14 @@ export function DeviceBookingPanel({ device, avgRating, reviewCount }: Props) {
         return;
       }
 
+      // Chặn vì còn nợ (403 từ BookingsService.create) — dẫn tới khoản nợ ở trang tài khoản.
+      if (message.includes("Bạn còn nợ")) {
+        toast.error(message, {
+          action: { label: "Xem khoản nợ", onClick: () => router.push("/profile#debt") },
+        });
+        return;
+      }
+
       toast.error(message);
     },
   });

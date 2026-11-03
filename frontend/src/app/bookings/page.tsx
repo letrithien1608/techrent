@@ -1,5 +1,6 @@
 "use client";
 
+import { DebtNotice } from "@/components/bookings/debt-notice";
 import { cn } from "cn";
 import Image from "next/image";
 import Link from "next/link";
@@ -138,6 +139,7 @@ export default function BookingsPage() {
       <p className="mt-2 text-muted-foreground">
         Theo dõi và quản lý các đơn thuê thiết bị của bạn.
       </p>
+      <DebtNotice className="mt-6" />
 
       <div className="mt-6 flex flex-wrap gap-2">
         {FILTERS.map((item) => (

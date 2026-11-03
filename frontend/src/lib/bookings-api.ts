@@ -375,3 +375,47 @@ export async function runOverdueCheck(): Promise<{ flagged: number }> {
   const { data } = await api.post<{ flagged: number }>("/bookings/overdue-check");
   return data;
 }
+
+// ---- Công nợ ----
+
+export interface DebtPaymentRecord {
+  id: string;
+  amount: string;
+  method: RentalPaymentMethod;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface DebtLine {
+  bookingId: string;
+  status: BookingStatus;
+  device: { id: string; name: string; images: string[] };
+  amountOwed: number;
+  debtPaidAmount: number;
+  outstanding: number;
+  payments: DebtPaymentRecord[];
+}
+
+export async function fetchMyDebt(): Promise<{ total: number; bookings: DebtLine[] }> {
+  const { data } = await api.get("/debts/me");
+  return data;
+}
+
+export interface Debtor {
+  user: { id: string; name: string; email: string; phone: string | null; isBlacklisted: boolean };
+  total: number;
+  bookings: DebtLine[];
+}
+
+export async function fetchDebtors(): Promise<Debtor[]> {
+  const { data } = await api.get<Debtor[]>("/debts");
+  return data;
+}
+
+export async function collectDebt(
+  bookingId: string,
+  input: { amount: number; method: RentalPaymentMethod; note?: string },
+): Promise<DebtPaymentRecord> {
+  const { data } = await api.post<DebtPaymentRecord>(`/debts/bookings/${bookingId}/payments`, input);
+  return data;
+}
