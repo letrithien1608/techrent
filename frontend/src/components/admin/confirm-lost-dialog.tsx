@@ -61,7 +61,7 @@ export function ConfirmLostDialog({ booking, onChanged }: { booking: Booking; on
           <div className="divide-y divide-border/50 overflow-hidden rounded-xl border border-border/60 text-sm">
             {[
               ["Giá trị thiết bị", formatVnd(preview.originalPrice)],
-              ["Phí trễ hạn (đã áp trần)", formatVnd(preview.lateFee)],
+              ["Phí trễ hạn", formatVnd(preview.lateFee)],
               ["Tiền cọc cửa hàng giữ lại", `−${formatVnd(preview.depositAmount)}`],
             ].map(([label, value]) => (
               <div key={label} className="flex justify-between px-3 py-2">
@@ -76,6 +76,7 @@ export function ConfirmLostDialog({ booking, onChanged }: { booking: Booking; on
           </div>
         )}
         <ul className="list-disc space-y-1 pl-5 text-xs text-muted-foreground">
+          <li>Tổng cửa hàng đòi (cọc + nợ) đã áp trần theo chính sách.</li>
           <li>Thiết bị chuyển trạng thái &quot;Đã mất&quot; và ngừng cho thuê.</li>
           <li>Khách tự động vào danh sách đen, lý do kèm bằng chứng: hợp đồng, eKYC, biên bản giao máy.</li>
         </ul>

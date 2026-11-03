@@ -113,7 +113,10 @@ export function BookingDetailDialog({
         {(detail.status === "ongoing" || detail.status === "completed" || detail.inspections?.length) && (
           <div className="border-t border-border/60 pt-4">
             <h3 className="mb-2 text-sm font-semibold">Biên bản giao / nhận máy</h3>
-            <InspectionComparison inspections={detail.inspections} />
+            <InspectionComparison
+              inspections={detail.inspections}
+              endedWithoutReturn={!!detail.issueReports?.some((r) => r.resolution === "ended_early")}
+            />
           </div>
         )}
 

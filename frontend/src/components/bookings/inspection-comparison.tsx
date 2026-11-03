@@ -66,13 +66,24 @@ function InspectionColumn({
 }
 
 /** Ảnh tình trạng thiết bị lúc giao đặt cạnh ảnh lúc trả — căn cứ tính phí hư hỏng. */
-export function InspectionComparison({ inspections }: { inspections?: BookingInspection[] }) {
+export function InspectionComparison({
+  inspections,
+  endedWithoutReturn = false,
+}: {
+  inspections?: BookingInspection[];
+  /** Đơn đã kết thúc mà không qua bước trả máy (kết thúc sớm do lỗi thiết bị). */
+  endedWithoutReturn?: boolean;
+}) {
   const handover = inspections?.find((i) => i.type === "handover");
   const returned = inspections?.find((i) => i.type === "return");
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <InspectionColumn title="Lúc giao máy" inspection={handover} emptyText="Chưa lập biên bản giao máy" />
-      <InspectionColumn title="Lúc trả máy" inspection={returned} emptyText="Chưa trả máy" />
+      <InspectionColumn
+        title="Lúc trả máy"
+        inspection={returned}
+        emptyText={endedWithoutReturn ? "Đơn kết thúc sớm do lỗi thiết bị — xem mục Báo lỗi" : "Chưa trả máy"}
+      />
     </div>
   );
 }

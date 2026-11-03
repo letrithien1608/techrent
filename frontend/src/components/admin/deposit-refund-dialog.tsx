@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FormErrorBanner } from "@/components/form-error-banner";
 import { markDepositRefunded, type Booking } from "@/lib/bookings-api";
-import { isRefundOverdue } from "@/lib/booking-format";
+import { isRefundOverdue, totalRefundAmount } from "@/lib/booking-format";
 import { formatDateTimeVi, formatVnd } from "@/lib/device-format";
 import { getErrorMessage } from "@/lib/get-error-message";
 
@@ -65,7 +65,10 @@ export function DepositRefundDialog({
         <DialogHeader>
           <DialogTitle>Xác nhận đã hoàn cọc</DialogTitle>
           <DialogDescription>
-            Chuyển khoản {formatVnd(booking.depositRefundAmount ?? 0)} cho {booking.user?.name ?? "khách"}
+            Chuyển khoản {formatVnd(totalRefundAmount(booking))}
+            {Number(booking.rentalRefundAmount ?? 0) > 0 &&
+              ` (cọc ${formatVnd(booking.depositRefundAmount ?? 0)} + tiền thuê ${formatVnd(booking.rentalRefundAmount!)})`}{" "}
+            cho {booking.user?.name ?? "khách"}
             {booking.user?.phone && ` (SĐT ${booking.user.phone})`}, rồi nhập mã giao dịch ngân hàng.
           </DialogDescription>
         </DialogHeader>

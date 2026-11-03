@@ -53,6 +53,11 @@ export const DEPOSIT_REFUND_STATUS_LABEL: Record<
   not_refunded: { label: "Không hoàn cọc", className: "bg-red-500/15 text-red-300" },
 };
 
+/** Tổng tiền phải chuyển khoản trả khách = cọc hoàn + tiền thuê hoàn (kết thúc sớm). */
+export function totalRefundAmount(booking: Pick<Booking, "depositRefundAmount" | "rentalRefundAmount">): number {
+  return Number(booking.depositRefundAmount ?? 0) + Number(booking.rentalRefundAmount ?? 0);
+}
+
 /** Khoản cọc chờ hoàn đã quá hạn chuyển khoản. */
 export function isRefundOverdue(booking: Pick<Booking, "depositRefundStatus" | "depositRefundDueAt">, now = Date.now()): boolean {
   return (

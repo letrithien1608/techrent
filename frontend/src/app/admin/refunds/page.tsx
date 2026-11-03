@@ -18,7 +18,7 @@ import { AdminPagination } from "@/components/admin/admin-pagination";
 import { BookingDetailDialog } from "@/components/admin/booking-detail-dialog";
 import { DepositRefundDialog } from "@/components/admin/deposit-refund-dialog";
 import { fetchBookings, type DepositRefundStatus } from "@/lib/bookings-api";
-import { DEPOSIT_REFUND_STATUS_LABEL, isRefundOverdue } from "@/lib/booking-format";
+import { DEPOSIT_REFUND_STATUS_LABEL, isRefundOverdue, totalRefundAmount } from "@/lib/booking-format";
 import { formatDateTimeVi, formatVnd } from "@/lib/device-format";
 
 const PAGE_SIZE = 20;
@@ -123,7 +123,12 @@ export default function AdminRefundsPage() {
                       </TableCell>
                       <TableCell className="max-w-[180px] truncate">{booking.device?.name ?? "Thiết bị"}</TableCell>
                       <TableCell className="font-semibold tabular-nums">
-                        {formatVnd(booking.depositRefundAmount ?? 0)}
+                        {formatVnd(totalRefundAmount(booking))}
+                        {Number(booking.rentalRefundAmount ?? 0) > 0 && (
+                          <span className="block text-xs font-normal text-muted-foreground">
+                            gồm {formatVnd(booking.rentalRefundAmount!)} tiền thuê
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell className={cn("text-xs", overdue ? "font-medium text-destructive" : "text-muted-foreground")}>
                         {tab === "refunded"

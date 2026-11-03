@@ -164,7 +164,10 @@ export default function BookingDetailPage() {
         {(booking.status === "ongoing" || booking.status === "completed") && (
           <div className="mt-6 border-t border-border/60 pt-5">
             <h2 className="mb-3 text-sm font-semibold">Biên bản giao / nhận máy</h2>
-            <InspectionComparison inspections={booking.inspections} />
+            <InspectionComparison
+              inspections={booking.inspections}
+              endedWithoutReturn={!!booking.issueReports?.some((r) => r.resolution === "ended_early")}
+            />
           </div>
         )}
 
