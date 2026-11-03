@@ -129,7 +129,7 @@ export function AccountOverviewSection() {
               <p className="mb-4 text-sm text-muted-foreground">
                 Đơn đang xử lý: <span className="font-medium text-foreground">{active.device?.name}</span>
               </p>
-              <BookingStatusTimeline status={active.status} />
+              <BookingStatusTimeline booking={active} />
             </div>
           )}
 

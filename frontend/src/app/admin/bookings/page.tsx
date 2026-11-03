@@ -4,7 +4,7 @@ import { cn } from "cn";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, ClipboardList, Loader2, PlayCircle, WifiOff } from "lucide-react";
+import { CheckCircle2, ClipboardList, Loader2, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,13 +26,14 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { BookingDetailDialog } from "@/components/admin/booking-detail-dialog";
+import { BookingHandoverDialog } from "@/components/admin/booking-handover-dialog";
+import { BookingReturnDialog } from "@/components/admin/booking-return-dialog";
+import { DepositRefundDialog } from "@/components/admin/deposit-refund-dialog";
 import { CancelBookingDialog } from "@/components/bookings/cancel-booking-dialog";
 import {
-  completeBooking,
   confirmBooking,
   fetchBookingById,
   fetchBookings,
-  startBooking,
   type BookingStatus,
 } from "@/lib/bookings-api";
 import { BOOKING_STATUS_LABEL } from "@/lib/booking-format";
@@ -46,7 +47,7 @@ const FILTERS: { value: BookingStatus | "all"; label: string }[] = [
   { value: "pending", label: "Chờ thanh toán" },
   { value: "confirmed", label: "Đã xác nhận" },
   { value: "ongoing", label: "Đang thuê" },
-  { value: "completed", label: "Hoàn tất" },
+  { value: "completed", label: "Đã trả máy" },
   { value: "cancelled", label: "Đã huỷ" },
 ];
 
@@ -102,12 +103,7 @@ function AdminBookingsContent() {
   }
 
   const transitionMutation = useMutation({
-    mutationFn: ({ id, action }: { id: string; action: "confirm" | "start" | "complete" }) =>
-      action === "confirm"
-        ? confirmBooking(id)
-        : action === "start"
-          ? startBooking(id)
-          : completeBooking(id),
+    mutationFn: ({ id }: { id: string }) => confirmBooking(id),
     onSuccess: () => {
       toast.success("Đã cập nhật trạng thái đơn thuê");
       handleChanged();
@@ -184,8 +180,11 @@ function AdminBookingsContent() {
                     transitionMutation.variables?.id === booking.id;
                   return (
                     <TableRow key={booking.id}>
-                      <TableCell className="max-w-[180px] truncate font-medium">
-                        {booking.device?.name ?? "Thiết bị"}
+                      <TableCell className="max-w-[200px]">
+                        <p className="truncate font-medium">{booking.device?.name ?? "Thiết bị"}</p>
+                        {booking.user && (
+                          <p className="truncate text-xs text-muted-foreground">{booking.user.name}</p>
+                        )}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {formatDateTimeVi(booking.startTime)}
@@ -218,9 +217,7 @@ function AdminBookingsContent() {
                                   size="icon-sm"
                                   disabled={isMutatingThis}
                                   aria-label="Xác nhận đơn"
-                                  onClick={() =>
-                                    transitionMutation.mutate({ id: booking.id, action: "confirm" })
-                                  }
+                                  onClick={() => transitionMutation.mutate({ id: booking.id })}
                                 >
                                   {isMutatingThis ? (
                                     <Loader2 className="size-4 animate-spin" />
@@ -235,48 +232,30 @@ function AdminBookingsContent() {
                           {booking.status === "confirmed" && (
                             <Tooltip>
                               <TooltipTrigger render={<span className="inline-flex" />}>
-                                <Button
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  disabled={isMutatingThis}
-                                  aria-label="Bắt đầu giao thiết bị"
-                                  onClick={() =>
-                                    transitionMutation.mutate({ id: booking.id, action: "start" })
-                                  }
-                                >
-                                  {isMutatingThis ? (
-                                    <Loader2 className="size-4 animate-spin" />
-                                  ) : (
-                                    <PlayCircle className="size-4" />
-                                  )}
-                                </Button>
+                                <BookingHandoverDialog booking={booking} onChanged={handleChanged} />
                               </TooltipTrigger>
-                              <TooltipContent>Bắt đầu (đã giao thiết bị)</TooltipContent>
+                              <TooltipContent>Giao máy (biên bản, thu tiền thuê, ký hợp đồng)</TooltipContent>
                             </Tooltip>
                           )}
                           {booking.status === "ongoing" && (
                             <Tooltip>
                               <TooltipTrigger render={<span className="inline-flex" />}>
-                                <Button
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  disabled={isMutatingThis}
-                                  aria-label="Hoàn tất đơn"
-                                  onClick={() =>
-                                    transitionMutation.mutate({ id: booking.id, action: "complete" })
-                                  }
-                                >
-                                  {isMutatingThis ? (
-                                    <Loader2 className="size-4 animate-spin" />
-                                  ) : (
-                                    <CheckCircle2 className="size-4" />
-                                  )}
-                                </Button>
+                                <BookingReturnDialog booking={booking} onChanged={handleChanged} />
                               </TooltipTrigger>
-                              <TooltipContent>Hoàn tất (đã nhận lại thiết bị)</TooltipContent>
+                              <TooltipContent>Xác nhận trả máy</TooltipContent>
                             </Tooltip>
                           )}
-                          {(booking.status === "pending" || booking.status === "confirmed") && (
+                          {booking.depositRefundStatus === "pending" && (
+                            <Tooltip>
+                              <TooltipTrigger render={<span className="inline-flex" />}>
+                                <DepositRefundDialog booking={booking} onChanged={handleChanged} iconOnly />
+                              </TooltipTrigger>
+                              <TooltipContent>Đã hoàn cọc</TooltipContent>
+                            </Tooltip>
+                          )}
+                          {(booking.status === "pending" ||
+                            booking.status === "confirmed" ||
+                            booking.status === "ongoing") && (
                             <CancelBookingDialog
                               booking={booking}
                               onCancelled={handleChanged}

@@ -5,12 +5,15 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ChevronRight, Loader2, Package } from "lucide-react";
+import { AlertTriangle, ChevronRight, Loader2, Package, Store } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BookingCountdown } from "@/components/bookings/booking-countdown";
 import { CancelBookingDialog } from "@/components/bookings/cancel-booking-dialog";
+import { BookingStatusTimeline } from "@/components/bookings/booking-status-timeline";
+import { DepositSettlementTable } from "@/components/bookings/deposit-settlement-table";
+import { InspectionComparison } from "@/components/bookings/inspection-comparison";
 import { BOOKING_TTL_MINUTES, fetchBookingById } from "@/lib/bookings-api";
 import { BOOKING_STATUS_LABEL } from "@/lib/booking-format";
 import { formatDateTimeVi, formatVnd } from "@/lib/device-format";
@@ -57,7 +60,7 @@ export default function BookingDetailPage() {
 
   if (bookingQuery.isPending) {
     return (
-      <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-16 sm:px-6">
+      <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-16 sm:px-6">
         <Skeleton className="h-8 w-2/3" />
         <Skeleton className="mt-4 h-40 w-full rounded-2xl" />
       </div>
@@ -96,7 +99,7 @@ export default function BookingDetailPage() {
   const canCancel = booking.status === "pending" || booking.status === "confirmed";
 
   return (
-    <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-10 sm:px-6 sm:py-16">
+    <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6 sm:py-16">
       <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
         <Link href="/bookings" className="transition-colors hover:text-foreground">
           Đơn của tôi
@@ -140,24 +143,21 @@ export default function BookingDetailPage() {
           </span>
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-3 border-t border-border/60 pt-5 text-sm">
-          <div>
-            <p className="text-muted-foreground">Tổng tiền thuê</p>
-            <p className="font-medium">{formatVnd(booking.totalPrice)}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Tiền cọc</p>
-            <p className="font-medium">{formatVnd(booking.depositAmount)}</p>
-          </div>
-          {!!Number(booking.lateFeeAmount) && (
-            <div className="col-span-2">
-              <p className="text-muted-foreground">Phí trễ hạn (đã gồm trong tổng tiền thuê)</p>
-              <p className="font-medium text-destructive">
-                {formatVnd(booking.lateFeeAmount!)}
-              </p>
-            </div>
-          )}
+        <div className="mt-6 border-t border-border/60 pt-5">
+          <BookingStatusTimeline booking={booking} />
         </div>
+
+        <div className="mt-6 border-t border-border/60 pt-5">
+          <h2 className="mb-3 text-sm font-semibold">Tiền thuê &amp; tiền cọc</h2>
+          <DepositSettlementTable booking={booking} />
+        </div>
+
+        {(booking.status === "ongoing" || booking.status === "completed") && (
+          <div className="mt-6 border-t border-border/60 pt-5">
+            <h2 className="mb-3 text-sm font-semibold">Biên bản giao / nhận máy</h2>
+            <InspectionComparison inspections={booking.inspections} />
+          </div>
+        )}
 
         {booking.status === "pending" && (
           <div className="mt-6 border-t border-border/60 pt-6">
@@ -175,18 +175,26 @@ export default function BookingDetailPage() {
         )}
 
         {booking.status === "confirmed" && (
-          <p className="mt-6 border-t border-border/60 pt-6 text-sm text-muted-foreground">
-            Đơn đã được xác nhận — vui lòng đến nhận thiết bị đúng thời gian đã đặt.
-          </p>
+          <div className="mt-6 flex gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4 text-sm">
+            <Store className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+            <p>
+              Đơn đã được xác nhận. Vui lòng đến <strong>cửa hàng TechRent</strong> đúng giờ nhận máy, mang theo{" "}
+              <strong>CCCD gốc</strong> để đối chiếu, thanh toán <strong>{formatVnd(booking.totalPrice)}</strong>{" "}
+              tiền thuê (tiền mặt hoặc chuyển khoản) và ký hợp đồng trực tiếp. TechRent không giao hàng tận nơi.
+            </p>
+          </div>
         )}
         {booking.status === "ongoing" && (
           <p className="mt-6 border-t border-border/60 pt-6 text-sm text-muted-foreground">
-            Bạn đang trong thời gian thuê thiết bị này.
+            Bạn đang thuê thiết bị này. Hạn trả: <strong>{formatDateTimeVi(booking.endTime)}</strong> — mang máy
+            đến cửa hàng để nhân viên kiểm tra và quyết toán tiền cọc. Trả trễ sẽ bị trừ phí trễ hạn vào cọc.
           </p>
         )}
         {booking.status === "completed" && (
           <p className="mt-6 border-t border-border/60 pt-6 text-sm text-muted-foreground">
-            Đơn đã hoàn tất — cảm ơn bạn đã sử dụng dịch vụ của TechRent.
+            Đã trả máy — cảm ơn bạn đã sử dụng dịch vụ của TechRent.
+            {booking.depositRefundStatus === "pending" &&
+              " Tiền cọc hoàn lại sẽ được chuyển khoản trước hạn ghi ở bảng trên."}
           </p>
         )}
         {booking.status === "cancelled" && (

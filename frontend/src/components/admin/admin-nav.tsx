@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { Menu } from "@base-ui/react/menu";
 import {
+  Banknote,
   ChevronsUpDown,
   ClipboardList,
   Home,
@@ -38,6 +39,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { href: "/admin/devices", label: "Thiết bị", icon: Package },
   { href: "/admin/categories", label: "Danh mục", icon: Tags },
   { href: "/admin/bookings", label: "Đơn thuê", icon: ClipboardList },
+  { href: "/admin/refunds", label: "Hoàn cọc", icon: Banknote },
   { href: "/admin/reviews", label: "Đánh giá", icon: MessageSquareText },
   { href: "/admin/maintenance", label: "Bảo trì", icon: Wrench },
   { href: "/admin/users", label: "Người dùng", icon: Users, adminOnly: true },

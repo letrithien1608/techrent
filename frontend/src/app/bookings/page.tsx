@@ -21,7 +21,7 @@ const FILTERS: { value: BookingStatus | "all"; label: string }[] = [
   { value: "pending", label: "Chờ thanh toán" },
   { value: "confirmed", label: "Đã xác nhận" },
   { value: "ongoing", label: "Đang thuê" },
-  { value: "completed", label: "Hoàn tất" },
+  { value: "completed", label: "Đã trả máy" },
   { value: "cancelled", label: "Đã huỷ" },
 ];
 
@@ -57,7 +57,12 @@ function BookingCard({ booking, onChanged }: { booking: Booking; onChanged: () =
             <p className="mt-1 text-sm font-medium">{formatVnd(booking.totalPrice)}</p>
             {!!Number(booking.lateFeeAmount) && (
               <p className="text-xs text-destructive">
-                Trong đó phí trễ hạn: {formatVnd(booking.lateFeeAmount!)}
+                Phí trễ hạn (trừ vào cọc): {formatVnd(booking.lateFeeAmount!)}
+              </p>
+            )}
+            {booking.depositRefundStatus === "pending" && (
+              <p className="text-xs text-amber-400">
+                Chờ hoàn cọc {formatVnd(booking.depositRefundAmount ?? 0)}
               </p>
             )}
           </div>

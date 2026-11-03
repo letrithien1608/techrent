@@ -7,10 +7,21 @@ export interface RentalPolicy {
   refundTiers: { minHoursBeforeStart: number; percentage: number }[];
   hourlyPricingMaxHours: number;
   bookingTtlMinutes: number;
+  depositRefundBusinessDays: number;
+  handoverMinPhotos: number;
+  storePickupOnly: boolean;
   examples: {
     deposit: { originalPrice: number; deposit: number };
     lateFee: { pricePerDay: number; byDays: { days: number; total: number }[] };
     refund: { hoursBeforeStart: number; percentage: number }[];
+    settlement: {
+      depositAmount: number;
+      lateFee: number;
+      damageFee: number;
+      totalDeductions: number;
+      refundAmount: number;
+      amountOwed: number;
+    };
   };
 }
 

@@ -14,9 +14,12 @@ import {
   YAxis,
 } from "recharts";
 import {
+  AlarmClock,
+  Banknote,
   Boxes,
   DollarSign,
   Package,
+  ShieldCheck,
   TrendingDown,
   TrendingUp,
   WifiOff,
@@ -33,15 +36,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { fetchBookings, type Booking } from "@/lib/bookings-api";
+import { fetchBookings, fetchFinancialStats, type Booking } from "@/lib/bookings-api";
 import { fetchDevices } from "@/lib/devices-api";
 import { BOOKING_STATUS_LABEL } from "@/lib/booking-format";
 import { formatDateTimeVi, formatVnd } from "@/lib/device-format";
 
-// Booking đã qua bước thanh toán cọc (pending chưa trả tiền, cancelled không tính) —
-// dùng làm ước tính "doanh thu" vì backend chưa có endpoint tổng hợp payments riêng
-// (xem ghi chú CLAUDE.md mục 1).
-const REVENUE_STATUSES = new Set(["confirmed", "ongoing", "completed"]);
+// Tổng tiền (thuê, phí trễ hạn, phí hư hỏng, cọc đang giữ) lấy từ
+// GET /bookings/stats (SQL trên toàn bộ đơn). Biểu đồ + xu hướng dựa trên
+// tiền thuê đã thu theo ngày thu, tính từ 100 đơn gần nhất.
 const CHART_DAYS = 14;
 // Giới hạn tối đa 1 lần gọi API cho phép (ràng buộc `@Max(100)` ở backend) —
 // đủ cho quy mô dữ liệu demo hiện tại (25 thiết bị), xem giới hạn đã ghi ở CLAUDE.md.
@@ -120,10 +122,10 @@ function buildRevenueChart(bookings: Booking[]) {
   }
 
   for (const booking of bookings) {
-    if (!REVENUE_STATUSES.has(booking.status)) continue;
-    const key = dayKey(booking.createdAt);
+    if (!booking.rentalPaid || !booking.rentalPaidAt) continue;
+    const key = dayKey(booking.rentalPaidAt);
     if (!buckets.has(key)) continue;
-    buckets.set(key, (buckets.get(key) ?? 0) + Number(booking.depositAmount));
+    buckets.set(key, (buckets.get(key) ?? 0) + Number(booking.totalPrice));
   }
 
   return Array.from(buckets.entries()).map(([key, revenue]) => ({
@@ -163,10 +165,16 @@ export default function AdminDashboardPage() {
     queryFn: () => fetchBookings({ limit: STATS_FETCH_LIMIT }),
   });
 
-  const isPending = devicesQuery.isPending || bookingsQuery.isPending;
+  const financeQuery = useQuery({
+    queryKey: ["admin", "bookings", "financial-stats"],
+    queryFn: fetchFinancialStats,
+  });
+
+  const isPending = devicesQuery.isPending || bookingsQuery.isPending || financeQuery.isPending;
   const isError =
     devicesQuery.isError ||
     bookingsQuery.isError ||
+    financeQuery.isError ||
     devicesQuery.data?.hasError;
 
   const devicesData = devicesQuery.data?.result?.data;
@@ -175,9 +183,6 @@ export default function AdminDashboardPage() {
   const bookings = useMemo(() => bookingsData ?? [], [bookingsData]);
 
   const stats = useMemo(() => {
-    const revenue = bookings
-      .filter((b) => REVENUE_STATUSES.has(b.status))
-      .reduce((sum, b) => sum + Number(b.depositAmount), 0);
     const processing = bookings.filter(
       (b) => b.status === "pending" || b.status === "confirmed",
     ).length;
@@ -192,15 +197,15 @@ export default function AdminDashboardPage() {
     let last7 = 0;
     let prev7 = 0;
     for (const b of bookings) {
-      if (!REVENUE_STATUSES.has(b.status)) continue;
-      const ageDays = (now - new Date(b.createdAt).getTime()) / DAY_MS;
+      if (!b.rentalPaid || !b.rentalPaidAt) continue;
+      const ageDays = (now - new Date(b.rentalPaidAt).getTime()) / DAY_MS;
       if (ageDays < 0) continue;
-      if (ageDays <= 7) last7 += Number(b.depositAmount);
-      else if (ageDays <= 14) prev7 += Number(b.depositAmount);
+      if (ageDays <= 7) last7 += Number(b.totalPrice);
+      else if (ageDays <= 14) prev7 += Number(b.totalPrice);
     }
     const revenueTrend = prev7 > 0 ? ((last7 - prev7) / prev7) * 100 : undefined;
 
-    return { revenue, processing, rented, maintenance, revenueTrend };
+    return { processing, rented, maintenance, revenueTrend };
   }, [bookings, devices]);
 
   const chartData = useMemo(() => buildRevenueChart(bookings), [bookings]);
@@ -240,6 +245,7 @@ export default function AdminDashboardPage() {
           onClick={() => {
             devicesQuery.refetch();
             bookingsQuery.refetch();
+            financeQuery.refetch();
           }}
         >
           Thử lại
@@ -248,16 +254,55 @@ export default function AdminDashboardPage() {
     );
   }
 
+  const finance = financeQuery.data!;
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={DollarSign}
-          label="Tổng doanh thu (ước tính)"
-          value={formatVnd(stats.revenue)}
+          label="Tiền thuê đã thu"
+          value={formatVnd(finance.rentalRevenue)}
           tone="bg-emerald-500/15 text-emerald-400"
           trendPercent={stats.revenueTrend}
         />
+        <StatCard
+          icon={AlarmClock}
+          label="Phí trễ hạn đã khấu trừ"
+          value={formatVnd(finance.lateFees)}
+          tone="bg-orange-500/15 text-orange-400"
+        />
+        <StatCard
+          icon={Wrench}
+          label="Phí hư hỏng đã khấu trừ"
+          value={formatVnd(finance.damageFees)}
+          tone="bg-red-500/15 text-red-300"
+        />
+        <StatCard
+          icon={ShieldCheck}
+          label="Tiền cọc đang giữ"
+          value={formatVnd(finance.depositHeld)}
+          tone="bg-violet-500/15 text-violet-300"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Link href="/admin/refunds" className="block rounded-2xl focus-visible:outline-2 focus-visible:outline-primary">
+          <StatCard
+            icon={Banknote}
+            label={
+              finance.overdueRefundCount > 0
+                ? `Chờ hoàn cọc · ${finance.overdueRefundCount} quá hạn`
+                : "Khoản cọc chờ hoàn"
+            }
+            value={String(finance.pendingRefundCount)}
+            tone={
+              finance.overdueRefundCount > 0
+                ? "bg-destructive/15 text-destructive"
+                : "bg-amber-500/15 text-amber-400"
+            }
+          />
+        </Link>
         <StatCard
           icon={Boxes}
           label="Đơn đang xử lý"
@@ -271,7 +316,7 @@ export default function AdminDashboardPage() {
           tone="bg-cyan-500/15 text-cyan-400"
         />
         <StatCard
-          icon={Wrench}
+          icon={Package}
           label="Thiết bị cần bảo trì"
           value={String(stats.maintenance)}
           tone="bg-destructive/15 text-destructive"
@@ -280,10 +325,10 @@ export default function AdminDashboardPage() {
 
       <div className="rounded-2xl border border-border/60 bg-card/50 p-5">
         <h2 className="font-heading text-base font-semibold">
-          Doanh thu {CHART_DAYS} ngày gần nhất
+          Tiền thuê đã thu {CHART_DAYS} ngày gần nhất
         </h2>
         <p className="text-sm text-muted-foreground">
-          Tổng hợp từ tiền cọc các đơn đã xác nhận/đang thuê/hoàn tất.
+          Theo ngày thu tiền thuê tại quầy (không gồm tiền cọc).
         </p>
         <div className="mt-4 h-64">
           <ResponsiveContainer width="100%" height="100%">
