@@ -3,7 +3,9 @@
 ## Tóm tắt chính sách cốt lõi
 - Tiền cọc bằng {{DEPOSIT_RATE}} giá trị (giá gốc) của thiết bị, không phụ thuộc thời gian thuê.
 - Đơn mới ở trạng thái "Chờ thanh toán" được giữ chỗ {{BOOKING_TTL_MINUTES}} phút; quá thời gian chưa thanh toán cọc thì đơn tự huỷ.
-- Thanh toán tiền cọc online qua VNPay.
+- Tiền cọc thanh toán online qua VNPay; tiền thuê thanh toán tại quầy khi nhận máy (tiền mặt hoặc chuyển khoản).
+- Chỉ nhận và trả máy tại cửa hàng, KHÔNG giao hàng tận nơi.
+- Khi trả máy: tiền cọc hoàn lại = tiền cọc − phí trễ hạn − phí hư hỏng; hoàn bằng chuyển khoản trong tối đa {{DEPOSIT_REFUND_BUSINESS_DAYS}} ngày làm việc.
 - Huỷ đơn: trước giờ nhận máy từ {{REFUND_FULL_HOURS}} giờ trở lên hoàn {{REFUND_FULL_PERCENT}} cọc; từ {{REFUND_PARTIAL_HOURS}} đến dưới {{REFUND_FULL_HOURS}} giờ hoàn {{REFUND_PARTIAL_PERCENT}}; dưới {{REFUND_PARTIAL_HOURS}} giờ hoặc đã nhận máy thì không hoàn, trừ khi lỗi thuộc về cửa hàng.
 - Trả máy trễ bị phạt leo thang: {{LATE_FEE_RULE}}
 - Phải xác thực danh tính (số CCCD + ảnh CCCD 2 mặt + ảnh chân dung) trước khi đặt thuê.
@@ -18,7 +20,7 @@
 - Thuê từ {{HOURLY_PRICING_MAX_HOURS}} giờ trở xuống: tính theo giá thuê/giờ, số giờ được làm tròn lên (thuê 2 giờ 10 phút tính 3 giờ).
 - Thuê trên {{HOURLY_PRICING_MAX_HOURS}} giờ: tính theo giá thuê/ngày, số ngày được làm tròn lên (thuê 1 ngày 2 giờ tính 2 ngày).
 - Giá thuê/giờ và giá thuê/ngày của từng thiết bị hiển thị ở trang danh sách và trang chi tiết thiết bị.
-- Tiền thuê và tiền cọc là 2 khoản khác nhau. Hệ thống hiện thu tiền cọc online qua VNPay; với khoản tiền thuê, nhân viên TechRent sẽ hướng dẫn cụ thể khi xác nhận đơn.
+- Tiền thuê và tiền cọc là 2 khoản khác nhau: tiền cọc trả online qua VNPay ngay sau khi đặt; tiền thuê trả tại quầy khi nhận máy, bằng tiền mặt hoặc chuyển khoản. Nhân viên bấm "Đã thu tiền thuê" và bạn nhận thông báo xác nhận.
 
 ## Giữ chỗ khi chưa thanh toán
 - Sau khi đặt thuê, đơn ở trạng thái "Chờ thanh toán" và thiết bị được giữ chỗ trong {{BOOKING_TTL_MINUTES}} phút.
@@ -41,20 +43,28 @@
 - Nếu đơn bị huỷ do lỗi từ phía cửa hàng (ví dụ thiết bị không giao được), bạn được hoàn {{REFUND_FULL_PERCENT}} tiền cọc bất kể thời điểm.
 - Đơn "Chờ thanh toán" chưa trả cọc thì huỷ không phát sinh tiền.
 - Hộp thoại huỷ đơn hiển thị trước mức hoàn cọc ước tính để bạn xem trước khi xác nhận.
-- Thời gian tiền hoàn về tài khoản phụ thuộc ngân hàng/VNPay; nhân viên TechRent sẽ hỗ trợ xử lý và theo dõi giúp bạn.
+- Tiền cọc được hoàn bằng chuyển khoản thủ công trong tối đa {{DEPOSIT_REFUND_BUSINESS_DAYS}} ngày làm việc (không tính thứ Bảy, Chủ nhật) kể từ lúc huỷ đơn. Khi tiền được chuyển, bạn nhận thông báo kèm mã giao dịch.
 
 ## Hoàn cọc sau khi trả máy
-- Khi trả máy, nhân viên kiểm tra tình trạng thiết bị và phụ kiện.
-- Nếu thiết bị có hư hỏng hoặc thiếu phụ kiện do bên thuê, chi phí khắc phục có thể được trừ vào tiền cọc trước khi hoàn phần còn lại.
-- Phí trễ hạn (nếu có) được cộng vào tổng tiền phải trả của đơn.
-- Thời gian và hình thức hoàn cọc sau khi trả máy: nhân viên TechRent sẽ hỗ trợ xử lý trực tiếp với bạn.
+- Khi trả máy tại cửa hàng, nhân viên kiểm tra tình trạng thiết bị và phụ kiện, đối chiếu với ảnh chụp lúc giao máy.
+- Công thức: tiền cọc hoàn lại = tiền cọc − phí trễ hạn − phí hư hỏng/thiếu phụ kiện.
+- Ví dụ: {{SETTLEMENT_EXAMPLE}}
+- Nếu tổng khoản trừ lớn hơn tiền cọc, bạn không được hoàn cọc và phải thanh toán thêm phần còn thiếu cho cửa hàng.
+- Tiền cọc hoàn lại được chuyển khoản trong tối đa {{DEPOSIT_REFUND_BUSINESS_DAYS}} ngày làm việc (không tính thứ Bảy, Chủ nhật) kể từ khi trả máy. Khi chuyển xong, bạn nhận thông báo kèm mã giao dịch.
+- Trang chi tiết đơn hiển thị bảng khấu trừ (tiền cọc, phí trễ hạn, phí hư hỏng, số tiền hoàn) và trạng thái hoàn cọc: Chờ hoàn cọc, Đã hoàn cọc hoặc Không hoàn cọc.
+
+## Nhận và trả máy tại cửa hàng
+- TechRent KHÔNG giao hàng tận nơi. Bạn nhận và trả máy trực tiếp tại cửa hàng.
+- Lý do: nhân viên cần đối chiếu CCCD gốc của bạn và cùng bạn ký hợp đồng trực tiếp.
+- Khi giao máy, nhân viên chụp tối thiểu {{HANDOVER_MIN_PHOTOS}} ảnh tình trạng thiết bị và ghi chú vết trầy, phụ kiện kèm theo (biên bản giao máy).
+- Khi trả máy, ảnh lúc giao được đặt cạnh ảnh lúc trả để đối chiếu, làm căn cứ tính phí hư hỏng nếu có.
 
 ## Phí trả máy trễ hạn
 - Trả trễ bị phạt LEO THANG theo từng ngày trễ: {{LATE_FEE_RULE}}
 - Trễ dù chỉ vài giờ cũng được tính là 1 ngày trễ (làm tròn lên).
 - Tổng phí trễ hạn không vượt quá giá trị thiết bị.
 - Ví dụ thiết bị giá thuê {{LATE_FEE_EXAMPLE_PRICE_PER_DAY}}/ngày: trễ 1 ngày phạt {{LATE_FEE_EXAMPLE_1DAY}}; trễ 2 ngày phạt tổng {{LATE_FEE_EXAMPLE_2DAYS}}; trễ 3 ngày phạt tổng {{LATE_FEE_EXAMPLE_3DAYS}}.
-- Phí trễ hạn hiển thị riêng trong chi tiết đơn để bạn thấy rõ.
+- Phí trễ hạn được trừ vào tiền cọc khi trả máy và hiển thị riêng trong bảng khấu trừ ở chi tiết đơn.
 - Nếu biết mình sẽ trả muộn, hãy liên hệ nhân viên càng sớm càng tốt.
 
 ## Danh sách đen

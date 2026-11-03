@@ -7,6 +7,7 @@
 
 import {
   DEPOSIT_RATIO,
+  DEPOSIT_REFUND_BUSINESS_DAYS,
   formatPercent,
   LATE_FEE_DAILY_RATIO,
   REFUND_TIERS,
@@ -71,13 +72,14 @@ Bên B (Bên thuê):
   - Tình trạng thiết bị lúc giao: ${data.deviceCondition ?? '(không có mô tả chi tiết, xem thực tế lúc giao nhận)'}
   - Giá trị thiết bị (tài sản): ${formatVnd(data.deviceOriginalPrice)}
 
-ĐIỀU 3 — THỜI HẠN THUÊ
+ĐIỀU 3 — THỜI HẠN THUÊ VÀ GIAO NHẬN
   - Từ: ${formatDateTime(data.startTime)}
   - Đến: ${formatDateTime(data.endTime)}
+  - Thiết bị được giao và nhận lại trực tiếp tại cửa hàng ${STORE_NAME} (không giao hàng tận nơi). Khi giao và khi nhận lại, hai bên lập biên bản có ảnh chụp tình trạng thiết bị làm căn cứ đối chiếu.
 
 ĐIỀU 4 — GIÁ THUÊ VÀ TIỀN CỌC
-  - Tổng tiền thuê: ${formatVnd(data.totalPrice)}
-  - Tiền đặt cọc: ${formatVnd(data.depositAmount)} (tương đương ${formatPercent(DEPOSIT_RATIO)} giá trị thiết bị, hoàn lại theo chính sách tại Điều 6)
+  - Tổng tiền thuê: ${formatVnd(data.totalPrice)} — Bên B thanh toán tại quầy khi nhận thiết bị (tiền mặt hoặc chuyển khoản).
+  - Tiền đặt cọc: ${formatVnd(data.depositAmount)} (tương đương ${formatPercent(DEPOSIT_RATIO)} giá trị thiết bị, đã thanh toán trực tuyến, hoàn lại theo chính sách tại Điều 6)
 
 ĐIỀU 5 — TRÁCH NHIỆM CỦA BÊN B
   1. Bên B có trách nhiệm bảo quản thiết bị trong tình trạng tốt, sử dụng đúng mục đích, không tự ý sửa chữa, tháo rời hoặc cho bên thứ ba thuê lại.
@@ -87,7 +89,8 @@ Bên B (Bên thuê):
 ĐIỀU 6 — PHẠT TRỄ HẠN VÀ HOÀN TRẢ TIỀN CỌC
   1. Nếu trả thiết bị trễ hạn, Bên B phải chịu phạt LEO THANG theo từng ngày trễ: ngày trễ thứ 1 phạt ${lateFeeDay1} (${lateStep} giá thuê/ngày), ngày trễ thứ 2 phạt THÊM ${lateFeeDay2} (${formatPercent(LATE_FEE_DAILY_RATIO * 2)} giá thuê/ngày), các ngày tiếp theo tiếp tục tăng thêm ${lateStep.replace('%', '')} điểm phần trăm mỗi ngày — tổng phí trễ hạn được cộng dồn qua tất cả các ngày trễ và KHÔNG vượt quá giá trị thiết bị nêu tại Điều 2.
   2. Tiền cọc được hoàn lại theo chính sách: hoàn ${fullTier.percentage}% nếu huỷ trước giờ nhận thiết bị tối thiểu ${fullTier.minHoursBeforeStart} giờ; hoàn ${partialTier.percentage}% nếu huỷ trong khoảng ${partialTier.minHoursBeforeStart}-${fullTier.minHoursBeforeStart} giờ trước giờ nhận; không hoàn cọc nếu huỷ trong vòng ${partialTier.minHoursBeforeStart} giờ trước giờ nhận hoặc sau khi đã nhận thiết bị, trừ trường hợp lỗi thuộc về Bên A.
-  3. Trường hợp thiết bị có hư hỏng/thiếu hụt khi trả lại, Bên A có quyền trừ chi phí khắc phục vào tiền cọc trước khi hoàn trả phần còn lại (nếu có) cho Bên B.
+  3. Khi Bên B trả thiết bị, tiền cọc hoàn lại = tiền cọc − phí trễ hạn − chi phí khắc phục hư hỏng/thiếu phụ kiện (đối chiếu biên bản lúc giao và lúc trả). Nếu các khoản trừ vượt quá tiền cọc, Bên B có trách nhiệm thanh toán phần còn thiếu cho Bên A.
+  4. Bên A hoàn tiền cọc bằng chuyển khoản trong tối đa ${DEPOSIT_REFUND_BUSINESS_DAYS} ngày làm việc kể từ khi Bên B trả thiết bị hoặc đơn thuê bị huỷ.
 
 ĐIỀU 7 — XỬ LÝ KHI MẤT HOẶC CHIẾM GIỮ THIẾT BỊ
   1. Nếu Bên B làm mất thiết bị hoặc cố ý không trả lại thiết bị sau khi đã được Bên A yêu cầu bằng văn bản/tin nhắn/điện thoại, Bên A có quyền yêu cầu bồi thường toàn bộ giá trị thiết bị nêu tại Điều 2.

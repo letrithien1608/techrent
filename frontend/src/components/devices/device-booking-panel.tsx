@@ -7,7 +7,7 @@ import { useCallback, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronRight, Loader2 } from "lucide-react";
+import { ChevronRight, Loader2, Store } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { StarRating } from "@/components/devices/star-rating";
@@ -272,6 +272,18 @@ export function DeviceBookingPanel({ device, avgRating, reviewCount }: Props) {
               Hiện đang hết hàng, vui lòng quay lại sau
             </p>
           )}
+
+          <div className="mt-4 flex gap-2.5 rounded-xl border border-border/60 bg-muted/20 p-3 text-xs leading-relaxed text-muted-foreground">
+            <Store className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+            <p>
+              <span className="font-medium text-foreground">Nhận và trả máy tại cửa hàng</span> — TechRent
+              không giao hàng tận nơi. Cọc thanh toán online qua VNPay; tiền thuê trả tại quầy khi nhận máy
+              (tiền mặt hoặc chuyển khoản). Mang theo CCCD gốc để đối chiếu và ký hợp đồng.{" "}
+              <Link href="/policies" className="text-primary hover:underline">
+                Xem chính sách
+              </Link>
+            </p>
+          </div>
         </motion.div>
       </motion.div>
 

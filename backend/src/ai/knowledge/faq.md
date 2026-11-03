@@ -7,7 +7,7 @@ Bạn cần tài khoản TechRent có số điện thoại, số CCCD và hoàn 
 Tiền cọc bằng {{DEPOSIT_RATE}} giá trị tài sản của thiết bị (xem dòng "Giá trị tài sản" ở trang chi tiết). Ví dụ thiết bị giá trị {{DEPOSIT_EXAMPLE_PRICE}} thì cọc {{DEPOSIT_EXAMPLE_AMOUNT}}. Cọc không thay đổi theo số giờ/ngày thuê.
 
 ## Cọc được hoàn lại thế nào?
-Huỷ trước giờ nhận máy từ {{REFUND_FULL_HOURS}} giờ trở lên hoàn {{REFUND_FULL_PERCENT}}; từ {{REFUND_PARTIAL_HOURS}} đến dưới {{REFUND_FULL_HOURS}} giờ hoàn {{REFUND_PARTIAL_PERCENT}}; dưới {{REFUND_PARTIAL_HOURS}} giờ không hoàn (trừ lỗi từ cửa hàng). Ví dụ: {{REFUND_EXAMPLES}}. Sau khi trả máy, nhân viên kiểm tra thiết bị rồi xử lý hoàn cọc, có thể trừ chi phí khắc phục hư hỏng do bên thuê.
+Huỷ trước giờ nhận máy từ {{REFUND_FULL_HOURS}} giờ trở lên hoàn {{REFUND_FULL_PERCENT}}; từ {{REFUND_PARTIAL_HOURS}} đến dưới {{REFUND_FULL_HOURS}} giờ hoàn {{REFUND_PARTIAL_PERCENT}}; dưới {{REFUND_PARTIAL_HOURS}} giờ không hoàn (trừ lỗi từ cửa hàng). Ví dụ: {{REFUND_EXAMPLES}}. Khi trả máy: tiền cọc hoàn lại = tiền cọc − phí trễ hạn − phí hư hỏng. Cọc được chuyển khoản trong tối đa {{DEPOSIT_REFUND_BUSINESS_DAYS}} ngày làm việc.
 
 ## Trả máy trễ bị phạt bao nhiêu?
 Phạt leo thang theo ngày: {{LATE_FEE_RULE}} Ví dụ giá thuê {{LATE_FEE_EXAMPLE_PRICE_PER_DAY}}/ngày: trễ 1 ngày phạt {{LATE_FEE_EXAMPLE_1DAY}}, trễ 2 ngày tổng {{LATE_FEE_EXAMPLE_2DAYS}}, trễ 3 ngày tổng {{LATE_FEE_EXAMPLE_3DAYS}}.
@@ -16,7 +16,7 @@ Phạt leo thang theo ngày: {{LATE_FEE_RULE}} Ví dụ giá thuê {{LATE_FEE_EX
 Thuê từ {{HOURLY_PRICING_MAX_HOURS}} giờ trở xuống tính theo giá/giờ (làm tròn lên giờ), trên {{HOURLY_PRICING_MAX_HOURS}} giờ tính theo giá/ngày (làm tròn lên ngày).
 
 ## Thanh toán bằng cách nào?
-Tiền cọc thanh toán online qua cổng VNPay ngay sau khi đặt. Về khoản tiền thuê, nhân viên TechRent sẽ hướng dẫn khi xác nhận đơn.
+Tiền cọc thanh toán online qua cổng VNPay ngay sau khi đặt. Tiền thuê thanh toán tại quầy khi nhận máy, bằng tiền mặt hoặc chuyển khoản.
 
 ## Đặt xong chưa thanh toán thì sao?
 Đơn được giữ chỗ {{BOOKING_TTL_MINUTES}} phút. Quá thời gian chưa thanh toán cọc, đơn tự huỷ và bạn có thể đặt lại nếu thiết bị còn trống.
@@ -52,10 +52,13 @@ Bấm "Quên mật khẩu?" ở trang đăng nhập, nhập email; link đặt l
 Không tự đổi được vì đây là dữ liệu định danh. Nếu nhập nhầm, vui lòng liên hệ nhân viên TechRent.
 
 ## Đánh giá thiết bị thế nào?
-Sau khi đơn "Hoàn tất", vào "Đơn của tôi" bấm đánh giá, chấm 1-5 sao và viết nhận xét. Mỗi đơn đánh giá 1 lần.
+Sau khi đơn "Đã trả máy", vào "Đơn của tôi" bấm đánh giá, chấm 1-5 sao và viết nhận xét. Mỗi đơn đánh giá 1 lần.
 
 ## TechRent có cho thuê PC, máy tính để bàn hay mini PC không?
 TechRent hiện KHÔNG cho thuê PC, máy tính để bàn và mini PC (thiết bị cồng kềnh, phải lắp đặt cố định, khó kiểm tra khi giao nhận). Nếu cần máy tính mạnh, bạn có thể thuê laptop cấu hình cao (danh mục Laptop) hoặc máy chơi game cầm tay.
 
 ## Có giao hàng tận nơi không?
-Mình chưa có thông tin về dịch vụ giao hàng; bạn vui lòng liên hệ nhân viên TechRent để được hỗ trợ.
+Không. TechRent không giao hàng tận nơi — bạn nhận và trả máy trực tiếp tại cửa hàng để nhân viên đối chiếu CCCD gốc và ký hợp đồng cùng bạn.
+
+## Bao lâu thì nhận lại tiền cọc?
+Tiền cọc hoàn lại được chuyển khoản trong tối đa {{DEPOSIT_REFUND_BUSINESS_DAYS}} ngày làm việc (không tính thứ Bảy, Chủ nhật) kể từ khi trả máy hoặc huỷ đơn. Khi chuyển xong bạn nhận thông báo kèm mã giao dịch; trạng thái hoàn cọc xem ở trang chi tiết đơn.

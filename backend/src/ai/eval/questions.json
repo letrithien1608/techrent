@@ -53,7 +53,7 @@
       ],
       "mustNotInclude": [
         "Momo",
-        "tiền mặt"
+        "cọc bằng tiền mặt"
       ]
     },
     {
@@ -258,11 +258,13 @@
       "group": "bẫy",
       "question": "TechRent có giao hàng tận nơi không?",
       "mustInclude": [
-        "liên hệ nhân viên|chưa có thông tin"
+        "không giao|không có dịch vụ giao|không hỗ trợ giao",
+        "cửa hàng"
       ],
       "mustNotInclude": [
         "miễn phí giao hàng",
-        "giao tận nơi trong"
+        "giao tận nơi trong",
+        "chưa có thông tin"
       ]
     },
     {
@@ -275,6 +277,63 @@
       "mustNotInclude": [
         "Mac mini",
         "ROG NUC"
+      ]
+    },
+    {
+      "id": "P6",
+      "group": "chính sách",
+      "question": "Tiền thuê thì thanh toán lúc nào, bằng cách nào?",
+      "mustInclude": [
+        "quầy|cửa hàng|nhận máy",
+        "tiền mặt|chuyển khoản"
+      ],
+      "mustNotInclude": [
+        "tiền thuê qua VNPay",
+        "thanh toán tiền thuê online"
+      ]
+    },
+    {
+      "id": "P7",
+      "group": "chính sách",
+      "question": "Trả máy xong thì bao lâu mình nhận lại tiền cọc?",
+      "mustInclude": [
+        "{{DEPOSIT_REFUND_BUSINESS_DAYS}} ngày làm việc"
+      ],
+      "mustNotInclude": [
+        "ngay lập tức",
+        "trong ngày"
+      ]
+    },
+    {
+      "id": "P8",
+      "group": "chính sách",
+      "question": "Mình cọc 15.000.000đ, trả máy trễ 1 ngày (giá thuê 400.000đ/ngày) và làm trầy máy bị tính bồi thường 1.000.000đ thì được hoàn lại bao nhiêu tiền cọc?",
+      "mustInclude": [
+        "{{SETTLEMENT_EXAMPLE_REFUND_NUMBER}}"
+      ],
+      "mustNotInclude": []
+    },
+    {
+      "id": "Q5",
+      "group": "quy trình",
+      "question": "Khi đến cửa hàng nhận máy thì nhân viên sẽ làm những gì?",
+      "mustInclude": [
+        "CCCD|căn cước",
+        "hợp đồng",
+        "ảnh|biên bản"
+      ],
+      "mustNotInclude": []
+    },
+    {
+      "id": "T6",
+      "group": "bẫy",
+      "question": "Nếu tiền bồi thường hư hỏng còn lớn hơn cả tiền cọc thì sao?",
+      "mustInclude": [
+        "thanh toán thêm|còn thiếu|trả thêm"
+      ],
+      "mustNotInclude": [
+        "được hoàn đủ cọc",
+        "không phải trả thêm"
       ]
     }
   ]

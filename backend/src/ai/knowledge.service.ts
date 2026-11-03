@@ -4,11 +4,14 @@ import { readdirSync, readFileSync, statSync } from 'fs';
 import { join, relative } from 'path';
 import {
   calculateDeposit,
+  calculateDepositSettlement,
   calculateLateFeeForDays,
   calculateRefundPercentage,
   DEFAULT_BOOKING_TTL_MINUTES,
   DEPOSIT_RATIO,
+  DEPOSIT_REFUND_BUSINESS_DAYS,
   formatPercent,
+  HANDOVER_MIN_PHOTOS,
   HOURLY_PRICING_MAX_HOURS,
   LATE_FEE_DAILY_RATIO,
   REFUND_TIERS,
@@ -63,6 +66,7 @@ const DEVICE_CACHE_TTL_MS = 60_000;
 const CORE_CHUNK_TITLE = 'Tóm tắt chính sách cốt lõi';
 const LATE_FEE_EXAMPLE_PRICE_PER_DAY = 400_000;
 const DEPOSIT_EXAMPLE_PRICE = 30_000_000;
+const SETTLEMENT_EXAMPLE_DAMAGE_FEE = 1_000_000;
 
 export function formatVnd(value: number): string {
   return `${Math.round(value).toLocaleString('vi-VN')}đ`;
@@ -73,6 +77,22 @@ export function formatVnd(value: number): string {
  * hàm của business-policy.ts, không chép tay, nên đổi chính sách ở code là
  * Trợ lý AI tự nói theo.
  */
+/** "cọc 15.000.000đ, trả trễ 1 ngày (phạt 80.000đ) và hư hỏng 1.000.000đ → hoàn 13.920.000đ" — tính bằng hàm nghiệp vụ. */
+function settlementExample(pricePerDay: number): string {
+  const deposit = calculateDeposit(DEPOSIT_EXAMPLE_PRICE);
+  const lateFee = calculateLateFeeForDays(1, pricePerDay, Number.MAX_VALUE);
+  const { refundAmount } = calculateDepositSettlement({
+    depositAmount: deposit,
+    lateFee,
+    damageFee: SETTLEMENT_EXAMPLE_DAMAGE_FEE,
+  });
+  return (
+    `tiền cọc ${formatVnd(deposit)}, trả máy trễ 1 ngày (phí trễ hạn ${formatVnd(lateFee)}) ` +
+    `và có hư hỏng bồi thường ${formatVnd(SETTLEMENT_EXAMPLE_DAMAGE_FEE)} thì hoàn lại ` +
+    `${formatVnd(deposit)} − ${formatVnd(lateFee)} − ${formatVnd(SETTLEMENT_EXAMPLE_DAMAGE_FEE)} = ${formatVnd(refundAmount)}.`
+  );
+}
+
 export function buildPolicyValues(ttlMinutes: number): Record<string, string> {
   const [fullTier, partialTier] = REFUND_TIERS;
   const examplePrice = LATE_FEE_EXAMPLE_PRICE_PER_DAY;
@@ -104,6 +124,17 @@ export function buildPolicyValues(ttlMinutes: number): Record<string, string> {
     LATE_FEE_EXAMPLE_1DAY: lateFee(1),
     LATE_FEE_EXAMPLE_2DAYS: lateFee(2),
     LATE_FEE_EXAMPLE_3DAYS: lateFee(3),
+    DEPOSIT_REFUND_BUSINESS_DAYS: String(DEPOSIT_REFUND_BUSINESS_DAYS),
+    HANDOVER_MIN_PHOTOS: String(HANDOVER_MIN_PHOTOS),
+    SETTLEMENT_EXAMPLE: settlementExample(examplePrice),
+    // Chỉ dùng cho bộ eval (đáp án P8) — cùng ví dụ với SETTLEMENT_EXAMPLE.
+    SETTLEMENT_EXAMPLE_REFUND: formatVnd(
+      calculateDepositSettlement({
+        depositAmount: calculateDeposit(DEPOSIT_EXAMPLE_PRICE),
+        lateFee: calculateLateFeeForDays(1, examplePrice, Number.MAX_VALUE),
+        damageFee: SETTLEMENT_EXAMPLE_DAMAGE_FEE,
+      }).refundAmount,
+    ),
   };
 }
 

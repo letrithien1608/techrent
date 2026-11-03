@@ -101,14 +101,24 @@ function StatCard({
   );
 }
 
+/** Khoá ngày theo giờ ĐỊA PHƯƠNG (không dùng toISOString — lệch 1 ngày ở múi giờ +7). */
 function dayKey(value: string | Date): string {
   const date = typeof value === "string" ? new Date(value) : value;
-  return date.toISOString().slice(0, 10);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
+/** "03/11" — ghép tay vì ICU vi-VN định dạng ngày-tháng bằng dấu "-". */
 function formatChartLabel(key: string): string {
-  const date = new Date(key);
-  return date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
+  const [, month, day] = key.split("-");
+  return `${day}/${month}`;
+}
+
+/** Trục tiền rút gọn: 1.500.000 → "1,5tr", 900.000 → "900k". */
+function formatCompactVnd(value: number): string {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toLocaleString("vi-VN", { maximumFractionDigits: 1 })}tr`;
+  if (value >= 1_000) return `${Math.round(value / 1_000)}k`;
+  return String(value);
 }
 
 function buildRevenueChart(bookings: Booking[]) {
@@ -346,7 +356,8 @@ export default function AdminDashboardPage() {
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
-                width={40}
+                width={56}
+                tickFormatter={(value) => formatCompactVnd(Number(value))}
               />
               <Tooltip
                 formatter={(value) => formatVnd(Number(value))}

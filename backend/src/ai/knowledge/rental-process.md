@@ -6,9 +6,9 @@
 3. Chọn thiết bị ở trang "Thiết bị".
 4. Chọn ngày giờ nhận/trả và bấm "Đặt thuê ngay" (đơn được giữ chỗ {{BOOKING_TTL_MINUTES}} phút).
 5. Thanh toán tiền cọc ({{DEPOSIT_RATE}} giá trị thiết bị) qua VNPay.
-6. Đến nhận máy: nhân viên đối chiếu CCCD, bạn ký hợp đồng và kiểm tra máy.
-7. Trả máy đúng hạn kèm đủ phụ kiện.
-8. Nhận hoàn cọc và đánh giá thiết bị.
+6. Đến cửa hàng nhận máy (không giao tận nơi): nhân viên đối chiếu CCCD gốc, bạn thanh toán tiền thuê tại quầy, ký hợp đồng, hai bên lập biên bản giao máy có ảnh.
+7. Trả máy tại cửa hàng đúng hạn kèm đủ phụ kiện; nhân viên đối chiếu ảnh lúc giao và quyết toán cọc.
+8. Nhận hoàn cọc bằng chuyển khoản trong tối đa {{DEPOSIT_REFUND_BUSINESS_DAYS}} ngày làm việc và đánh giá thiết bị.
 
 ## Bước 1: Đăng ký tài khoản
 - Đăng ký ở trang "Đăng ký" với họ tên, email, mật khẩu (tối thiểu 8 ký tự), số điện thoại (10 số, bắt đầu bằng 0) và số CCCD (12 số).
@@ -40,21 +40,23 @@
 - Thanh toán thành công, đơn chuyển sang "Đã xác nhận" và bạn nhận thông báo trên chuông thông báo.
 - Hợp đồng thuê được hệ thống tự lập khi đơn được xác nhận.
 
-## Bước 6: Ký hợp đồng và nhận thiết bị
-- Đến giờ nhận, nhân viên đối chiếu CCCD của bạn với hồ sơ đã xác thực.
+## Bước 6: Nhận thiết bị tại cửa hàng
+- Đến cửa hàng đúng giờ nhận (TechRent không giao hàng tận nơi), mang theo CCCD gốc để nhân viên đối chiếu với hồ sơ đã xác thực.
+- Thanh toán tiền thuê tại quầy bằng tiền mặt hoặc chuyển khoản; bạn nhận thông báo "Đã thu tiền thuê".
 - Nhân viên in hợp đồng thuê để bạn đọc và ký tay; cửa hàng giữ 1 bản, bạn giữ 1 bản.
-- Hai bên kiểm tra tình trạng thiết bị và phụ kiện lúc giao.
-- Sau khi giao máy, đơn chuyển sang "Đang thuê".
+- Nhân viên chụp tối thiểu {{HANDOVER_MIN_PHOTOS}} ảnh tình trạng thiết bị và ghi chú phụ kiện kèm theo (biên bản giao máy).
+- Chỉ khi đủ 3 việc (đã thu tiền thuê, đã ký hợp đồng, đã lập biên bản giao máy) đơn mới chuyển sang "Đang thuê".
 
 ## Bước 7: Trả thiết bị
 - Trả thiết bị đúng giờ đã đặt, kèm đầy đủ phụ kiện đã nhận.
-- Nhân viên kiểm tra tình trạng máy rồi hoàn tất đơn ("Hoàn tất").
-- Trả trễ sẽ bị tính phí trễ hạn leo thang: {{LATE_FEE_RULE}}
+- Mang máy đến cửa hàng; nhân viên chọn tình trạng (nguyên vẹn, hư hỏng hoặc thiếu phụ kiện), đối chiếu với ảnh lúc giao rồi xác nhận trả máy. Đơn chuyển sang "Đã trả máy".
+- Trả trễ sẽ bị tính phí trễ hạn leo thang (trừ vào tiền cọc): {{LATE_FEE_RULE}}
 
 ## Bước 8: Hoàn cọc và đánh giá
-- Sau khi trả máy, nhân viên xử lý hoàn cọc; chi phí khắc phục hư hỏng/thiếu phụ kiện do bên thuê (nếu có) có thể được trừ vào cọc.
-- Đơn "Hoàn tất" có nút đánh giá: chấm 1-5 sao và viết nhận xét (mỗi đơn đánh giá 1 lần).
+- Tiền cọc hoàn lại = tiền cọc − phí trễ hạn − phí hư hỏng; chuyển khoản trong tối đa {{DEPOSIT_REFUND_BUSINESS_DAYS}} ngày làm việc, bạn nhận thông báo kèm mã giao dịch.
+- Đơn "Đã trả máy" có nút đánh giá: chấm 1-5 sao và viết nhận xét (mỗi đơn đánh giá 1 lần).
 
 ## Theo dõi đơn của tôi
-- Trang "Đơn của tôi" liệt kê mọi đơn, lọc theo trạng thái: Chờ thanh toán, Đã xác nhận, Đang thuê, Hoàn tất, Đã huỷ.
-- Chuông thông báo trên thanh đầu trang báo khi đơn được xác nhận, bắt đầu thuê hoặc bị huỷ.
+- Trang "Đơn của tôi" liệt kê mọi đơn, lọc theo trạng thái: Chờ thanh toán, Đã xác nhận, Đang thuê, Đã trả máy, Đã huỷ.
+- Trang chi tiết đơn có dòng thời gian: Đặt thuê → Đã cọc → Nhận máy → Đang thuê → Đã trả máy → Hoàn cọc.
+- Chuông thông báo báo khi đơn được xác nhận, đã thu tiền thuê, bắt đầu thuê, đã nhận lại máy (kèm số tiền hoàn), đã hoàn cọc hoặc bị huỷ.
