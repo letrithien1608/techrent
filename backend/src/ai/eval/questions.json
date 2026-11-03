@@ -107,7 +107,7 @@
       "question": "Máy bị lỗi khi đang thuê thì sao?",
       "mustInclude": [
         "ảnh|video",
-        "nhân viên"
+        "nhân viên|cửa hàng|Báo lỗi thiết bị"
       ],
       "mustNotInclude": []
     },
