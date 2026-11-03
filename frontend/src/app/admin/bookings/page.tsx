@@ -29,11 +29,14 @@ import { BookingDetailDialog } from "@/components/admin/booking-detail-dialog";
 import { BookingHandoverDialog } from "@/components/admin/booking-handover-dialog";
 import { BookingReturnDialog } from "@/components/admin/booking-return-dialog";
 import { DepositRefundDialog } from "@/components/admin/deposit-refund-dialog";
+import { ConfirmLostDialog } from "@/components/admin/confirm-lost-dialog";
+import { useAuthStore } from "@/stores/auth-store";
 import { CancelBookingDialog } from "@/components/bookings/cancel-booking-dialog";
 import {
   confirmBooking,
   fetchBookingById,
   fetchBookings,
+  runOverdueCheck,
   type BookingStatus,
 } from "@/lib/bookings-api";
 import { BOOKING_STATUS_LABEL } from "@/lib/booking-format";
@@ -108,6 +111,16 @@ function AdminBookingsContent() {
     queryClient.invalidateQueries({ queryKey: ["admin", "bookings"] });
   }
 
+  const isAdmin = useAuthStore((state) => state.user?.role === "admin");
+  const overdueMutation = useMutation({
+    mutationFn: runOverdueCheck,
+    onSuccess: ({ flagged }) => {
+      toast.success(flagged ? `Đã đánh dấu ${flagged} đơn nghi mất thiết bị` : "Không có đơn mới quá hạn từ 7 ngày");
+      handleChanged();
+    },
+    onError: (error) => toast.error(getErrorMessage(error, "Không chạy được kiểm tra quá hạn")),
+  });
+
   const transitionMutation = useMutation({
     mutationFn: ({ id }: { id: string }) => confirmBooking(id),
     onSuccess: () => {
@@ -126,7 +139,7 @@ function AdminBookingsContent() {
     <div className="space-y-4">
       {focusBookingId && <FocusedBookingDialog key={focusBookingId} bookingId={focusBookingId} />}
       <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/50">
-        <div className="border-b border-border/60 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 p-4">
           <Select
             value={status}
             onValueChange={(value) => {
@@ -147,6 +160,17 @@ function AdminBookingsContent() {
               ))}
             </SelectContent>
           </Select>
+          {isAdmin && (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={overdueMutation.isPending}
+              onClick={() => overdueMutation.mutate()}
+            >
+              {overdueMutation.isPending && <Loader2 className="animate-spin" />}
+              Kiểm tra đơn quá hạn ngay
+            </Button>
+          )}
         </div>
 
         {bookingsQuery.isPending ? (
@@ -206,6 +230,11 @@ function AdminBookingsContent() {
                         >
                           {statusMeta.label}
                         </span>
+                        {booking.status === "ongoing" && booking.suspectedLostAt && (
+                          <span className="ml-1 rounded-full bg-destructive/15 px-2 py-0.5 text-xs font-medium text-destructive">
+                            Nghi mất
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
@@ -249,6 +278,14 @@ function AdminBookingsContent() {
                                 <BookingReturnDialog booking={booking} onChanged={handleChanged} />
                               </TooltipTrigger>
                               <TooltipContent>Xác nhận trả máy</TooltipContent>
+                            </Tooltip>
+                          )}
+                          {isAdmin && booking.status === "ongoing" && booking.suspectedLostAt && (
+                            <Tooltip>
+                              <TooltipTrigger render={<span className="inline-flex" />}>
+                                <ConfirmLostDialog booking={booking} onChanged={handleChanged} />
+                              </TooltipTrigger>
+                              <TooltipContent>Xác nhận mất thiết bị</TooltipContent>
                             </Tooltip>
                           )}
                           {booking.depositRefundStatus === "pending" && (

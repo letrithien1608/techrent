@@ -199,6 +199,18 @@ export default function BookingDetailPage() {
             đến cửa hàng để nhân viên kiểm tra và quyết toán tiền cọc. Trả trễ sẽ bị trừ phí trễ hạn vào cọc.
           </p>
         )}
+        {booking.status === "ongoing" && booking.suspectedLostAt && (
+          <div role="alert" className="mt-4 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+            Đơn đã quá hạn trả lâu. Vui lòng mang máy đến cửa hàng ngay — nếu không, cửa hàng sẽ xác nhận mất
+            thiết bị, giữ toàn bộ tiền cọc, ghi nợ phần còn lại và khoá tài khoản đặt thuê.
+          </div>
+        )}
+        {booking.status === "lost" && (
+          <p className="mt-6 border-t border-border/60 pt-6 text-sm text-destructive">
+            Cửa hàng đã xác nhận thiết bị không được trả. Tiền cọc bị giữ lại và khoản nợ còn lại hiển thị ở bảng
+            trên. Vui lòng liên hệ cửa hàng để thanh toán.
+          </p>
+        )}
         {booking.status === "ongoing" && (
           <div className="mt-4 flex flex-wrap items-center gap-3">
             {booking.issueReports?.some((r) => r.status === "open") ? (

@@ -350,3 +350,28 @@ export async function resolveIssue(
   const { data } = await api.post<IssueReportWithBooking>(`/issue-reports/${reportId}/resolve`, form);
   return data;
 }
+
+// ---- Không trả máy (chỉ admin) ----
+
+export interface LossPreview {
+  depositAmount: number;
+  originalPrice: number;
+  deviceName: string;
+  lateFee: number;
+  amountOwed: number;
+}
+
+export async function fetchLossPreview(id: string): Promise<LossPreview> {
+  const { data } = await api.get<LossPreview>(`/bookings/${id}/loss-preview`);
+  return data;
+}
+
+export async function confirmLost(id: string, note?: string): Promise<Booking> {
+  const { data } = await api.patch<Booking>(`/bookings/${id}/confirm-lost`, { note });
+  return data;
+}
+
+export async function runOverdueCheck(): Promise<{ flagged: number }> {
+  const { data } = await api.post<{ flagged: number }>("/bookings/overdue-check");
+  return data;
+}
