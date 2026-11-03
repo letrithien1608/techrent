@@ -236,10 +236,17 @@ export class ContractService {
     };
   }
 
-  /** Bản in/PDF cho staff/admin — CCCD đầy đủ, font nhúng. */
-  async renderForPrint(bookingId: string, actorId: string): Promise<string> {
+  /**
+   * Bản xem/in/PDF có font nhúng. Staff/admin: CCCD ĐẦY ĐỦ (`fullCccd` mặc
+   * định), sinh tạm. Chủ đơn: `fullCccd: false` — CCCD che như bản lưu DB.
+   */
+  async renderForPrint(
+    bookingId: string,
+    actorId?: string,
+    options: { fullCccd: boolean } = { fullCccd: true },
+  ): Promise<string> {
     const [data, booking] = await Promise.all([
-      this.buildData(bookingId, { fullCccd: true, actorId }),
+      this.buildData(bookingId, { fullCccd: options.fullCccd, actorId }),
       this.prisma.booking.findUniqueOrThrow({
         where: { id: bookingId },
         select: { totalPrice: true },
@@ -251,9 +258,13 @@ export class ContractService {
     );
   }
 
-  async renderPdf(bookingId: string, actorId: string): Promise<Buffer> {
+  async renderPdf(
+    bookingId: string,
+    actorId?: string,
+    options: { fullCccd: boolean } = { fullCccd: true },
+  ): Promise<Buffer> {
     return this.pdfService.render(
-      await this.renderForPrint(bookingId, actorId),
+      await this.renderForPrint(bookingId, actorId, options),
     );
   }
 

@@ -191,6 +191,27 @@ export class BookingsController {
     return this.bookingsService.cancel(id, user, dto);
   }
 
+  // Chủ đơn xem hợp đồng của CHÍNH đơn mình — CCCD che (********1234).
+  @Get(':id/my-contract')
+  getOwnContract(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    return this.bookingsService.getOwnContract(id, user);
+  }
+
+  @Get(':id/my-contract/pdf')
+  async getOwnContractPdf(
+    @Param('id') id: string,
+    @CurrentUser() user: RequestUser,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const pdf = await this.bookingsService.getOwnContractPdf(id, user);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="hop-dong-${id.slice(0, 8).toUpperCase()}.pdf"`,
+      'Cache-Control': 'no-store',
+    });
+    return new StreamableFile(pdf);
+  }
+
   // Xem/In hợp đồng (HTML hoàn chỉnh) — CCCD đầy đủ, sinh tạm, KHÔNG lưu lại.
   @Roles(Role.staff, Role.admin)
   @Get(':id/contract')

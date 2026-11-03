@@ -106,6 +106,23 @@ describe('ContractService', () => {
     expect(html).toContain('Trần Minh Quân');
   });
 
+  it('bản cho chủ đơn (fullCccd: false): CCCD che, không giải mã, vẫn nhúng font', async () => {
+    const html = await service.renderForPrint(booking.id, undefined, {
+      fullCccd: false,
+    });
+    expect(usersService.revealCccd).not.toHaveBeenCalled();
+    expect(html).toContain('********1234');
+    expect(html).not.toContain('079204001234');
+    expect(html).toContain("font-family:'Noto Serif'");
+  });
+
+  it('PDF cho chủ đơn: HTML đưa vào Chromium là bản CCCD che', async () => {
+    await service.renderPdf(booking.id, undefined, { fullCccd: false });
+    const html: string = pdfService.render.mock.calls[0][0];
+    expect(html).toContain('********1234');
+    expect(html).not.toContain('079204001234');
+  });
+
   it('nạp đúng máy cũ/máy mới cho Phụ lục đổi thiết bị', async () => {
     const data = await service.buildData(booking.id, { fullCccd: false });
     expect(data.swaps).toEqual([

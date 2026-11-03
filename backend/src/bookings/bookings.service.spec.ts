@@ -1195,6 +1195,98 @@ describe('BookingsService', () => {
     });
   });
 
+  describe('getOwnContract / getOwnContractPdf (chủ đơn)', () => {
+    const confirmedBooking = {
+      ...baseBooking,
+      status: BookingStatus.confirmed,
+      contractSigned: true,
+      contractSignedAt: new Date('2026-11-05T02:00:00Z'),
+    };
+
+    it('chủ đơn xem được bản CCCD CHE (fullCccd: false) + trạng thái ký', async () => {
+      prisma.booking.findUnique.mockResolvedValue(confirmedBooking);
+
+      const result = await service.getOwnContract(baseBooking.id, customer);
+
+      expect(contractService.renderForPrint).toHaveBeenCalledWith(
+        baseBooking.id,
+        undefined,
+        { fullCccd: false },
+      );
+      expect(result).toEqual({
+        html: '<html>hợp đồng</html>',
+        signed: true,
+        signedAt: confirmedBooking.contractSignedAt,
+      });
+    });
+
+    it('chủ đơn tải PDF bản CCCD che', async () => {
+      prisma.booking.findUnique.mockResolvedValue(confirmedBooking);
+
+      await expect(
+        service.getOwnContractPdf(baseBooking.id, customer),
+      ).resolves.toEqual(Buffer.from('%PDF'));
+      expect(contractService.renderPdf).toHaveBeenCalledWith(
+        baseBooking.id,
+        undefined,
+        { fullCccd: false },
+      );
+    });
+
+    it('khách khác gọi vào đơn không phải của mình → 403, không dựng hợp đồng', async () => {
+      prisma.booking.findUnique.mockResolvedValue(confirmedBooking);
+
+      await expect(
+        service.getOwnContract(baseBooking.id, otherCustomer),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      await expect(
+        service.getOwnContractPdf(baseBooking.id, otherCustomer),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(contractService.renderForPrint).not.toHaveBeenCalled();
+      expect(contractService.renderPdf).not.toHaveBeenCalled();
+    });
+
+    it.each([BookingStatus.pending, BookingStatus.cancelled])(
+      'đơn %s chưa có hợp đồng → 400',
+      async (status) => {
+        prisma.booking.findUnique.mockResolvedValue({ ...baseBooking, status });
+
+        await expect(
+          service.getOwnContract(baseBooking.id, customer),
+        ).rejects.toBeInstanceOf(BadRequestException);
+        expect(contractService.renderForPrint).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each([
+      BookingStatus.ongoing,
+      BookingStatus.completed,
+      BookingStatus.lost,
+    ])('đơn %s xem được', async (status) => {
+      prisma.booking.findUnique.mockResolvedValue({ ...baseBooking, status });
+
+      await expect(
+        service.getOwnContract(baseBooking.id, customer),
+      ).resolves.toMatchObject({ html: '<html>hợp đồng</html>' });
+    });
+
+    it('staff/admin vẫn lấy bản CCCD đầy đủ qua endpoint nhân viên (không truyền fullCccd: false)', async () => {
+      prisma.booking.findUnique.mockResolvedValue(confirmedBooking);
+
+      await service.getContractForPrint(baseBooking.id, admin.userId);
+      await service.getContractPdf(baseBooking.id, admin.userId);
+
+      expect(contractService.renderForPrint).toHaveBeenCalledWith(
+        baseBooking.id,
+        admin.userId,
+      );
+      expect(contractService.renderPdf).toHaveBeenCalledWith(
+        baseBooking.id,
+        admin.userId,
+      );
+    });
+  });
+
   describe('setContractSigned', () => {
     it('đánh dấu đã ký kèm thời điểm ký', async () => {
       prisma.booking.findUnique.mockResolvedValue(baseBooking);

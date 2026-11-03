@@ -64,6 +64,14 @@ const ACTIVE_BOOKING_STATUSES: BookingStatus[] = [
   BookingStatus.ongoing,
 ];
 
+// Hợp đồng sinh ở mốc xác nhận → khách xem được từ `confirmed` trở đi.
+const CONTRACT_VISIBLE_STATUSES: BookingStatus[] = [
+  BookingStatus.confirmed,
+  BookingStatus.ongoing,
+  BookingStatus.completed,
+  BookingStatus.lost,
+];
+
 // Kèm thông tin thiết bị gọn (tên/ảnh) khi khách xem danh sách/chi tiết booking
 // của mình ở frontend — tránh phải gọi thêm N request GET /devices/:id riêng.
 const bookingWithDevice = {
@@ -508,6 +516,50 @@ export class BookingsService {
 
   getContractPdf(id: string, actorId: string): Promise<Buffer> {
     return this.contractService.renderPdf(id, actorId);
+  }
+
+  /**
+   * Chủ đơn xem/tải hợp đồng của CHÍNH đơn mình — CCCD CHE, cùng hàm dựng
+   * HTML/PDF với bản nhân viên. Chỉ từ khi đơn đã xác nhận (pending/huỷ
+   * không có hợp đồng); người khác (kể cả staff qua đường này) → 403.
+   */
+  async getOwnContract(
+    id: string,
+    currentUser: RequestUser,
+  ): Promise<{ html: string; signed: boolean; signedAt: Date | null }> {
+    const booking = await this.assertOwnContractAccess(id, currentUser);
+    const html = await this.contractService.renderForPrint(id, undefined, {
+      fullCccd: false,
+    });
+    return {
+      html,
+      signed: booking.contractSigned,
+      signedAt: booking.contractSignedAt,
+    };
+  }
+
+  async getOwnContractPdf(
+    id: string,
+    currentUser: RequestUser,
+  ): Promise<Buffer> {
+    await this.assertOwnContractAccess(id, currentUser);
+    return this.contractService.renderPdf(id, undefined, { fullCccd: false });
+  }
+
+  private async assertOwnContractAccess(
+    id: string,
+    currentUser: RequestUser,
+  ): Promise<Booking> {
+    const booking = await this.findByIdOrThrow(id);
+    if (booking.userId !== currentUser.userId) {
+      throw new ForbiddenException('Bạn không có quyền xem hợp đồng này');
+    }
+    if (!CONTRACT_VISIBLE_STATUSES.includes(booking.status)) {
+      throw new BadRequestException(
+        'Hợp đồng chỉ có sau khi đơn được xác nhận',
+      );
+    }
+    return booking;
   }
 
   /** Nhân viên đánh dấu đã/chưa ký tay — KHÔNG lưu ảnh hợp đồng đã ký (ngoài phạm vi). */

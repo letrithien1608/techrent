@@ -291,6 +291,18 @@ export async function downloadContractPdf(id: string): Promise<Blob> {
   return data;
 }
 
+// ---- Khách: hợp đồng của CHÍNH đơn mình (CCCD che), từ khi đơn đã xác nhận ----
+
+export async function fetchOwnContract(id: string): Promise<BookingContract> {
+  const { data } = await api.get<BookingContract>(`/bookings/${id}/my-contract`);
+  return data;
+}
+
+export async function downloadOwnContractPdf(id: string): Promise<Blob> {
+  const { data } = await api.get<Blob>(`/bookings/${id}/my-contract/pdf`, { responseType: "blob" });
+  return data;
+}
+
 export async function setContractSigned(
   id: string,
   signed: boolean,

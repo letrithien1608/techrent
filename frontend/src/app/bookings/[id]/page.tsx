@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BookingCountdown } from "@/components/bookings/booking-countdown";
 import { CancelBookingDialog } from "@/components/bookings/cancel-booking-dialog";
+import { BookingContractCard } from "@/components/bookings/booking-contract-card";
 import { BookingStatusTimeline } from "@/components/bookings/booking-status-timeline";
 import { DepositSettlementTable } from "@/components/bookings/deposit-settlement-table";
 import { InspectionComparison } from "@/components/bookings/inspection-comparison";
@@ -99,6 +100,8 @@ export default function BookingDetailPage() {
     new Date(booking.createdAt).getTime() + BOOKING_TTL_MINUTES * 60_000,
   );
   const canCancel = booking.status === "pending" || booking.status === "confirmed";
+  // Hợp đồng sinh khi đơn được xác nhận — khớp CONTRACT_VISIBLE_STATUSES ở backend.
+  const hasContract = ["confirmed", "ongoing", "completed", "lost"].includes(booking.status);
 
   return (
     <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6 sm:py-16">
@@ -153,6 +156,13 @@ export default function BookingDetailPage() {
           <div className="mt-6 border-t border-border/60 pt-5">
             <h2 className="mb-3 text-sm font-semibold">Báo lỗi &amp; đổi máy</h2>
             <IssueEvents reports={booking.issueReports} />
+          </div>
+        )}
+
+        {hasContract && (
+          <div className="mt-6 border-t border-border/60 pt-5">
+            <h2 className="mb-3 text-sm font-semibold">Hợp đồng thuê</h2>
+            <BookingContractCard booking={booking} />
           </div>
         )}
 
