@@ -106,5 +106,17 @@
     "failedIds": [
       "O1 (0/3)"
     ]
+  },
+  {
+    "at": "2026-11-03T14:09:10.470Z",
+    "label": "Phiên 1/3 chính sách: tiền thuê tại quầy, hoàn cọc 3 ngày làm việc, giao nhận tại cửa hàng",
+    "passed": 84,
+    "total": 90,
+    "repeat": 3,
+    "failedIds": [
+      "O1 (0/3)",
+      "O2 (1/3)",
+      "T6 (2/3)"
+    ]
   }
 ]
