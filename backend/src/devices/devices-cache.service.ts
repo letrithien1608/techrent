@@ -55,8 +55,21 @@ export class DevicesCacheService {
     return `${DevicesCacheService.KEY_PREFIX}${parts.join(':')}`;
   }
 
+  /**
+   * Tắt cache CHỈ để đo so sánh có/không cache khi kiểm thử tải (load-tests/):
+   * phải đặt CẢ `LOAD_TEST=true` lẫn `DEVICES_CACHE_DISABLED=true`. Mặc định
+   * (không đặt biến) cache luôn bật.
+   */
+  private static isDisabledForLoadTest(): boolean {
+    return (
+      process.env.LOAD_TEST === 'true' &&
+      process.env.DEVICES_CACHE_DISABLED === 'true'
+    );
+  }
+
   /** Cache miss/lỗi Redis đều trả `null` — gọi nơi luôn có fallback truy vấn DB thật. */
   async get<T>(key: string): Promise<T | null> {
+    if (DevicesCacheService.isDisabledForLoadTest()) return null;
     try {
       const raw = await this.redisService.client.get(key);
       return raw ? (JSON.parse(raw) as T) : null;
@@ -68,6 +81,7 @@ export class DevicesCacheService {
 
   /** Lỗi ghi cache (VD Redis tạm gián đoạn) chỉ log, KHÔNG throw — request vẫn đã có dữ liệu thật từ DB để trả về. */
   async set(key: string, value: unknown): Promise<void> {
+    if (DevicesCacheService.isDisabledForLoadTest()) return;
     try {
       await this.redisService.client
         .multi()

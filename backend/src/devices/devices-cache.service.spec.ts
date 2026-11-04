@@ -58,6 +58,32 @@ describe('DevicesCacheService', () => {
     });
   });
 
+  describe('cờ tắt cache khi kiểm thử tải', () => {
+    afterEach(() => {
+      delete process.env.LOAD_TEST;
+      delete process.env.DEVICES_CACHE_DISABLED;
+    });
+
+    it('LOAD_TEST=true + DEVICES_CACHE_DISABLED=true: không đọc/ghi Redis', async () => {
+      process.env.LOAD_TEST = 'true';
+      process.env.DEVICES_CACHE_DISABLED = 'true';
+      client.get.mockResolvedValue(JSON.stringify({ data: [] }));
+
+      expect(await service.get('devices:list:1:20:::')).toBeNull();
+      await service.set('devices:list:1:20:::', { data: [] });
+
+      expect(client.get).not.toHaveBeenCalled();
+      expect(client.multi).not.toHaveBeenCalled();
+    });
+
+    it('chỉ đặt DEVICES_CACHE_DISABLED (thiếu LOAD_TEST): cache vẫn bật', async () => {
+      process.env.DEVICES_CACHE_DISABLED = 'true';
+      client.get.mockResolvedValue(JSON.stringify({ data: [] }));
+
+      expect(await service.get('devices:list:1:20:::')).toEqual({ data: [] });
+    });
+  });
+
   describe('get (cache hit/miss)', () => {
     it('cache HIT: trả đúng dữ liệu đã lưu (JSON.parse lại đúng)', async () => {
       const cachedValue = { data: [{ id: 'device-1' }], meta: { total: 1 } };

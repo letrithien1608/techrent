@@ -33,6 +33,10 @@ import { JwtStrategy } from './strategies/jwt.strategy';
         // JwtAuthGuard chạy trước ThrottlerGuard (xem thứ tự APP_GUARD bên dưới)
         // nên req.user đã có sẵn khi ThrottlerGuard chạy.
         getTracker: (req) => req.user?.userId ?? req.ip,
+        // CHỈ khi kiểm thử tải bằng k6 (load-tests/): k6 bắn từ 1 IP nên mọi
+        // request công khai sẽ dính giới hạn 100/phút. Mặc định (không đặt
+        // biến) rate limit giữ nguyên. Đọc lúc chạy request, không phải lúc import.
+        skipIf: () => process.env.LOAD_TEST === 'true',
       },
     ]),
   ],
