@@ -15,7 +15,6 @@ describe('DevicesService', () => {
       delete: jest.Mock;
     };
     category: { findUnique: jest.Mock };
-    $transaction: jest.Mock;
   };
   let realtimeGateway: { emitDeviceStatusChanged: jest.Mock };
   let devicesCacheService: {
@@ -23,6 +22,7 @@ describe('DevicesService', () => {
     get: jest.Mock;
     set: jest.Mock;
     invalidateAll: jest.Mock;
+    getOrLoad: jest.Mock;
   };
 
   const baseDevice: Device = {
@@ -58,7 +58,6 @@ describe('DevicesService', () => {
         delete: jest.fn(),
       },
       category: { findUnique: jest.fn() },
-      $transaction: jest.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
     };
     realtimeGateway = { emitDeviceStatusChanged: jest.fn() };
     // Mặc định get() -> null (cache miss) để các test hiện có vẫn đi đúng
@@ -71,6 +70,18 @@ describe('DevicesService', () => {
       get: jest.fn().mockResolvedValue(null),
       set: jest.fn().mockResolvedValue(undefined),
       invalidateAll: jest.fn().mockResolvedValue(undefined),
+      // Mô phỏng đúng getOrLoad() thật (đọc cache → trượt thì gọi loader → lưu)
+      // qua get/set giả ở trên; single-flight được test riêng ở
+      // devices-cache.service.spec.ts.
+      getOrLoad: jest.fn(
+        async (key: string, loader: () => Promise<unknown>) => {
+          const cached = await devicesCacheService.get(key);
+          if (cached) return cached;
+          const value = await loader();
+          await devicesCacheService.set(key, value);
+          return value;
+        },
+      ),
     };
     service = new DevicesService(
       prisma as unknown as PrismaService,

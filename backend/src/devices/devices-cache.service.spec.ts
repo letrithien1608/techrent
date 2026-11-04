@@ -116,7 +116,7 @@ describe('DevicesCacheService', () => {
         'devices:list:1:20:::',
         JSON.stringify({ data: [] }),
         'EX',
-        45,
+        expect.any(Number),
       );
       expect(multiChain.sadd).toHaveBeenCalledWith(
         'devices:list:keys',
@@ -158,6 +158,146 @@ describe('DevicesCacheService', () => {
     it('lỗi Redis lúc invalidate -> KHÔNG throw (chỉ log warning, không làm hỏng hành động nghiệp vụ chính)', async () => {
       client.smembers.mockRejectedValue(new Error('Redis down'));
       await expect(service.invalidateAll()).resolves.toBeUndefined();
+    });
+  });
+
+  describe('TTL lệch ngẫu nhiên (chống các key hết hạn cùng lúc)', () => {
+    afterEach(() => jest.restoreAllMocks());
+
+    it('TTL nằm trong [35, 55] giây, đủ cả 2 biên', () => {
+      jest.spyOn(Math, 'random').mockReturnValueOnce(0);
+      expect(service.ttlSeconds()).toBe(35);
+      jest.spyOn(Math, 'random').mockReturnValueOnce(0.999999);
+      expect(service.ttlSeconds()).toBe(55);
+      jest.spyOn(Math, 'random').mockReturnValueOnce(0.5);
+      expect(service.ttlSeconds()).toBe(45);
+    });
+
+    it('các key lưu liên tiếp nhận TTL khác nhau', async () => {
+      jest.restoreAllMocks();
+      const ttls = new Set<number>();
+      for (let i = 0; i < 50; i++) {
+        await service.set(`devices:list:${i}`, { data: [] });
+        const ttl = multiChain.set.mock.calls[i][3] as number;
+        expect(ttl).toBeGreaterThanOrEqual(35);
+        expect(ttl).toBeLessThanOrEqual(55);
+        ttls.add(ttl);
+      }
+      expect(ttls.size).toBeGreaterThan(1);
+    });
+  });
+
+  describe('getOrLoad (single-flight)', () => {
+    const KEY = 'devices:list:1:12:::::';
+
+    /** Promise điều khiển được để giữ truy vấn DB "đang chạy". */
+    function deferred<T>() {
+      let resolve!: (v: T) => void;
+      let reject!: (e: unknown) => void;
+      const promise = new Promise<T>((res, rej) => {
+        resolve = res;
+        reject = rej;
+      });
+      return { promise, resolve, reject };
+    }
+
+    beforeEach(() => client.get.mockResolvedValue(null));
+
+    it('100 request đồng thời trượt cache cùng key → chỉ 1 lần truy vấn DB, mọi request nhận cùng kết quả', async () => {
+      const db = deferred<{ data: string[] }>();
+      const loader = jest.fn(() => db.promise);
+
+      const requests = Array.from({ length: 100 }, () =>
+        service.getOrLoad(KEY, loader),
+      );
+      // Cho mọi request đi qua bước đọc Redis rồi mới trả kết quả DB.
+      await new Promise((r) => setImmediate(r));
+      db.resolve({ data: ['device-1'] });
+      const results = await Promise.all(requests);
+
+      expect(loader).toHaveBeenCalledTimes(1);
+      expect(results.every((r) => r.data[0] === 'device-1')).toBe(true);
+      expect(multiChain.set).toHaveBeenCalledTimes(1);
+    });
+
+    it('key khác nhau không dùng chung truy vấn', async () => {
+      const loader = jest.fn().mockResolvedValue({ data: [] });
+      await Promise.all([
+        service.getOrLoad(KEY, loader),
+        service.getOrLoad('devices:list:2:12:::::', loader),
+      ]);
+      expect(loader).toHaveBeenCalledTimes(2);
+    });
+
+    it('cache HIT không gọi DB', async () => {
+      client.get.mockResolvedValue(JSON.stringify({ data: ['cached'] }));
+      const loader = jest.fn();
+      expect(await service.getOrLoad(KEY, loader)).toEqual({
+        data: ['cached'],
+      });
+      expect(loader).not.toHaveBeenCalled();
+    });
+
+    it('truy vấn xong thì lần trượt cache sau truy vấn lại (không giữ promise cũ)', async () => {
+      const loader = jest.fn().mockResolvedValue({ data: [] });
+      await service.getOrLoad(KEY, loader);
+      await service.getOrLoad(KEY, loader);
+      expect(loader).toHaveBeenCalledTimes(2);
+    });
+
+    it('truy vấn lỗi: mọi request đang chờ nhận lỗi, không lưu cache, lần sau thử lại được', async () => {
+      const db = deferred<unknown>();
+      const loader = jest.fn(() => db.promise);
+      const requests = [1, 2, 3].map(() => service.getOrLoad(KEY, loader));
+      await new Promise((r) => setImmediate(r));
+      db.reject(new Error('DB down'));
+
+      for (const r of requests) await expect(r).rejects.toThrow('DB down');
+      expect(loader).toHaveBeenCalledTimes(1);
+      expect(multiChain.set).not.toHaveBeenCalled();
+
+      const retry = jest.fn().mockResolvedValue({ data: [] });
+      await service.getOrLoad(KEY, retry);
+      expect(retry).toHaveBeenCalledTimes(1);
+    });
+
+    it('invalidateAll() giữa chừng: truy vấn cũ không ghi vào cache, request mới không nhập vào truy vấn cũ', async () => {
+      const oldDb = deferred<{ data: string[] }>();
+      const oldLoader = jest.fn(() => oldDb.promise);
+      const oldRequest = service.getOrLoad(KEY, oldLoader);
+      await new Promise((r) => setImmediate(r));
+
+      await service.invalidateAll();
+
+      const newLoader = jest.fn().mockResolvedValue({ data: ['new'] });
+      const newResult = await service.getOrLoad(KEY, newLoader);
+      oldDb.resolve({ data: ['old'] });
+      await oldRequest;
+
+      expect(newLoader).toHaveBeenCalledTimes(1);
+      expect(newResult).toEqual({ data: ['new'] });
+      // Chỉ kết quả mới được ghi vào cache.
+      expect(multiChain.set).toHaveBeenCalledTimes(1);
+      expect(multiChain.set.mock.calls[0][1]).toBe(
+        JSON.stringify({ data: ['new'] }),
+      );
+    });
+
+    it('cờ tắt cache khi kiểm thử tải: luôn gọi DB, không gộp', async () => {
+      process.env.LOAD_TEST = 'true';
+      process.env.DEVICES_CACHE_DISABLED = 'true';
+      try {
+        const loader = jest.fn().mockResolvedValue({ data: [] });
+        await Promise.all([
+          service.getOrLoad(KEY, loader),
+          service.getOrLoad(KEY, loader),
+        ]);
+        expect(loader).toHaveBeenCalledTimes(2);
+        expect(client.get).not.toHaveBeenCalled();
+      } finally {
+        delete process.env.LOAD_TEST;
+        delete process.env.DEVICES_CACHE_DISABLED;
+      }
     });
   });
 });

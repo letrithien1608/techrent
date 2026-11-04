@@ -23,16 +23,74 @@ import { RedisService } from '../redis/redis.service';
  * — invalidateAll() đọc sổ này rồi DEL đúng các key đó (+ tự xoá sổ), KHÔNG
  * dùng lệnh `KEYS`/`SCAN` quét pattern (chậm hơn ở quy mô lớn, dù ở quy mô
  * demo hiện tại sự khác biệt không đáng kể — vẫn chọn cách đúng chuẩn hơn).
+ *
+ * Chống cache stampede (phát hiện khi kiểm thử tải k6, 04/11 —
+ * `docs/load-test-result.md` mục 5.1): mọi key từng có cùng TTL 45 s nên hết
+ * hạn cùng lúc, hàng trăm request trượt cache cùng mở truy vấn DB → pool cạn
+ * → lỗi 500. Hai lớp chống:
+ *  1. `getOrLoad()` gộp các request trượt cache CÙNG key trong tiến trình này
+ *     thành ĐÚNG 1 lần gọi `loader` (single-flight, map promise đang chạy).
+ *  2. TTL lệch ngẫu nhiên `TTL_SECONDS ± TTL_JITTER_SECONDS` để các key không
+ *     hết hạn cùng một thời điểm.
+ * `invalidateAll()` tăng `generation` + bỏ các promise đang chạy: request đến
+ * SAU khi xoá cache không nhập vào truy vấn cũ, và truy vấn cũ (có thể đọc dữ
+ * liệu trước thay đổi) KHÔNG được ghi đè vào cache.
  */
 @Injectable()
 export class DevicesCacheService {
   private readonly logger = new Logger(DevicesCacheService.name);
 
   private static readonly TTL_SECONDS = 45;
+  private static readonly TTL_JITTER_SECONDS = 10;
   private static readonly KEY_PREFIX = 'devices:list:';
   private static readonly INDEX_KEY = 'devices:list:keys';
 
+  /** Truy vấn DB đang chạy theo cache key (single-flight, chỉ trong tiến trình này). */
+  private readonly inFlight = new Map<string, Promise<unknown>>();
+  /** Tăng mỗi lần `invalidateAll()` — kết quả của truy vấn bắt đầu trước đó không được ghi vào cache. */
+  private generation = 0;
+
   constructor(private readonly redisService: RedisService) {}
+
+  /** TTL ngẫu nhiên trong [45 − 10, 45 + 10] giây. */
+  ttlSeconds(): number {
+    const { TTL_SECONDS, TTL_JITTER_SECONDS } = DevicesCacheService;
+    return (
+      TTL_SECONDS -
+      TTL_JITTER_SECONDS +
+      Math.floor(Math.random() * (2 * TTL_JITTER_SECONDS + 1))
+    );
+  }
+
+  /**
+   * Đọc cache; trượt cache thì gọi `loader` (truy vấn DB) rồi lưu lại. Các
+   * request đồng thời trượt CÙNG key dùng chung 1 lần gọi `loader`. Lỗi của
+   * `loader` trả về cho mọi request đang chờ, không lưu vào cache.
+   */
+  async getOrLoad<T>(key: string, loader: () => Promise<T>): Promise<T> {
+    if (DevicesCacheService.isDisabledForLoadTest()) return loader();
+
+    const pending = this.inFlight.get(key);
+    if (pending) return pending as Promise<T>;
+
+    const cached = await this.get<T>(key);
+    if (cached) return cached;
+
+    // Có thể request khác đã bắt đầu tải trong lúc chờ Redis.
+    const started = this.inFlight.get(key);
+    if (started) return started as Promise<T>;
+
+    const generation = this.generation;
+    const promise: Promise<T> = (async () => {
+      const value = await loader();
+      if (generation === this.generation) await this.set(key, value);
+      return value;
+    })().finally(() => {
+      if (this.inFlight.get(key) === promise) this.inFlight.delete(key);
+    });
+    this.inFlight.set(key, promise);
+    return promise;
+  }
 
   buildKey(filter: {
     page: number;
@@ -85,7 +143,7 @@ export class DevicesCacheService {
     try {
       await this.redisService.client
         .multi()
-        .set(key, JSON.stringify(value), 'EX', DevicesCacheService.TTL_SECONDS)
+        .set(key, JSON.stringify(value), 'EX', this.ttlSeconds())
         .sadd(DevicesCacheService.INDEX_KEY, key)
         .exec();
     } catch (error) {
@@ -94,6 +152,8 @@ export class DevicesCacheService {
   }
 
   async invalidateAll(): Promise<void> {
+    this.generation += 1;
+    this.inFlight.clear();
     try {
       const keys = await this.redisService.client.smembers(
         DevicesCacheService.INDEX_KEY,

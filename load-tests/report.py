@@ -23,6 +23,9 @@ SCENARIOS = [
     ("c-mixed-flow", "Luồng hỗn hợp"),
     ("a3-devices-list-cache-stress", "Stress GET /devices (có cache, không nghỉ)"),
     ("b2-devices-list-nocache-stress", "Stress GET /devices (tắt cache, không nghỉ)"),
+    # Bản đo TRƯỚC khi sửa cache stampede (giữ lại để so sánh trước/sau).
+    ("a3-devices-list-cache-stress-before", "Stress có cache — TRƯỚC khi sửa"),
+    ("b2-devices-list-nocache-stress-before", "Stress tắt cache — TRƯỚC khi sửa"),
 ]
 # Bảng màu phân loại đã kiểm định (dataviz palette, slot 1→4), thứ tự cố định.
 COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#2a78d6", "#eb6834"]
@@ -143,4 +146,59 @@ grouped(
     "mục tiêu ≥ 100 req/s",
     "chart-stress-throughput.png",
     lambda y: f"{y:.0f}",
+)
+
+
+def before_after(metric_idx, ylabel, title, filename):
+    """2 khung cạnh nhau (có cache / tắt cache), mỗi khung: trước (xám) vs sau (xanh)."""
+    pairs = [
+        ("Có cache Redis", "a3-devices-list-cache-stress"),
+        ("Tắt cache", "b2-devices-list-nocache-stress"),
+    ]
+    fig, axes = plt.subplots(1, 2, figsize=(10, 4.5), dpi=150, sharey=False)
+    for ax, (label, name) in zip(axes, pairs):
+        series = [("Trước khi sửa", f"{name}-before", "#a3a29d"), ("Sau khi sửa", name, COLORS[0])]
+        for i, (sl, n, color) in enumerate(series):
+            if n not in per_level:
+                continue
+            xs = [j + (i - 0.5) * 0.4 for j in range(len(LEVELS))]
+            ys = [per_level[n].get(lv, (0, 0, 0))[metric_idx] for lv in LEVELS]
+            bars = ax.bar(xs, ys, 0.37, color=color, label=sl)
+            ax.bar_label(bars, labels=[f"{y:.0f}" for y in ys], fontsize=7, color=INK, padding=2)
+        ax.set_xticks(range(len(LEVELS)), [str(lv) for lv in LEVELS])
+        style(ax, ylabel)
+        ax.set_ylim(0, ax.get_ylim()[1] * 1.12)
+        ax.set_title(label, loc="left", color=INK, fontsize=10)
+    axes[0].legend(frameon=False, fontsize=8, loc="upper left")
+    fig.suptitle(title, x=0.01, ha="left", color=INK, fontsize=11)
+    fig.tight_layout()
+    fig.savefig(ROOT / filename)
+    print(f"\nĐã vẽ {filename}")
+
+
+for name in ["a3-devices-list-cache-stress", "b2-devices-list-nocache-stress"]:
+    m = load(f"{name}-before")
+    if m:
+        per_level.setdefault(f"{name}-before", {})
+        for lv in LEVELS:
+            d = vals(m, f"http_req_duration{{level:{lv}}}")
+            r = vals(m, f"http_reqs{{level:{lv}}}")
+            per_level[f"{name}-before"][lv] = (r["count"] / LEVEL_SECONDS, d["avg"], d["p(95)"], d["p(99)"])
+    m = load(name)
+    if m:
+        for lv in LEVELS:
+            d = vals(m, f"http_req_duration{{level:{lv}}}")
+            per_level[name][lv] = per_level[name][lv][:3] + (d["p(99)"],)
+
+before_after(
+    3,
+    "p99 (ms)",
+    "Stress GET /devices — p99 trước/sau khi sửa cache stampede",
+    "chart-stress-before-after-p99.png",
+)
+before_after(
+    0,
+    "Request/giây",
+    "Stress GET /devices — thông lượng trước/sau khi sửa cache stampede",
+    "chart-stress-before-after-throughput.png",
 )

@@ -2,6 +2,8 @@
 
 > Ngày chạy: 04/11/2026. Công cụ: **k6 v2.3.0**. Script: `load-tests/`. Số liệu gốc (summary JSON của k6): `docs/load-test/*-summary.json`. Biểu đồ: `docs/load-test/*.png`.
 > Mục tiêu đối chiếu: mục 9 `TechRent-Roadmap.md` (Non-functional Requirements).
+>
+> **Cập nhật 04/11 (chiều)**: đã sửa lỗi 500 do *cache stampede* ở `GET /devices` (mục 5.1) và chạy lại 2 bài stress a3/b2 cùng cấu hình — phần stress của bảng 4.3 và 2 biểu đồ đầu là số liệu **sau khi sửa**; số liệu trước khi sửa giữ ở `docs/load-test/*-before-summary.json` và bảng so sánh ở mục 5.1. Các kịch bản a1, a2, b (tải thường), c, d **chưa chạy lại** — số liệu là của bản trước khi sửa.
 
 ## 1. Tóm tắt
 
@@ -9,8 +11,8 @@
 |---|---|---|
 | Thời gian phản hồi API trung bình < 300 ms | Đọc dữ liệu: 2,4–23,3 ms ở mọi mức tải tới 200 người dùng ảo. Đặt thuê khi 100 người tranh **cùng 1 máy cùng 1 khung giờ**: 397 ms | **Đạt** với tải thực tế. Không đạt trong tình huống tranh chấp cực đoan (giải thích ở mục 4.4) |
 | Danh sách thiết bị có cache Redis < 100 ms | TB 3,3 ms (p95 10 ms, p99 29 ms); bài stress không nghỉ: < 100 ms tới 100 người dùng ảo | **Đạt** |
-| Chịu được ≥ 100 request/giây | 388 req/s ở 200 người dùng (có nghỉ 0,5 s); tối đa **~1.205 req/s** khi bắn liên tục (có cache) | **Đạt** (gấp ~12 lần mục tiêu) |
-| Tỷ lệ lỗi < 1% | 0,00% ở mọi kịch bản thường; 0,04% ở bài stress có cache (0,16% riêng mức 200 người dùng) | **Đạt** |
+| Chịu được ≥ 100 request/giây | 388 req/s ở 200 người dùng (có nghỉ 0,5 s); tối đa **~1.283 req/s** khi bắn liên tục (có cache, sau khi sửa stampede) | **Đạt** (gấp ~13 lần mục tiêu) |
+| Tỷ lệ lỗi < 1% | 0,00% ở mọi kịch bản, kể cả 2 bài stress sau khi sửa (trước khi sửa: 113 lỗi 500 = 0,04% ở bài stress có cache) | **Đạt** |
 | Không đặt trùng thiết bị | 5 vòng × 100 người: đúng 5 đơn thành công, 495 lần nhận 409, database 0 cặp đơn chồng lịch | **Đạt** |
 
 ## 2. Môi trường chạy
@@ -24,7 +26,7 @@
 | Hệ điều hành | Windows 11 Home 10.0.26300 |
 | Node.js | v20.19.0 |
 | PostgreSQL 16 + Redis 7 | Docker Desktop 29.8.0 (WSL2, 16 CPU, ~11,3 GB RAM cấp cho Docker), cùng máy |
-| Backend | **Bản build production**: `npm run build` rồi `node dist/main.js`, `NODE_ENV=production`, 1 tiến trình Node, pool kết nối Postgres mặc định của `pg` = 10 |
+| Backend | **Bản build production**: `npm run build` rồi `node dist/main.js`, `NODE_ENV=production`, 1 tiến trình Node. Pool kết nối Postgres: 10 (mặc định của `pg`) ở lần đo đầu; **20** (`DATABASE_POOL_MAX`, mặc định mới) ở lần chạy lại a3/b2 sau khi sửa |
 | k6 | Chạy **trên cùng máy** với backend + database (tranh CPU với nhau — xem mục 5) |
 | Dữ liệu | Dữ liệu dev hiện có: 50 thiết bị / 16 danh mục, 169 đơn thuê |
 
@@ -85,16 +87,16 @@
 | 200 VU | 4,0 / 14,4 | 35,6 / 155,2 | 388,4 / 366,1 |
 | **Toàn bộ** | **3,3 / 10,0** | **23,3 / 128,4** | 174,2 / 167,7 |
 
-**Stress — không nghỉ** (a3 có cache, b2 tắt cache):
+**Stress — không nghỉ** (a3 có cache, b2 tắt cache) — **sau khi sửa cache stampede** (số liệu trước khi sửa ở mục 5.1):
 
 | Mức tải | Có cache: req/s | Có cache: TB / p95 / p99 (ms) | Tắt cache: req/s | Tắt cache: TB / p95 / p99 (ms) |
 |---|---:|---:|---:|---:|
-| 10 VU | 1.185,9 | 8,0 / 11,2 / 20,3 | 464,9 | 20,5 / 29,0 / 55,0 |
-| 50 VU | 1.262,8 | 38,2 / 53,7 / 84,1 | 452,9 | 106,7 / 171,9 / 261,8 |
-| 100 VU | 1.226,8 | 79,8 / 114,1 / 179,0 | 447,9 | 218,9 / 352,8 / 431,8 |
-| 200 VU | 1.150,0 | 170,4 / 267,6 / 974,9 | 433,6 | 452,3 / 642,2 / 704,9 |
-| **Toàn bộ** | **1.205,4** | 72,9 / 167,3 / 285,6 | **449,1** | 195,6 / 554,0 / 649,9 |
-| Lỗi | 0,04% (113 / 289.533) | | 0,00% | |
+| 10 VU | 1.316,2 | 7,2 / 8,6 / 9,9 | 546,9 | 17,4 / 20,0 / 23,5 |
+| 50 VU | 1.280,6 | 37,7 / 45,0 / 48,2 | 527,7 | 91,6 / 107,3 / 115,4 |
+| 100 VU | 1.257,1 | 77,9 / 91,0 / 98,5 | 523,4 | 187,2 / 208,6 / 220,3 |
+| 200 VU | 1.280,8 | 153,0 / 171,5 / 187,0 | 519,8 | 377,3 / 408,9 / 432,6 |
+| **Toàn bộ** | **1.282,7** | 68,5 / 159,4 / 173,8 | **528,8** | 166,2 / 395,0 / 410,9 |
+| Lỗi | 0,00% (0 / 308.087) | | 0,00% (0 / 127.066) | |
 
 ![Thời gian phản hồi trung bình — có/không cache](load-test/chart-stress-cache-vs-nocache.png)
 
@@ -103,8 +105,8 @@
 **Nhận xét:**
 
 - Ở tải thường, cache giúp thời gian trung bình giảm **~86%** (23,3 → 3,3 ms) và p95 giảm **~92%** (128,4 → 10,0 ms). Khác biệt lộ rõ ở 200 VU: không cache thì p95 vọt lên 155 ms vì các truy vấn bắt đầu phải xếp hàng chờ kết nối database.
-- Ở bài stress, cache tăng **thông lượng tối đa ~2,7 lần** (449 → 1.205 req/s) và giảm thời gian trung bình ~63% (195,6 → 72,9 ms).
-- Trong bài stress, thông lượng gần như **không tăng thêm** từ 10 VU trở lên (có cache ~1.200 req/s, không cache ~450 req/s): hệ thống đã chạm giới hạn ngay từ 10 VU, thêm người dùng chỉ làm request xếp hàng lâu hơn — thời gian chờ tăng gần tỷ lệ thuận với số VU (đúng định luật Little: 200 VU ÷ 1.150 req/s ≈ 174 ms, khớp TB đo được 170 ms). Giới hạn khi có cache nhiều khả năng là CPU của **1 tiến trình Node** (đọc chuỗi JSON từ Redis rồi gửi về) cộng với việc k6 chạy chung máy; khi không cache là **pool 10 kết nối Postgres** (mỗi request chạy 2 truy vấn `findMany` + `count`). Lần chạy này chưa đo CPU từng tiến trình nên đây là nhận định, chưa phải kết luận đã kiểm chứng.
+- Ở bài stress (sau khi sửa), cache tăng **thông lượng tối đa ~2,4 lần** (529 → 1.283 req/s) và giảm thời gian trung bình ~59% (166,2 → 68,5 ms).
+- Trong bài stress, thông lượng gần như **không tăng thêm** từ 10 VU trở lên (có cache ~1.280 req/s, không cache ~525 req/s): hệ thống đã chạm giới hạn ngay từ 10 VU, thêm người dùng chỉ làm request xếp hàng lâu hơn — thời gian chờ tăng gần tỷ lệ thuận với số VU (đúng định luật Little: 200 VU ÷ 1.281 req/s ≈ 156 ms, khớp TB đo được 153 ms). Giới hạn khi có cache nhiều khả năng là CPU của **1 tiến trình Node** (đọc chuỗi JSON từ Redis rồi gửi về) cộng với việc k6 chạy chung máy; khi không cache là database (mỗi request chạy 2 truy vấn `findMany` + `count`). Lần chạy này chưa đo CPU từng tiến trình nên đây là nhận định, chưa phải kết luận đã kiểm chứng.
 
 ### 4.4. (c) Luồng hỗn hợp giống người dùng thật
 
@@ -149,23 +151,45 @@ Kiểm tra database ngay sau khi chạy (`load-tests/verify-race.js`): mỗi khu
 
 ## 5. Phát hiện và hạn chế
 
-### 5.1. Lỗi 500 khi cache hết hạn dưới tải cực cao (chưa sửa — chờ quyết định)
+### 5.1. Lỗi 500 khi cache hết hạn dưới tải cực cao — ĐÃ SỬA
 
-Trong bài stress có cache ở mức 200 VU (~1.150 req/s), **113 request (0,04% tổng, 0,16% ở mức 200 VU)** trả lỗi 500. Log server cho thấy toàn bộ là `Transaction API error: Unable to start a transaction in the given time`.
+**Lần đo đầu**: trong bài stress có cache ở mức 200 VU (~1.150 req/s), **113 request (0,04% tổng, 0,16% ở mức 200 VU)** trả lỗi 500. Log server: toàn bộ là `Transaction API error: Unable to start a transaction in the given time`.
 
-Nguyên nhân: mọi key cache danh sách có cùng thời hạn 45 giây nên **hết hạn gần như cùng lúc**; ngay sau đó hàng trăm request đồng thời cùng "trượt cache" và cùng mở `$transaction([findMany, count])` (hiện tượng *cache stampede*), trong khi pool chỉ có 10 kết nối → các request chờ quá thời hạn 2 giây mặc định của Prisma bị huỷ. Bài stress **không cache** lại không có lỗi vì tải lên database đều đặn chứ không dồn thành từng đợt.
+**Nguyên nhân**: mọi key cache danh sách có cùng thời hạn 45 giây nên **hết hạn gần như cùng lúc**; ngay sau đó hàng trăm request đồng thời cùng "trượt cache" và cùng mở `$transaction([findMany, count])` (*cache stampede*), trong khi pool chỉ có 10 kết nối → các request chờ quá hạn 2 giây mặc định của Prisma bị huỷ.
 
-Mức lỗi vẫn dưới mục tiêu 1% và chỉ xảy ra ở mức tải ~11 lần mục tiêu, nhưng đây là điểm yếu thật. Hướng xử lý có thể làm (chưa làm, cần người dùng quyết định):
+**Cách sửa** (`backend/src/devices/devices-cache.service.ts`, `devices.service.ts`, `prisma/prisma.service.ts`):
 
-1. Gộp các request trượt cache cùng key thành 1 truy vấn (single-flight/khoá ngắn trên Redis) — giải quyết tận gốc stampede.
-2. Tăng kích thước pool kết nối (`max` của `PrismaPg`, VD 20–30) và/hoặc nới `maxWait` của transaction.
-3. Bỏ `$transaction` cho cặp `findMany` + `count` (chỉ đọc, không cần tính nguyên tử chặt chẽ) để không giữ kết nối lâu.
-4. Thêm độ lệch ngẫu nhiên vào TTL (VD 40–50 s) để các key không hết hạn cùng lúc.
+1. **Single-flight**: `DevicesCacheService.getOrLoad(key, loader)` giữ 1 map "truy vấn đang chạy" theo cache key — các request trượt cache cùng key trong cùng tiến trình **dùng chung 1 lần truy vấn DB**. Lỗi truy vấn trả về cho mọi request đang chờ và không lưu vào cache. `invalidateAll()` bỏ các truy vấn đang chạy và tăng "thế hệ" cache: request đến sau khi xoá cache không nhập vào truy vấn cũ, kết quả truy vấn cũ (có thể đọc dữ liệu trước thay đổi) không được ghi vào cache → giữ nguyên hành vi xoá cache khi thiết bị thay đổi.
+2. **TTL lệch ngẫu nhiên** 45 ± 10 giây (35–55 s) cho mỗi key, để các tổ hợp lọc không hết hạn cùng lúc.
+3. **Bỏ `$transaction`** cho cặp `findMany` + `count` (chạy song song bằng `Promise.all`): đây là truy vấn chỉ đọc, lệch 1 bản ghi giữa danh sách và tổng số khi có thiết bị vừa thêm/xoá là chấp nhận được, còn transaction giữ 1 kết nối suốt 2 truy vấn và có hạn chờ 2 s (chính là nguồn lỗi).
+4. **Pool Postgres 10 → 20** (env `DATABASE_POOL_MAX`, mặc định 20): 10 kết nối là nút thắt khi không có cache và khi nhiều người cùng đặt thuê; 20 vẫn chừa nhiều chỗ trong giới hạn mặc định 100 kết nối của PostgreSQL cho dev server, e2e test và công cụ quản trị chạy cùng lúc. Không tăng cao hơn vì backend chỉ có 1 tiến trình Node — nhiều kết nối hơn chỉ dời hàng đợi sang Postgres.
+
+**So sánh trước / sau** (cùng kịch bản `devices-ramp.js`, `SLEEP=0`, 10 → 50 → 100 → 200 VU mỗi mức 1 phút, cùng máy):
+
+| Bài | | Request/giây | TB (ms) | p95 (ms) | p99 (ms) | Max (ms) | Lỗi 500 |
+|---|---|---:|---:|---:|---:|---:|---:|
+| Có cache (a3) | Trước | 1.205,4 | 72,9 | 167,3 | 285,6 | 2.439,1 | **113** (0,04%) |
+| | **Sau** | **1.282,7** | **68,5** | **159,4** | **173,8** | **589,8** | **0** |
+| Có cache — riêng 200 VU | Trước | 1.150,0 | 170,4 | 267,6 | 974,9 | 2.439,1 | 113 (0,16%) |
+| | **Sau** | **1.280,8** | **153,0** | **171,5** | **187,0** | **589,8** | **0** |
+| Tắt cache (b2) | Trước | 449,1 | 195,6 | 554,0 | 649,9 | 818,5 | 0 |
+| | **Sau** | **528,8** | **166,2** | **395,0** | **410,9** | **523,7** | **0** |
+
+![p99 trước/sau](load-test/chart-stress-before-after-p99.png)
+
+![Thông lượng trước/sau](load-test/chart-stress-before-after-throughput.png)
+
+**Nhận xét:**
+
+- Có cache: **hết hoàn toàn lỗi 500** (113 → 0), p99 toàn bài giảm ~39% (285,6 → 173,8 ms), riêng mức 200 VU p99 giảm ~81% (974,9 → 187,0 ms) và thời gian tối đa giảm từ 2,4 s xuống 0,59 s — các "gai" lúc cache hết hạn đồng loạt đã biến mất. Thông lượng tăng ~6% (1.205 → 1.283 req/s).
+- Tắt cache: không có stampede nên thay đổi đến từ bỏ transaction + pool 20: thông lượng tăng ~18% (449 → 529 req/s), p95 giảm ~29% (554 → 395 ms).
+- Hai lần đo không cùng thời điểm và tải nền (laptop, k6 chạy chung máy) nên chênh lệch vài phần trăm về thông lượng nằm trong sai số; kết luận chắc chắn là lỗi 500 và phần đuôi p99/max.
+- Single-flight chỉ gộp request **trong 1 tiến trình Node**. Nếu sau này chạy nhiều tiến trình (cluster/PM2), mỗi tiến trình vẫn có thể gửi 1 truy vấn khi trượt cache — số truy vấn đồng thời tối đa bằng số tiến trình, vẫn nhỏ; muốn gộp hẳn cần khoá ngắn trên Redis.
 
 ### 5.2. Hạn chế của phép đo
 
 - k6, backend, Postgres và Redis chạy **trên cùng 1 laptop**: k6 tiêu tốn CPU đáng kể ở bài stress nên con số thông lượng tối đa là **giới hạn dưới** của năng lực thật; ngược lại không có độ trễ mạng giữa client–server và server–database như khi triển khai thật.
-- Backend chạy **1 tiến trình Node** (chưa dùng cluster/PM2 nhiều tiến trình), pool database mặc định 10 kết nối — chưa tinh chỉnh cho hiệu năng.
+- Backend chạy **1 tiến trình Node** (chưa dùng cluster/PM2 nhiều tiến trình). Pool database 10 kết nối ở lần đo đầu, 20 ở lần chạy lại a3/b2.
 - Dữ liệu ở quy mô demo (50 thiết bị, 169 đơn); quy mô lớn hơn sẽ làm truy vấn không cache chậm hơn và lợi ích của cache càng rõ.
 - Không đo kịch bản ghi nặng khác (thanh toán VNPay, upload ảnh) — các luồng này phụ thuộc dịch vụ bên ngoài (VNPay Sandbox, Cloudinary) nên không phù hợp đo tải trên máy local.
 - Mục "thời gian tải trang lần đầu < 3 s trên 4G" (frontend) không thuộc phạm vi k6, chưa đo trong lần này.
@@ -193,4 +217,6 @@ node cleanup.js
 python report.py
 ```
 
-Dữ liệu test đã được dọn sau lần chạy này: 100 tài khoản `loadtest.*@techrent.test`, 5 đơn, 10 thông báo gửi nhân viên về các đơn đó, 5 job TTL BullMQ và cache danh sách. Số bản ghi trở về đúng như trước khi chạy (23 tài khoản, 169 đơn, 89 thông báo).
+So sánh trước/sau: trước khi chạy lại a3/b2, sao chép summary cũ thành `*-before-summary.json` (trong `docs/load-test/`); `report.py` tự vẽ thêm 2 biểu đồ `chart-stress-before-after-*.png`.
+
+Dữ liệu test đã được dọn sau lần chạy này: 100 tài khoản `loadtest.*@techrent.test`, 5 đơn, 10 thông báo gửi nhân viên về các đơn đó, 5 job TTL BullMQ và cache danh sách. Số bản ghi trở về đúng như trước khi chạy (23 tài khoản, 169 đơn, 89 thông báo). Lần chạy lại a3/b2 (sau khi sửa) chỉ gửi `GET`; sau đó đã xoá cache danh sách, database giữ nguyên 23 tài khoản / 169 đơn / 89 thông báo / 50 thiết bị.

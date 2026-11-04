@@ -53,15 +53,15 @@ export class DevicesService {
   async findAll(
     filter: ListDevicesFilter,
   ): Promise<PaginatedResult<DeviceWithCategory>> {
-    const cacheKey = this.devicesCacheService.buildKey(filter);
-    const cached =
-      await this.devicesCacheService.get<PaginatedResult<DeviceWithCategory>>(
-        cacheKey,
-      );
-    if (cached) {
-      return cached;
-    }
+    return this.devicesCacheService.getOrLoad(
+      this.devicesCacheService.buildKey(filter),
+      () => this.queryList(filter),
+    );
+  }
 
+  private async queryList(
+    filter: ListDevicesFilter,
+  ): Promise<PaginatedResult<DeviceWithCategory>> {
     const {
       page,
       limit,
@@ -84,7 +84,10 @@ export class DevicesService {
           ? { pricePerDay: 'desc' }
           : { createdAt: 'desc' };
 
-    const [devices, total] = await this.prisma.$transaction([
+    // Không bọc `$transaction`: chỉ đọc, lệch 1 bản ghi giữa `data` và `total`
+    // khi có thiết bị vừa được thêm/xoá là chấp nhận được, trong khi transaction
+    // giữ 1 kết nối suốt 2 truy vấn và có hạn chờ 2 s (nguồn lỗi 500 khi tải cao).
+    const [devices, total] = await Promise.all([
       this.prisma.device.findMany({
         where,
         skip: (page - 1) * limit,
@@ -95,7 +98,7 @@ export class DevicesService {
       this.prisma.device.count({ where }),
     ]);
 
-    const result: PaginatedResult<DeviceWithCategory> = {
+    return {
       data: devices,
       meta: {
         page,
@@ -104,10 +107,6 @@ export class DevicesService {
         totalPages: Math.max(1, Math.ceil(total / limit)),
       },
     };
-
-    await this.devicesCacheService.set(cacheKey, result);
-
-    return result;
   }
 
   async findByIdOrThrow(id: string): Promise<DeviceWithCategory> {
