@@ -2,6 +2,8 @@ import { api } from "./api-client";
 
 export const REVIEW_COMMENT_MIN = 10;
 export const REVIEW_COMMENT_MAX = 1000;
+/** Khớp REVIEW_EDITS_PER_DAY ở backend/src/common/business-policy.ts. */
+export const REVIEW_EDITS_PER_DAY = 5;
 
 export interface OwnReview {
   id: string;
@@ -11,22 +13,27 @@ export interface OwnReview {
   editedAt: string | null;
   isHidden: boolean;
   hiddenReason: string | null;
+  /** Có giá trị = đã bị nhân viên/quản trị xoá. */
+  deletedAt: string | null;
+  deleteReason: string | null;
+  verifiedRental: boolean;
+  editsLeftToday: number;
 }
 
-export interface ReviewEligibility {
-  canReview: boolean;
-  reason: "not_rented" | "blacklisted" | null;
+export type IneligibleReason = "staff" | "blacklisted" | "removed_by_moderator";
+
+export interface MyReviewState {
+  /** Chưa có đánh giá → được viết mới. */
+  canCreate: boolean;
+  /** Đã có đánh giá → được sửa/xoá. */
+  canEdit: boolean;
+  reason: IneligibleReason | null;
   review: OwnReview | null;
 }
 
-export const INELIGIBLE_MESSAGE: Record<NonNullable<ReviewEligibility["reason"]>, string> = {
-  not_rented: "Bạn cần thuê và trả thiết bị này để đánh giá",
-  blacklisted: "Tài khoản của bạn đang bị hạn chế nên không thể đánh giá",
-};
-
-/** Quyền đánh giá của người đang đăng nhập + đánh giá cũ của họ cho thiết bị. */
-export async function fetchMyReview(deviceId: string): Promise<ReviewEligibility> {
-  const { data } = await api.get<ReviewEligibility>("/reviews/me", { params: { deviceId } });
+/** Đánh giá của người đang đăng nhập cho thiết bị + quyền viết/sửa. */
+export async function fetchMyReview(deviceId: string): Promise<MyReviewState> {
+  const { data } = await api.get<MyReviewState>(`/devices/${deviceId}/reviews/me`);
   return data;
 }
 
@@ -36,7 +43,7 @@ export interface ReviewPayload {
 }
 
 export async function createReview(deviceId: string, payload: ReviewPayload) {
-  const { data } = await api.post("/reviews", { deviceId, ...payload });
+  const { data } = await api.post(`/devices/${deviceId}/reviews`, payload);
   return data;
 }
 
@@ -45,11 +52,22 @@ export async function updateReview(reviewId: string, payload: ReviewPayload) {
   return data;
 }
 
+/** Khách tự xoá đánh giá của mình (xoá hẳn, viết lại được). */
 export async function deleteReview(reviewId: string): Promise<void> {
   await api.delete(`/reviews/${reviewId}`);
 }
 
 // ---- Quản trị ----
+
+/** Lý do gợi ý khi nhân viên/quản trị xoá đánh giá. */
+export const MODERATION_REASONS = [
+  "Spam",
+  "Ngôn từ không phù hợp",
+  "Quảng cáo",
+  "Sai sự thật",
+] as const;
+
+export type AdminReviewStatus = "visible" | "hidden" | "deleted";
 
 export interface AdminReview {
   id: string;
@@ -60,16 +78,19 @@ export interface AdminReview {
   isHidden: boolean;
   hiddenReason: string | null;
   hiddenAt: string | null;
+  deletedAt: string | null;
+  deleteReason: string | null;
+  deletedBy: { id: string; name: string | null } | null;
+  verifiedRental: boolean;
   user: { id: string; name: string; email: string };
   device: { id: string; name: string; images: string[] };
-  booking: { id: string; endTime: string };
 }
 
 export interface AdminReviewsParams {
   page?: number;
   limit?: number;
   rating?: number;
-  hidden?: boolean;
+  status?: AdminReviewStatus;
   search?: string;
 }
 
@@ -86,5 +107,17 @@ export async function setReviewVisibility(
   payload: { hidden: boolean; reason?: string },
 ): Promise<AdminReview> {
   const { data } = await api.patch<AdminReview>(`/reviews/${reviewId}/visibility`, payload);
+  return data;
+}
+
+/** Nhân viên/quản trị xoá đánh giá vi phạm (xoá mềm, bắt buộc lý do). */
+export async function moderatorDeleteReview(reviewId: string, reason: string): Promise<AdminReview> {
+  const { data } = await api.post<AdminReview>(`/reviews/${reviewId}/moderator-delete`, { reason });
+  return data;
+}
+
+/** Chỉ quản trị viên: khôi phục đánh giá bị xoá nhầm. */
+export async function restoreReview(reviewId: string): Promise<AdminReview> {
+  const { data } = await api.post<AdminReview>(`/reviews/${reviewId}/restore`);
   return data;
 }

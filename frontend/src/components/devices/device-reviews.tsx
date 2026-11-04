@@ -3,7 +3,7 @@
 import { UserAvatar } from "@/components/account/user-avatar";
 import { cn } from "cn";
 import { useState } from "react";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { BadgeCheck, ChevronLeft, ChevronRight, MessageSquare, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/select";
 import { StarRating } from "@/components/devices/star-rating";
 import { MyReviewPanel } from "@/components/reviews/my-review-panel";
+import { ModeratorDeleteReviewDialog } from "@/components/reviews/moderator-delete-review-dialog";
+import { useAuthStore } from "@/stores/auth-store";
 import {
   fetchReviews,
   fetchReviewSummary,
@@ -29,6 +31,7 @@ import {
 const PAGE_SIZE = 5;
 
 const SORT_LABEL: Record<ReviewSort, string> = {
+  relevant: "Ưu tiên người đã thuê",
   newest: "Mới nhất",
   highest: "Điểm cao nhất",
   lowest: "Điểm thấp nhất",
@@ -42,7 +45,14 @@ function formatReviewDate(value: string): string {
   });
 }
 
-function ReviewItem({ review }: { review: Review }) {
+function ReviewItem({
+  review,
+  onModerated,
+}: {
+  review: Review;
+  /** Có → người xem là nhân viên/quản trị, hiện nút "Xoá". */
+  onModerated?: () => void;
+}) {
   return (
     <div className="-mx-3 flex items-start gap-3 rounded-xl px-3 py-5 transition-colors first:pt-3 hover:bg-muted/30">
       <UserAvatar name={review.reviewerName} src={review.reviewerAvatarUrl} size="lg" className="size-10 text-sm ring-0" />
@@ -50,15 +60,27 @@ function ReviewItem({ review }: { review: Review }) {
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <p className="font-medium">{review.reviewerName}</p>
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-500">
-              <BadgeCheck className="size-3" />
-              Đã thuê thiết bị này
-            </span>
+            {review.verifiedRental && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-500">
+                <BadgeCheck className="size-3" />
+                Đã thuê thiết bị này
+              </span>
+            )}
           </div>
-          <span className="text-xs text-muted-foreground">
-            {formatReviewDate(review.createdAt)}
-            {review.editedAt ? " · đã chỉnh sửa" : ""}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">
+              {formatReviewDate(review.createdAt)}
+              {review.editedAt ? " · đã chỉnh sửa" : ""}
+            </span>
+            {onModerated && (
+              <ModeratorDeleteReviewDialog
+                review={review}
+                authorName={review.reviewerName}
+                onDeleted={onModerated}
+                trigger="text"
+              />
+            )}
+          </div>
         </div>
         <div className="mt-1">
           <StarRating rating={review.rating} size={14} />
@@ -121,9 +143,13 @@ export function DeviceReviews({
   initialReviews: PaginatedReviews | null;
 }) {
   const [page, setPage] = useState(1);
-  const [sort, setSort] = useState<ReviewSort>("newest");
+  const [sort, setSort] = useState<ReviewSort>("relevant");
   const [rating, setRating] = useState<number | null>(null);
-  const isDefaultView = page === 1 && sort === "newest" && rating === null;
+  const [rentedOnly, setRentedOnly] = useState(false);
+  const isDefaultView = page === 1 && sort === "relevant" && rating === null && !rentedOnly;
+  const queryClient = useQueryClient();
+  const role = useAuthStore((state) => state.user?.role);
+  const canModerate = role === "staff" || role === "admin";
 
   const summaryQuery = useQuery({
     queryKey: ["review-summary", deviceId],
@@ -131,9 +157,15 @@ export function DeviceReviews({
     initialData: initialSummary ?? undefined,
   });
   const listQuery = useQuery({
-    queryKey: ["reviews", deviceId, { page, sort, rating }],
+    queryKey: ["reviews", deviceId, { page, sort, rating, rentedOnly }],
     queryFn: () =>
-      fetchReviews(deviceId, { page, limit: PAGE_SIZE, sort, rating: rating ?? undefined }),
+      fetchReviews(deviceId, {
+        page,
+        limit: PAGE_SIZE,
+        sort,
+        rating: rating ?? undefined,
+        rentedOnly,
+      }),
     initialData: isDefaultView ? (initialReviews ?? undefined) : undefined,
     placeholderData: keepPreviousData,
   });
@@ -147,6 +179,11 @@ export function DeviceReviews({
     setPage(1);
   }
 
+  function refreshAfterModeration() {
+    queryClient.invalidateQueries({ queryKey: ["reviews", deviceId] });
+    queryClient.invalidateQueries({ queryKey: ["review-summary", deviceId] });
+  }
+
   return (
     <motion.section
       id="reviews"
@@ -158,7 +195,8 @@ export function DeviceReviews({
     >
       <h2 className="font-heading text-2xl font-semibold tracking-tight">Đánh giá từ khách hàng</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Chỉ khách đã thuê và trả thiết bị mới có thể đánh giá.
+        Khách hàng đã đăng nhập đều có thể đánh giá (1 lần/thiết bị). Nhãn &ldquo;Đã thuê thiết
+        bị này&rdquo; dành cho người đã thuê và trả máy.
       </p>
 
       <div className="mt-6">
@@ -210,15 +248,32 @@ export function DeviceReviews({
                   </button>
                 );
               })}
+              <button
+                type="button"
+                aria-pressed={rentedOnly}
+                onClick={() => {
+                  setRentedOnly((current) => !current);
+                  setPage(1);
+                }}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full border px-3 py-1 text-sm transition-colors",
+                  rentedOnly
+                    ? "border-emerald-500 bg-emerald-500/15 text-emerald-500"
+                    : "border-border/60 text-muted-foreground hover:border-emerald-500/50 hover:text-foreground",
+                )}
+              >
+                <BadgeCheck className="size-3.5" />
+                Chỉ người đã thuê ({summary!.rentedCount ?? 0})
+              </button>
             </div>
             <Select
               value={sort}
               onValueChange={(value) => {
-                setSort((value as ReviewSort) ?? "newest");
+                setSort((value as ReviewSort) ?? "relevant");
                 setPage(1);
               }}
             >
-              <SelectTrigger className="w-[170px]" aria-label="Sắp xếp đánh giá">
+              <SelectTrigger className="w-[210px]" aria-label="Sắp xếp đánh giá">
                 <SelectValue>{(value: ReviewSort) => SORT_LABEL[value]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -247,12 +302,16 @@ export function DeviceReviews({
               </div>
             ) : list.data.length === 0 ? (
               <p className="py-10 text-center text-muted-foreground">
-                Chưa có đánh giá {rating} sao nào.
+                Không có đánh giá nào khớp bộ lọc.
               </p>
             ) : (
               <div className="divide-y divide-border/60">
                 {list.data.map((review) => (
-                  <ReviewItem key={review.id} review={review} />
+                  <ReviewItem
+                    key={review.id}
+                    review={review}
+                    onModerated={canModerate ? refreshAfterModeration : undefined}
+                  />
                 ))}
               </div>
             )}

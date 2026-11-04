@@ -19,7 +19,12 @@ import {
   HOURLY_PRICING_MAX_HOURS,
   LATE_FEE_DAILY_RATIO,
   REFUND_TIERS,
+  REVIEW_EDITS_PER_DAY,
 } from '../common/business-policy';
+import {
+  REVIEW_COMMENT_MAX,
+  REVIEW_COMMENT_MIN,
+} from '../reviews/review-content.util';
 
 const EXAMPLE_ORIGINAL_PRICE = 30_000_000;
 const EXAMPLE_PRICE_PER_DAY = 400_000;
@@ -51,6 +56,11 @@ export class PoliciesService {
       lostSuspectOverdueDays: LOST_SUSPECT_OVERDUE_DAYS,
       lostDeviceMaxClaimRatio: LOST_DEVICE_MAX_CLAIM_RATIO,
       replacementValueTolerance: REPLACEMENT_VALUE_TOLERANCE,
+      reviews: {
+        editsPerDay: REVIEW_EDITS_PER_DAY,
+        commentMin: REVIEW_COMMENT_MIN,
+        commentMax: REVIEW_COMMENT_MAX,
+      },
       examples: {
         deposit: {
           originalPrice: EXAMPLE_ORIGINAL_PRICE,

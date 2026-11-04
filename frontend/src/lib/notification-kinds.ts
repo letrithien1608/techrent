@@ -3,6 +3,7 @@ import {
   Banknote,
   Bell,
   HandCoins,
+  MessageSquareX,
   SearchX,
   TriangleAlert,
   CalendarClock,
@@ -50,6 +51,7 @@ export const NOTIFICATION_KINDS: Record<string, NotificationKind> = {
   booking_due_soon: { label: "Sắp đến hạn trả", icon: CalendarClock, tone: "bg-amber-500/15 text-amber-300", category: "reminder" },
   booking_overdue: { label: "Trễ hạn", icon: AlarmClock, tone: "bg-red-500/15 text-red-300", category: "reminder" },
   kyc_verified: { label: "Xác thực", icon: ShieldCheck, tone: "bg-violet-500/15 text-violet-300", category: "identity" },
+  review_deleted: { label: "Đánh giá bị xoá", icon: MessageSquareX, tone: "bg-red-500/15 text-red-300", category: "system" },
   maintenance_reported: { label: "Báo hỏng", icon: Wrench, tone: "bg-orange-500/15 text-orange-300", category: "maintenance" },
 };
 

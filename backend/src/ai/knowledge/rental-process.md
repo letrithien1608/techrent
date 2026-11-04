@@ -8,7 +8,7 @@
 5. Thanh toán tiền cọc ({{DEPOSIT_RATE}} giá trị thiết bị) qua VNPay.
 6. Đến cửa hàng nhận máy (không giao tận nơi): nhân viên đối chiếu CCCD gốc, bạn thanh toán tiền thuê tại quầy, ký hợp đồng, hai bên lập biên bản giao máy có ảnh.
 7. Trả máy tại cửa hàng đúng hạn kèm đủ phụ kiện; nhân viên đối chiếu ảnh lúc giao và quyết toán cọc.
-8. Nhận hoàn cọc bằng chuyển khoản trong tối đa {{DEPOSIT_REFUND_BUSINESS_DAYS}} ngày làm việc và đánh giá thiết bị.
+8. Nhận hoàn cọc bằng chuyển khoản trong tối đa {{DEPOSIT_REFUND_BUSINESS_DAYS}} ngày làm việc; có thể đánh giá thiết bị ở trang chi tiết thiết bị.
 
 ## Bước 1: Đăng ký tài khoản
 - Đăng ký ở trang "Đăng ký" với họ tên, email, mật khẩu (tối thiểu 8 ký tự), số điện thoại (10 số, bắt đầu bằng 0) và số CCCD (12 số).
@@ -55,7 +55,7 @@
 
 ## Bước 8: Hoàn cọc và đánh giá
 - Tiền cọc hoàn lại = tiền cọc − phí trễ hạn − phí hư hỏng; chuyển khoản trong tối đa {{DEPOSIT_REFUND_BUSINESS_DAYS}} ngày làm việc, bạn nhận thông báo kèm mã giao dịch.
-- Đơn "Đã trả máy" có nút đánh giá: chấm 1-5 sao và viết nhận xét (mỗi đơn đánh giá 1 lần).
+- Đánh giá thiết bị ở trang chi tiết thiết bị (đơn "Đã trả máy" có đường dẫn tới đó): chấm 1-5 sao và viết nhận xét, mỗi tài khoản 1 đánh giá cho mỗi thiết bị, sửa được sau. Đánh giá của người đã thuê có nhãn "Đã thuê thiết bị này".
 
 ## Theo dõi đơn của tôi
 - Trang "Đơn của tôi" liệt kê mọi đơn, lọc theo trạng thái: Chờ thanh toán, Đã xác nhận, Đang thuê, Đã trả máy, Đã huỷ.

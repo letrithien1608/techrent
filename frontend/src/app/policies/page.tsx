@@ -6,6 +6,7 @@ import {
   CircleDollarSign,
   Clock4,
   FileSignature,
+  MessageSquareText,
   RotateCcw,
   ShieldCheck,
   Store,
@@ -284,6 +285,36 @@ function PolicyContent({ policy }: { policy: RentalPolicy }) {
           đưa vào danh sách đen và có thể bị trình báo cơ quan chức năng.
         </p>
       </PolicyCard>
+
+      {policy.reviews && (
+        <PolicyCard icon={MessageSquareText} title="Đánh giá thiết bị">
+          <ul className="list-disc space-y-1.5 pl-5">
+            <li>
+              Mọi khách hàng đã đăng nhập đều đánh giá được, không cần đã thuê.
+              Mỗi tài khoản có đúng 1 đánh giá cho mỗi thiết bị; muốn đổi ý thì
+              sửa đánh giá cũ (tối đa {policy.reviews.editsPerDay} lần/ngày).
+            </li>
+            <li>
+              Nhận xét dài {policy.reviews.commentMin}–{policy.reviews.commentMax}{" "}
+              ký tự, không chứa đường link hay ký tự lặp liên tục.
+            </li>
+            <li>
+              Đánh giá của người đã thuê và trả máy có nhãn &ldquo;Đã thuê thiết
+              bị này&rdquo; (tự tính từ đơn thuê) và được ưu tiên hiển thị trước.
+            </li>
+            <li>
+              Bạn tự xoá đánh giá của mình thì có thể viết lại. Đánh giá vi phạm
+              (spam, quảng cáo, ngôn từ không phù hợp, sai sự thật) có thể bị
+              cửa hàng ẩn hoặc xoá kèm lý do — đánh giá đã bị xoá thì không viết
+              lại được cho thiết bị đó.
+            </li>
+            <li>
+              Nhân viên và quản trị viên không đánh giá thiết bị. Điểm trung
+              bình chỉ tính các đánh giá đang hiển thị.
+            </li>
+          </ul>
+        </PolicyCard>
+      )}
     </div>
   );
 }

@@ -58,7 +58,10 @@ Bấm "Quên mật khẩu?" ở trang đăng nhập, nhập email; link đặt l
 Không tự đổi được vì đây là dữ liệu định danh. Nếu nhập nhầm, vui lòng liên hệ nhân viên TechRent.
 
 ## Đánh giá thiết bị thế nào?
-Sau khi đơn "Đã trả máy", vào "Đơn của tôi" bấm đánh giá, chấm 1-5 sao và viết nhận xét. Mỗi đơn đánh giá 1 lần.
+Mọi khách hàng đã đăng nhập đều đánh giá được, không cần đã thuê: vào trang chi tiết thiết bị, mục "Đánh giá từ khách hàng", chấm 1-5 sao và viết nhận xét {{REVIEW_COMMENT_MIN}}-{{REVIEW_COMMENT_MAX}} ký tự (không chèn link). Mỗi tài khoản chỉ có 1 đánh giá cho mỗi thiết bị; muốn đổi thì bấm "Sửa" (tối đa {{REVIEW_EDITS_PER_DAY}} lần sửa mỗi ngày) hoặc "Xoá" rồi viết lại. Người đã thuê và trả máy có nhãn "Đã thuê thiết bị này" và được hiển thị trước. Nhân viên và quản trị viên không đánh giá thiết bị.
+
+## Đánh giá của tôi bị xoá thì sao?
+Cửa hàng có thể ẩn hoặc xoá đánh giá vi phạm (spam, quảng cáo, ngôn từ không phù hợp, sai sự thật); khi bị xoá bạn nhận thông báo kèm lý do. Đánh giá đã bị cửa hàng xoá thì bạn không viết lại được cho thiết bị đó. Nếu cho rằng bị xoá nhầm, vui lòng liên hệ nhân viên TechRent để được xem xét khôi phục.
 
 ## TechRent có cho thuê PC, máy tính để bàn hay mini PC không?
 TechRent hiện KHÔNG cho thuê PC, máy tính để bàn và mini PC (thiết bị cồng kềnh, phải lắp đặt cố định, khó kiểm tra khi giao nhận). Nếu cần máy tính mạnh, bạn có thể thuê laptop cấu hình cao (danh mục Laptop) hoặc máy chơi game cầm tay.

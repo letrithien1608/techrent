@@ -78,9 +78,9 @@ export interface Review {
   reviewerName: string;
   /** Ảnh đại diện công khai của người đánh giá, `null` = hiện chữ cái đầu. */
   reviewerAvatarUrl?: string | null;
-  /** Luôn true: chỉ người đã thuê và trả thiết bị mới đánh giá được. */
-  verifiedRental: true;
-  rentedAt: string;
+  /** Người viết có đơn đã trả máy với thiết bị — backend tự tính từ dữ liệu đơn. */
+  verifiedRental: boolean;
+  rentedAt: string | null;
 }
 
 export interface FeaturedReview extends Review {
@@ -91,10 +91,13 @@ export interface ReviewSummary {
   deviceId: string;
   avgRating: number | null;
   reviewCount: number;
+  /** Số đánh giá đang hiển thị của người đã thuê thiết bị. */
+  rentedCount: number;
   distribution: Record<1 | 2 | 3 | 4 | 5, number>;
 }
 
-export type ReviewSort = "newest" | "highest" | "lowest";
+/** relevant = người đã thuê trước, rồi mới nhất (mặc định). */
+export type ReviewSort = "relevant" | "newest" | "highest" | "lowest";
 
 export interface PaginatedReviews {
   data: Review[];
@@ -175,6 +178,7 @@ export interface FetchReviewsParams {
   limit?: number;
   sort?: ReviewSort;
   rating?: number;
+  rentedOnly?: boolean;
 }
 
 /** Danh sách đánh giá công khai của 1 thiết bị (dùng ở client, có lọc/sắp xếp/phân trang). */
@@ -187,6 +191,7 @@ export async function fetchReviews(
   if (params.limit) search.set("limit", String(params.limit));
   if (params.sort) search.set("sort", params.sort);
   if (params.rating) search.set("rating", String(params.rating));
+  if (params.rentedOnly) search.set("rentedOnly", "true");
   const res = await fetch(`${API_URL}/reviews?${search.toString()}`, { cache: "no-store" });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return (await res.json()) as PaginatedReviews;

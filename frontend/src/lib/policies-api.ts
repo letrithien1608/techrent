@@ -13,6 +13,8 @@ export interface RentalPolicy {
   lostSuspectOverdueDays: number;
   lostDeviceMaxClaimRatio: number;
   replacementValueTolerance: number;
+  /** Có thể thiếu nếu Next.js còn giữ bản cache cũ của API (trước 04/11). */
+  reviews?: { editsPerDay: number; commentMin: number; commentMax: number };
   examples: {
     deposit: { originalPrice: number; deposit: number };
     lateFee: { pricePerDay: number; byDays: { days: number; total: number }[] };

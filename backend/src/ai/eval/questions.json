@@ -405,6 +405,31 @@
         "Đặt mật khẩu"
       ],
       "mustNotInclude": []
+    },
+    {
+      "id": "R1",
+      "group": "đánh giá",
+      "question": "Mình chưa thuê thiết bị nào thì có viết đánh giá được không?",
+      "mustInclude": [
+        "không cần|được",
+        "đăng nhập"
+      ],
+      "mustNotInclude": [
+        "phải thuê",
+        "cần thuê và trả"
+      ]
+    },
+    {
+      "id": "R2",
+      "group": "đánh giá",
+      "question": "Mỗi thiết bị mình được đánh giá mấy lần, muốn đổi số sao thì làm sao?",
+      "mustInclude": [
+        "1 đánh giá|một đánh giá|1 lần|một lần",
+        "sửa"
+      ],
+      "mustNotInclude": [
+        "mỗi đơn"
+      ]
     }
   ]
 }

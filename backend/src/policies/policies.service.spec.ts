@@ -27,4 +27,12 @@ describe('PoliciesService', () => {
     ]);
     expect(examples.refund.map((r) => r.percentage)).toEqual([100, 50, 0]);
   });
+
+  it('quy tắc đánh giá lấy từ hằng số nghiệp vụ', () => {
+    expect(service.getRentalPolicy().reviews).toEqual({
+      editsPerDay: 5,
+      commentMin: 10,
+      commentMax: 1000,
+    });
+  });
 });

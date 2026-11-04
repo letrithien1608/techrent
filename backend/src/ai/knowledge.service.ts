@@ -21,7 +21,12 @@ import {
   LOST_SUSPECT_OVERDUE_DAYS,
   REFUND_TIERS,
   REPLACEMENT_VALUE_TOLERANCE,
+  REVIEW_EDITS_PER_DAY,
 } from '../common/business-policy';
+import {
+  REVIEW_COMMENT_MAX,
+  REVIEW_COMMENT_MIN,
+} from '../reviews/review-content.util';
 import { DeviceStatus } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { parseSpecSheet } from '../devices/spec-sheet.util';
@@ -160,6 +165,9 @@ export function buildPolicyValues(ttlMinutes: number): Record<string, string> {
     LATE_FEE_EXAMPLE_2DAYS: lateFee(2),
     LATE_FEE_EXAMPLE_3DAYS: lateFee(3),
     DEPOSIT_REFUND_BUSINESS_DAYS: String(DEPOSIT_REFUND_BUSINESS_DAYS),
+    REVIEW_EDITS_PER_DAY: String(REVIEW_EDITS_PER_DAY),
+    REVIEW_COMMENT_MIN: String(REVIEW_COMMENT_MIN),
+    REVIEW_COMMENT_MAX: String(REVIEW_COMMENT_MAX),
     HANDOVER_MIN_PHOTOS: String(HANDOVER_MIN_PHOTOS),
     SETTLEMENT_EXAMPLE: settlementExample(examplePrice),
     LOST_SUSPECT_OVERDUE_DAYS: String(LOST_SUSPECT_OVERDUE_DAYS),
@@ -510,7 +518,7 @@ export function formatDevice(device: DeviceSuggestion): string {
   if (device.specs) lines.splice(1, 0, `  + Thông số: ${device.specs}`);
   if (device.reviewCount > 0 && device.avgRating !== null) {
     lines.push(
-      `  + Đánh giá của khách đã thuê: ${device.avgRating.toFixed(1).replace('.', ',')}/5 (${device.reviewCount} lượt)`,
+      `  + Đánh giá của khách hàng: ${device.avgRating.toFixed(1).replace('.', ',')}/5 (${device.reviewCount} lượt)`,
     );
   }
   return lines.join('\n');

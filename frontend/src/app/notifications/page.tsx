@@ -40,7 +40,7 @@ const READ_FILTERS: { value: ReadFilter; label: string }[] = [
 // Chỉ hiện nhóm mà backend hiện thật sự sinh thông báo (nhắc hạn/xác thực đã có
 // sẵn icon trong NOTIFICATION_KINDS nhưng chưa có sự kiện tạo) — thêm vào đây
 // khi backend bắt đầu gửi loại đó. Bảo trì chỉ gửi cho staff/admin.
-const CUSTOMER_CATEGORIES: NotificationCategory[] = ["booking", "payment"];
+const CUSTOMER_CATEGORIES: NotificationCategory[] = ["booking", "payment", "system"];
 const STAFF_CATEGORIES: NotificationCategory[] = ["booking", "payment", "maintenance"];
 
 function Chip({

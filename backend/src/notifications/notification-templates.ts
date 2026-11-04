@@ -354,3 +354,24 @@ export function buildMaintenanceNotification(input: {
     },
   };
 }
+
+/** Gửi người viết khi staff/admin xoá đánh giá của họ (kèm lý do). */
+export function buildReviewDeletedNotification(input: {
+  reviewId: string;
+  device: { id: string; name: string; images: string[] };
+  reason: string;
+}): NotificationContent {
+  return {
+    type: 'review_deleted',
+    title: 'Đánh giá đã bị xoá',
+    message: `Đánh giá của bạn về ${input.device.name} đã bị xoá. Lý do: ${input.reason}`,
+    link: `/devices/${input.device.id}#reviews`,
+    metadata: {
+      reviewId: input.reviewId,
+      deviceId: input.device.id,
+      deviceName: input.device.name,
+      deviceImage: input.device.images?.[0] ?? null,
+      reason: input.reason,
+    },
+  };
+}

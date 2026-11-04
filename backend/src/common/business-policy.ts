@@ -66,6 +66,9 @@ export const REPLACEMENT_VALUE_TOLERANCE = 0.2;
 /** Tiền hoàn (thuê phần chưa dùng) làm tròn XUỐNG tới bội số này (VND). */
 export const REFUND_ROUNDING_VND = 1000;
 
+/** Mỗi đánh giá chỉ được sửa tối đa N lần trong 1 ngày (giờ Việt Nam). */
+export const REVIEW_EDITS_PER_DAY = 5;
+
 /** Múi giờ cửa hàng — dùng để xác định ngày làm việc (VN không có giờ mùa hè). */
 const STORE_UTC_OFFSET_MS = 7 * HOUR_MS;
 
@@ -267,4 +270,11 @@ export function isEquivalentValue(
     Math.abs(candidatePrice - originalPrice) <=
     originalPrice * REPLACEMENT_VALUE_TOLERANCE
   );
+}
+
+/** Ngày theo giờ cửa hàng (VN), dạng "YYYY-MM-DD" — dùng cho giới hạn theo ngày. */
+export function storeDayKey(date: Date): string {
+  return new Date(date.getTime() + STORE_UTC_OFFSET_MS)
+    .toISOString()
+    .slice(0, 10);
 }

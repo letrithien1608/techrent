@@ -11,7 +11,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle, hours } from '@nestjs/throttler';
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -21,6 +21,7 @@ import { Role } from '../generated/prisma/client';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { SetReviewVisibilityDto } from './dto/set-review-visibility.dto';
+import { ModeratorDeleteReviewDto } from './dto/moderator-delete-review.dto';
 import {
   ListAdminReviewsQueryDto,
   ListReviewsQueryDto,
@@ -42,6 +43,7 @@ export class ReviewsController {
       deviceId: query.deviceId,
       sort: query.sort,
       rating: query.rating,
+      rentedOnly: query.rentedOnly,
     });
   }
 
@@ -58,12 +60,6 @@ export class ReviewsController {
   }
 
   @ApiBearerAuth()
-  @Get('me')
-  mine(@CurrentUser() user: RequestUser, @Query() query: ReviewDeviceQueryDto) {
-    return this.reviewsService.getEligibility(user.userId, query.deviceId);
-  }
-
-  @ApiBearerAuth()
   @Roles(Role.staff, Role.admin)
   @Get('admin')
   findForAdmin(@Query() query: ListAdminReviewsQueryDto) {
@@ -73,20 +69,14 @@ export class ReviewsController {
       deviceId: query.deviceId,
       sort: query.sort,
       rating: query.rating,
-      hidden: query.hidden,
+      status: query.status,
       search: query.search,
     });
   }
 
   @ApiBearerAuth()
-  // Chống spam: tối đa 5 lần gửi/sửa đánh giá mỗi giờ cho mỗi tài khoản.
-  @Throttle({ default: { limit: 5, ttl: hours(1) } })
-  @Post()
-  create(@CurrentUser() user: RequestUser, @Body() dto: CreateReviewDto) {
-    return this.reviewsService.create(user.userId, dto);
-  }
-
-  @ApiBearerAuth()
+  // Chống spam: tối đa 5 lần gửi/sửa đánh giá mỗi giờ cho mỗi tài khoản (ngoài
+  // giới hạn REVIEW_EDITS_PER_DAY lần sửa/đánh giá/ngày ở service).
   @Throttle({ default: { limit: 5, ttl: hours(1) } })
   @Patch(':id')
   update(
@@ -98,6 +88,9 @@ export class ReviewsController {
   }
 
   @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Khách tự xoá đánh giá của mình (xoá hẳn, được viết lại)',
+  })
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
@@ -116,5 +109,62 @@ export class ReviewsController {
     @Body() dto: SetReviewVisibilityDto,
   ) {
     return this.reviewsService.setVisibility(id, user.userId, dto);
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Staff/admin xoá đánh giá vi phạm (xoá mềm, bắt buộc lý do)',
+  })
+  @Roles(Role.staff, Role.admin)
+  @Post(':id/moderator-delete')
+  @HttpCode(HttpStatus.OK)
+  moderatorDelete(
+    @CurrentUser() user: RequestUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ModeratorDeleteReviewDto,
+  ) {
+    return this.reviewsService.moderatorDelete(id, user.userId, dto.reason);
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Admin khôi phục đánh giá đã bị xoá' })
+  @Roles(Role.admin)
+  @Post(':id/restore')
+  @HttpCode(HttpStatus.OK)
+  restore(@Param('id', ParseUUIDPipe) id: string) {
+    return this.reviewsService.restore(id);
+  }
+}
+
+/** Viết đánh giá + lấy đánh giá của chính mình, theo từng thiết bị. */
+@ApiTags('reviews')
+@ApiBearerAuth()
+@Controller('devices/:deviceId/reviews')
+export class DeviceReviewsController {
+  constructor(private readonly reviewsService: ReviewsService) {}
+
+  @ApiOperation({
+    summary:
+      'Viết đánh giá (khách đã đăng nhập, 1 đánh giá/thiết bị — trùng → 409)',
+  })
+  @Throttle({ default: { limit: 5, ttl: hours(1) } })
+  @Post()
+  create(
+    @CurrentUser() user: RequestUser,
+    @Param('deviceId', ParseUUIDPipe) deviceId: string,
+    @Body() dto: CreateReviewDto,
+  ) {
+    return this.reviewsService.create(user.userId, deviceId, dto);
+  }
+
+  @ApiOperation({
+    summary: 'Đánh giá của tôi cho thiết bị + quyền viết/sửa',
+  })
+  @Get('me')
+  mine(
+    @CurrentUser() user: RequestUser,
+    @Param('deviceId', ParseUUIDPipe) deviceId: string,
+  ) {
+    return this.reviewsService.getMine(user.userId, deviceId);
   }
 }

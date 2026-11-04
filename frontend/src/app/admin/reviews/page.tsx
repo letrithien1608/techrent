@@ -5,7 +5,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Eye, EyeOff, Loader2, MessageSquareText, Package, Search, WifiOff } from "lucide-react";
+import {
+  BadgeCheck,
+  Eye,
+  EyeOff,
+  Loader2,
+  MessageSquareText,
+  Package,
+  RotateCcw,
+  Search,
+  WifiOff,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,7 +50,15 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { FormErrorBanner } from "@/components/form-error-banner";
 import { StarRating } from "@/components/devices/star-rating";
-import { fetchAdminReviews, setReviewVisibility, type AdminReview } from "@/lib/reviews-api";
+import { ModeratorDeleteReviewDialog } from "@/components/reviews/moderator-delete-review-dialog";
+import {
+  fetchAdminReviews,
+  restoreReview,
+  setReviewVisibility,
+  type AdminReview,
+  type AdminReviewStatus,
+} from "@/lib/reviews-api";
+import { useAuthStore } from "@/stores/auth-store";
 import { formatDateTimeVi } from "@/lib/device-format";
 import { getErrorMessage } from "@/lib/get-error-message";
 
@@ -51,10 +69,11 @@ const RATING_FILTERS = [
   ...[5, 4, 3, 2, 1].map((star) => ({ value: String(star), label: `${star} sao` })),
 ];
 
-const VISIBILITY_FILTERS = [
+const STATUS_TABS: { value: "all" | AdminReviewStatus; label: string }[] = [
   { value: "all", label: "Tất cả" },
   { value: "visible", label: "Đang hiển thị" },
   { value: "hidden", label: "Đã ẩn" },
+  { value: "deleted", label: "Đã xoá" },
 ];
 
 /** Ẩn đánh giá: bắt buộc lý do (backend cũng bắt buộc). Không có chức năng sửa nội dung. */
@@ -148,7 +167,8 @@ export default function AdminReviewsPage() {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [rating, setRating] = useState("all");
-  const [visibility, setVisibility] = useState("all");
+  const [status, setStatus] = useState<"all" | AdminReviewStatus>("all");
+  const isAdmin = useAuthStore((state) => state.user?.role) === "admin";
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -159,14 +179,14 @@ export default function AdminReviewsPage() {
   }, [searchInput]);
 
   const reviewsQuery = useQuery({
-    queryKey: ["admin", "reviews", page, search, rating, visibility],
+    queryKey: ["admin", "reviews", page, search, rating, status],
     queryFn: () =>
       fetchAdminReviews({
         page,
         limit: PAGE_SIZE,
         search: search || undefined,
         rating: rating === "all" ? undefined : Number(rating),
-        hidden: visibility === "all" ? undefined : visibility === "hidden",
+        status: status === "all" ? undefined : status,
       }),
   });
 
@@ -181,11 +201,42 @@ export default function AdminReviewsPage() {
     onError: (error) => toast.error(getErrorMessage(error, "Không thể hiện lại đánh giá")),
   });
 
+  const restoreMutation = useMutation({
+    mutationFn: (id: string) => restoreReview(id),
+    onSuccess: () => {
+      toast.success("Đã khôi phục đánh giá");
+      refresh();
+    },
+    onError: (error) => toast.error(getErrorMessage(error, "Không thể khôi phục đánh giá")),
+  });
+
   const reviews = reviewsQuery.data?.data ?? [];
   const meta = reviewsQuery.data?.meta;
 
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Trạng thái đánh giá">
+        {STATUS_TABS.map((tab) => (
+          <button
+            key={tab.value}
+            type="button"
+            role="tab"
+            aria-selected={status === tab.value}
+            onClick={() => {
+              setStatus(tab.value);
+              setPage(1);
+            }}
+            className={cn(
+              "rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors",
+              status === tab.value
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border/60 text-muted-foreground hover:border-primary/50 hover:text-foreground",
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
       <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/50">
         <div className="flex flex-wrap items-center gap-3 border-b border-border/60 p-4">
           <div className="relative min-w-[220px] flex-1">
@@ -212,26 +263,6 @@ export default function AdminReviewsPage() {
             </SelectTrigger>
             <SelectContent>
               {RATING_FILTERS.map((item) => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={visibility}
-            onValueChange={(value) => {
-              setVisibility(value ?? "all");
-              setPage(1);
-            }}
-          >
-            <SelectTrigger className="w-40" aria-label="Lọc theo trạng thái hiển thị">
-              <SelectValue>
-                {(value: string) => VISIBILITY_FILTERS.find((item) => item.value === value)?.label}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {VISIBILITY_FILTERS.map((item) => (
                 <SelectItem key={item.value} value={item.value}>
                   {item.label}
                 </SelectItem>
@@ -274,8 +305,14 @@ export default function AdminReviewsPage() {
                 {reviews.map((review) => {
                   const image = review.device.images[0];
                   const showingThis = showMutation.isPending && showMutation.variables === review.id;
+                  const restoringThis =
+                    restoreMutation.isPending && restoreMutation.variables === review.id;
+                  const deleted = !!review.deletedAt;
                   return (
-                    <TableRow key={review.id} className={cn(review.isHidden && "opacity-70")}>
+                    <TableRow
+                      key={review.id}
+                      className={cn((review.isHidden || deleted) && "opacity-70")}
+                    >
                       <TableCell className="max-w-[200px]">
                         <Link
                           href={`/devices/${review.device.id}`}
@@ -295,6 +332,12 @@ export default function AdminReviewsPage() {
                       <TableCell className="max-w-[160px]">
                         <p className="truncate text-sm">{review.user.name}</p>
                         <p className="truncate text-xs text-muted-foreground">{review.user.email}</p>
+                        {review.verifiedRental && (
+                          <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-emerald-500">
+                            <BadgeCheck className="size-3" />
+                            Đã thuê
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell className="max-w-[320px]">
                         <StarRating rating={review.rating} size={12} />
@@ -309,8 +352,20 @@ export default function AdminReviewsPage() {
                         {formatDateTimeVi(review.createdAt)}
                         {review.editedAt && <span className="block">đã chỉnh sửa</span>}
                       </TableCell>
-                      <TableCell className="max-w-[180px]">
-                        {review.isHidden ? (
+                      <TableCell className="max-w-[200px]">
+                        {deleted ? (
+                          <>
+                            <span className="rounded-full bg-destructive/15 px-2 py-0.5 text-xs font-medium text-destructive">
+                              Đã xoá
+                            </span>
+                            <p className="mt-1 line-clamp-2 text-xs whitespace-normal text-muted-foreground">
+                              {review.deleteReason}
+                            </p>
+                            <p className="mt-0.5 text-[11px] whitespace-normal text-muted-foreground/80">
+                              {review.deletedBy?.name ?? "—"} · {formatDateTimeVi(review.deletedAt!)}
+                            </p>
+                          </>
+                        ) : review.isHidden ? (
                           <>
                             <span className="rounded-full bg-destructive/15 px-2 py-0.5 text-xs font-medium text-destructive">
                               Đã ẩn
@@ -329,7 +384,30 @@ export default function AdminReviewsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end">
-                          {review.isHidden ? (
+                          {deleted ? (
+                            isAdmin ? (
+                              <Tooltip>
+                                <TooltipTrigger render={<span className="inline-flex" />}>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    aria-label="Khôi phục đánh giá"
+                                    disabled={restoringThis}
+                                    onClick={() => restoreMutation.mutate(review.id)}
+                                  >
+                                    {restoringThis ? (
+                                      <Loader2 className="size-4 animate-spin" />
+                                    ) : (
+                                      <RotateCcw className="size-4" />
+                                    )}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Khôi phục</TooltipContent>
+                              </Tooltip>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">Chỉ quản trị viên khôi phục</span>
+                            )
+                          ) : review.isHidden ? (
                             <Tooltip>
                               <TooltipTrigger render={<span className="inline-flex" />}>
                                 <Button
@@ -350,6 +428,13 @@ export default function AdminReviewsPage() {
                             </Tooltip>
                           ) : (
                             <HideReviewDialog review={review} onDone={refresh} />
+                          )}
+                          {!deleted && (
+                            <ModeratorDeleteReviewDialog
+                              review={review}
+                              authorName={review.user.name}
+                              onDeleted={refresh}
+                            />
                           )}
                         </div>
                       </TableCell>

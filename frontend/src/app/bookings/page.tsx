@@ -7,11 +7,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { PackageSearch, Package, WifiOff } from "lucide-react";
+import { PackageSearch, Package, Star, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CancelBookingDialog } from "@/components/bookings/cancel-booking-dialog";
-import { MyReviewPanel } from "@/components/reviews/my-review-panel";
 import { fetchBookings, type Booking, type BookingStatus } from "@/lib/bookings-api";
 import { BOOKING_STATUS_LABEL } from "@/lib/booking-format";
 import { formatDateTimeVi, formatVnd } from "@/lib/device-format";
@@ -79,10 +78,13 @@ function BookingCard({ booking, onChanged }: { booking: Booking; onChanged: () =
 
       {isCompleted && (
         <div className="mt-4 border-t border-border/60 pt-4">
-          <MyReviewPanel
-            deviceId={booking.deviceId}
-            deviceName={booking.device?.name ?? "Thiết bị"}
-          />
+          <Link
+            href={`/devices/${booking.deviceId}#reviews`}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+          >
+            <Star className="size-4" />
+            Đánh giá hoặc sửa đánh giá thiết bị này
+          </Link>
         </div>
       )}
     </div>

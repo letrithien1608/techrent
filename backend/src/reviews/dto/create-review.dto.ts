@@ -1,11 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
+import { IsInt, IsString, Max, MaxLength, Min } from 'class-validator';
 
 export class CreateReviewDto {
-  @ApiProperty({ description: 'Thiết bị muốn đánh giá (phải đã thuê và trả)' })
-  @IsUUID()
-  deviceId: string;
-
   @ApiProperty({ minimum: 1, maximum: 5, example: 5 })
   @IsInt()
   @Min(1)

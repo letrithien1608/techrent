@@ -18,7 +18,9 @@ function TestimonialCard({ review }: { review: FeaturedReview }) {
         <div className="min-w-0">
           <p className="flex items-center gap-1 text-sm font-medium text-foreground">
             {review.reviewerName}
-            <BadgeCheck className="size-3.5 text-emerald-500" aria-label="Đã thuê thiết bị này" />
+            {review.verifiedRental && (
+              <BadgeCheck className="size-3.5 text-emerald-500" aria-label="Đã thuê thiết bị này" />
+            )}
           </p>
           <Link
             href={`/devices/${review.device.id}`}
@@ -31,7 +33,9 @@ function TestimonialCard({ review }: { review: FeaturedReview }) {
                 <Package className="size-5 p-0.5" />
               )}
             </span>
-            <span className="truncate">Đã thuê {review.device.name}</span>
+            <span className="truncate">
+              {review.verifiedRental ? "Đã thuê" : "Đánh giá"} {review.device.name}
+            </span>
           </Link>
         </div>
       </div>
@@ -39,7 +43,7 @@ function TestimonialCard({ review }: { review: FeaturedReview }) {
   );
 }
 
-/** Đánh giá thật 4–5★ mới nhất từ khách đã thuê — không có đánh giá nào thì ẩn cả mục. */
+/** Đánh giá thật 4–5★ mới nhất của khách — không có đánh giá nào thì ẩn cả mục. */
 export function TestimonialsSection({ reviews }: { reviews: FeaturedReview[] }) {
   if (reviews.length === 0) return null;
   // Nhân đôi để dải chạy ngang liền mạch; ít đánh giá quá thì nhân thêm cho đủ rộng.
