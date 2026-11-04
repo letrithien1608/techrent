@@ -8,16 +8,51 @@
  * - Thiết bị chưa có đơn nào → xoá hẳn.
  * - Danh mục chỉ bị xoá khi không còn thiết bị nào; còn thiết bị ngừng kinh
  *   doanh thì giữ lại (trang khách tự ẩn qua GET /categories?activeOnly=true).
- * - Cuối cùng xoá cache Redis danh sách thiết bị.
+ * - Cuối cùng xoá cache Redis danh sách thiết bị, rồi xoá trên Cloudinary ảnh
+ *   của các thiết bị đã xoá hẳn (cùng logic DevicesService.remove(): chỉ ảnh
+ *   trong techrent/devices của project, bỏ qua ảnh thiết bị khác còn dùng,
+ *   lỗi chỉ ghi log).
  */
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
+import { v2 as cloudinary } from 'cloudinary';
+import {
+  DEVICE_IMAGE_FOLDER,
+  deleteDeviceImagesIfUnused,
+  publicIdFromCloudinaryUrl,
+} from '../../src/upload/cloudinary-url.util';
 import { invalidateDeviceListCache } from './redis-cache';
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
 });
+
+async function deleteImagesOfRemovedDevices(urls: string[]): Promise<void> {
+  if (urls.length === 0) return;
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+  const deleted = await deleteDeviceImagesIfUnused(
+    {
+      prisma,
+      publicIdFromUrl: (url) =>
+        publicIdFromCloudinaryUrl(
+          url,
+          process.env.CLOUDINARY_CLOUD_NAME,
+          DEVICE_IMAGE_FOLDER,
+        ),
+      deleteImage: async (publicId) => {
+        await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
+      },
+      warn: (message) => console.warn(`  ⚠️  ${message}`),
+    },
+    urls,
+  );
+  console.log(`🖼  Đã xoá ${deleted.length} ảnh trên Cloudinary`);
+}
 
 async function main() {
   const dryRun = process.argv.includes('--dry-run');
@@ -26,6 +61,8 @@ async function main() {
     throw new Error('Cần truyền tên danh mục, VD: "PC & Mini PC"');
   }
 
+  // Ảnh của thiết bị đã xoá hẳn — chỉ xoá trên Cloudinary sau khi CSDL xong.
+  const deletedImages: string[] = [];
   for (const name of names) {
     const category = await prisma.category.findFirst({
       where: { name },
@@ -34,6 +71,7 @@ async function main() {
           select: {
             id: true,
             name: true,
+            images: true,
             _count: { select: { bookings: true, maintenance: true } },
           },
         },
@@ -60,7 +98,10 @@ async function main() {
         }
       } else {
         console.log(`  🗑  Xoá (chưa có đơn nào): ${device.name}`);
-        if (!dryRun) await prisma.device.delete({ where: { id: device.id } });
+        if (!dryRun) {
+          await prisma.device.delete({ where: { id: device.id } });
+          deletedImages.push(...device.images);
+        }
       }
     }
     if (kept === 0) {
@@ -76,6 +117,7 @@ async function main() {
   if (!dryRun) {
     const cleared = await invalidateDeviceListCache();
     console.log(`🧹 Đã xoá ${cleared} cache danh sách thiết bị`);
+    await deleteImagesOfRemovedDevices(deletedImages);
   } else {
     console.log('(chạy thử --dry-run, chưa ghi gì)');
   }

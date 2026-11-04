@@ -48,8 +48,12 @@ Số CCCD được mã hoá khi lưu, chỉ hiển thị 4 số cuối. Ảnh x�
 ## Đăng ký hoặc đăng nhập bằng Google, Facebook được không?
 Được. Ở trang Đăng nhập hoặc Đăng ký, bấm "Tiếp tục với Google" hoặc "Tiếp tục với Facebook". Google/Facebook chỉ thay cho bước nhập email và mật khẩu: lần đầu bạn vẫn phải hoàn tất đăng ký với số điện thoại (10 số), số CCCD (12 số) và đồng ý điều khoản thì mới có tài khoản. Mỗi số điện thoại, mỗi số CCCD và mỗi tài khoản Google/Facebook chỉ dùng cho 1 tài khoản TechRent. Sau khi đăng ký, bạn vẫn phải làm xác thực danh tính (eKYC: ảnh CCCD 2 mặt + ảnh chân dung) trong trang Tài khoản thì mới đặt thuê được. Từ lần sau, bấm nút là đăng nhập ngay. Nếu email Google/Facebook đã xác minh trùng email tài khoản TechRent bạn đã có, hệ thống tự liên kết vào tài khoản đó.
 
-## Tài khoản tạo bằng Google, Facebook có mật khẩu không?
-Không. Muốn đăng nhập thêm bằng email và mật khẩu, vào Tài khoản → mục "Phương thức đăng nhập" → "Đặt mật khẩu". Ở mục này bạn cũng liên kết hoặc gỡ liên kết Google, Facebook; hệ thống không cho gỡ cách đăng nhập cuối cùng. Bỏ ngang trang hoàn tất đăng ký quá 15 phút thì chưa có tài khoản nào được tạo, chỉ cần bấm lại nút Google/Facebook.
+## Tài khoản đăng ký bằng Google, Facebook có đăng nhập bằng email và mật khẩu được không?
+Được, và KHÔNG cần tạo tài khoản mới. Tài khoản đăng ký bằng Google hoặc Facebook lúc đầu chưa có mật khẩu, bạn tự đặt thêm như sau:
+1. Đăng nhập bằng nút Google/Facebook như bình thường.
+2. Vào trang Tài khoản → mục "Phương thức đăng nhập" → bấm "Đặt mật khẩu" và nhập mật khẩu mới.
+3. Từ đó bạn đăng nhập được bằng cả 2 cách: nút Google/Facebook, hoặc email của tài khoản + mật khẩu vừa đặt.
+Cũng ở mục "Phương thức đăng nhập", bạn liên kết hoặc gỡ liên kết Google, Facebook; hệ thống không cho gỡ cách đăng nhập cuối cùng. Bỏ ngang trang hoàn tất đăng ký quá 15 phút thì chưa có tài khoản nào được tạo, chỉ cần bấm lại nút Google/Facebook.
 
 ## Tôi quên mật khẩu?
 Bấm "Quên mật khẩu?" ở trang đăng nhập, nhập email; link đặt lại mật khẩu gửi qua email, có hạn 15 phút và chỉ dùng được 1 lần.

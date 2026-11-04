@@ -202,5 +202,17 @@
       "A2 (0/3)",
       "R1 (2/3)"
     ]
+  },
+  {
+    "at": "2026-11-04T17:33:09.848Z",
+    "label": "Sửa FAQ A2: đặt mật khẩu cho tài khoản Google/Facebook",
+    "passed": 109,
+    "total": 114,
+    "repeat": 3,
+    "failedIds": [
+      "O1 (0/3)",
+      "O2 (2/3)",
+      "R1 (2/3)"
+    ]
   }
 ]

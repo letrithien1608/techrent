@@ -3,3 +3,6 @@ node_modules
 .env
 
 /src/generated/prisma
+
+# Báo cáo của script chạy tay (VD scripts/cleanup-orphan-images.ts)
+/scripts/output

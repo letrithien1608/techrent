@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
+import { publicIdFromCloudinaryUrl } from './cloudinary-url.util';
 
 const UPLOAD_FOLDER = 'techrent/devices';
 // Thư mục RIÊNG cho ảnh KYC (CCCD mặt trước/sau + ảnh chân dung xác thực) —
@@ -150,20 +151,13 @@ export class UploadService {
     await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
   }
 
-  /**
-   * Suy ra `public_id` từ URL ảnh Cloudinary CỦA CHÍNH project (đúng cloud
-   * name) và nằm trong `folderPrefix`. URL khác (link ngoài, cloud khác,
-   * thư mục khác) → `null` — không bao giờ xoá nhầm ảnh không thuộc mình.
-   */
+  /** Xem `publicIdFromCloudinaryUrl()` — chỉ nhận ảnh của chính project. */
   publicIdFromUrl(url: string, folderPrefix: string): string | null {
-    const cloudName = cloudinary.config().cloud_name;
-    const match =
-      /^https:\/\/res\.cloudinary\.com\/([^/]+)\/image\/upload\/(?:[^/]*,[^/]*\/)?(?:v\d+\/)?(.+)\.[a-z0-9]+$/i.exec(
-        url,
-      );
-    if (!match || match[1] !== cloudName) return null;
-    const publicId = decodeURIComponent(match[2]);
-    return publicId.startsWith(`${folderPrefix}/`) ? publicId : null;
+    return publicIdFromCloudinaryUrl(
+      url,
+      cloudinary.config().cloud_name,
+      folderPrefix,
+    );
   }
 
   private uploadDataUri(

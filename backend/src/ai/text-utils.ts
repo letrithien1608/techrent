@@ -103,6 +103,15 @@ export const SYNONYM_GROUPS: string[][] = [
   ['giam gia', 'khuyen mai', 'uu dai', 'voucher', 'ma giam'],
   ['danh gia', 'review', 'nhan xet'],
   ['quen mat khau', 'mat khau', 'dat lai mat khau'],
+  [
+    'dat mat khau',
+    'tao mat khau',
+    'them mat khau',
+    'email va mat khau',
+    'email mat khau',
+    'dang nhap bang email',
+    'phuong thuc dang nhap',
+  ],
   ['ket noi', 'cai dat', 'su dung', 'huong dan'],
   ['bao quan', 'luu y'],
 ];

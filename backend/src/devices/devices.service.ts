@@ -5,6 +5,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { UploadService } from '../upload/upload.service';
+import {
+  DEVICE_IMAGE_FOLDER,
+  deleteDeviceImagesIfUnused,
+} from '../upload/cloudinary-url.util';
 import { MIN_DEVICE_IMAGES } from './dto/create-device.dto';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -48,9 +52,6 @@ const deviceWithCategory = {
 export type DeviceWithCategory = Prisma.DeviceGetPayload<
   typeof deviceWithCategory
 >;
-
-/** Thư mục Cloudinary của ảnh thiết bị (seed + ảnh admin tải lên). */
-const DEVICE_IMAGE_FOLDER = 'techrent/devices';
 
 @Injectable()
 export class DevicesService {
@@ -241,10 +242,15 @@ export class DevicesService {
     }
   }
 
+  /**
+   * Xoá hẳn thiết bị: xoá dòng trong CSDL XONG mới xoá ảnh trên Cloudinary
+   * (bỏ qua ảnh thiết bị khác còn dùng). Lỗi xoá ảnh chỉ log.
+   */
   async remove(id: string): Promise<void> {
-    await this.findByIdOrThrow(id);
+    const device = await this.findByIdOrThrow(id);
     await this.prisma.device.delete({ where: { id } });
     await this.devicesCacheService.invalidateAll();
+    await this.deleteImagesIfUnused(device.images);
   }
 
   /** Gắn thêm ảnh mới (từ Cloudinary) vào danh sách ảnh hiện có của thiết bị. */
@@ -288,27 +294,23 @@ export class DevicesService {
         (url) => !images.includes(url),
       ),
     );
-    for (const url of removed) {
-      await this.deleteDeviceImageIfUnused(url);
-    }
+    await this.deleteImagesIfUnused(removed);
     return this.findByIdOrThrow(id);
   }
 
-  private async deleteDeviceImageIfUnused(url: string): Promise<void> {
-    const publicId = this.uploadService.publicIdFromUrl(
-      url,
-      DEVICE_IMAGE_FOLDER,
+  /** Dùng chung cho sửa ảnh, xoá thiết bị và script gỡ danh mục. */
+  private deleteImagesIfUnused(urls: Iterable<string>): Promise<string[]> {
+    return deleteDeviceImagesIfUnused(
+      {
+        prisma: this.prisma,
+        publicIdFromUrl: (url) =>
+          this.uploadService.publicIdFromUrl(url, DEVICE_IMAGE_FOLDER),
+        deleteImage: (publicId) =>
+          this.uploadService.deletePublicImage(publicId),
+        warn: (message) => this.logger.warn(message),
+      },
+      urls,
     );
-    if (!publicId) return;
-    const stillUsed = await this.prisma.device.count({
-      where: { images: { has: url } },
-    });
-    if (stillUsed > 0) return;
-    try {
-      await this.uploadService.deletePublicImage(publicId);
-    } catch {
-      this.logger.warn(`Không xoá được ảnh thiết bị cũ ${publicId}`);
-    }
   }
 
   async addImages(id: string, imageUrls: string[]): Promise<Device> {

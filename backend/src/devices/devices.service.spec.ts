@@ -365,6 +365,63 @@ describe('DevicesService', () => {
         where: { id: baseDevice.id },
       });
     });
+
+    describe('xoá ảnh trên Cloudinary', () => {
+      const cdn = (n: string) =>
+        `https://res.cloudinary.com/demo/image/upload/v1/techrent/devices/${n}.jpg`;
+      const images = [
+        cdn('a'),
+        cdn('chung'),
+        'https://images.unsplash.com/photo-1.jpg',
+        'https://res.cloudinary.com/demo/image/upload/v1/techrent/kyc/x.jpg',
+      ];
+
+      beforeEach(() => {
+        prisma.device.findUnique.mockResolvedValue({ ...baseDevice, images });
+        // Ảnh "chung" thiết bị khác vẫn đang dùng.
+        prisma.device.count.mockImplementation(
+          ({ where }: { where: { images: { has: string } } }) =>
+            Promise.resolve(where.images.has === cdn('chung') ? 1 : 0),
+        );
+      });
+
+      it('xoá ảnh của thiết bị SAU khi xoá dòng CSDL, chỉ ảnh techrent/devices', async () => {
+        await service.remove(baseDevice.id);
+
+        expect(uploadService.deletePublicImage).toHaveBeenCalledTimes(1);
+        expect(uploadService.deletePublicImage).toHaveBeenCalledWith(
+          'techrent/devices/a',
+        );
+        expect(prisma.device.delete.mock.invocationCallOrder[0]).toBeLessThan(
+          uploadService.deletePublicImage.mock.invocationCallOrder[0],
+        );
+      });
+
+      it('ảnh thiết bị khác còn dùng thì không xoá', async () => {
+        await service.remove(baseDevice.id);
+
+        expect(uploadService.deletePublicImage).not.toHaveBeenCalledWith(
+          'techrent/devices/chung',
+        );
+      });
+
+      it('xoá CSDL lỗi (VD còn đơn thuê) → không xoá ảnh nào', async () => {
+        prisma.device.delete.mockRejectedValue(new Error('FK violation'));
+
+        await expect(service.remove(baseDevice.id)).rejects.toThrow(
+          'FK violation',
+        );
+        expect(uploadService.deletePublicImage).not.toHaveBeenCalled();
+      });
+
+      it('Cloudinary lỗi → vẫn xoá xong thiết bị, chỉ ghi log', async () => {
+        uploadService.deletePublicImage.mockRejectedValue(new Error('cdn'));
+
+        await expect(service.remove(baseDevice.id)).resolves.toBeUndefined();
+        expect(prisma.device.delete).toHaveBeenCalled();
+        expect(devicesCacheService.invalidateAll).toHaveBeenCalled();
+      });
+    });
   });
 
   describe('addImages', () => {
