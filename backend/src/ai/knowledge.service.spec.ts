@@ -201,6 +201,18 @@ describe('KnowledgeService', () => {
       ).resolves.toBeNull();
     });
 
+    it('findDeviceByName: chỉ trả 1 máy khi nhắc tên rõ ràng, chỉ nhắc danh mục thì null', async () => {
+      await expect(
+        service.findDeviceByName('Thuê DJI Mini 4 Pro trả trễ 2 ngày'),
+      ).resolves.toMatchObject({ name: 'DJI Mini 4 Pro', pricePerDay: 350000 });
+      await expect(
+        service.findDeviceByName('Thuê flycam trả trễ 2 ngày'),
+      ).resolves.toBeNull();
+      await expect(
+        service.findDeviceByName('Thuê máy Pro trả trễ 2 ngày'),
+      ).resolves.toBeNull();
+    });
+
     it('formatDevice ghi rõ giá, cọc và tình trạng', async () => {
       const [device] = (await service.findDevices('flycam DJI Mini 4 Pro'))!;
       const line = formatDevice(device);

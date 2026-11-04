@@ -214,5 +214,30 @@
       "O2 (2/3)",
       "R1 (2/3)"
     ]
+  },
+  {
+    "at": "2026-11-04T20:49:22.739Z",
+    "label": "Phí trễ hạn do hệ thống tự tính + kiểm tra tổng",
+    "passed": 121,
+    "total": 129,
+    "repeat": 3,
+    "failedIds": [
+      "O1 (2/3)",
+      "O2 (0/3)",
+      "A1 (2/3)",
+      "F3 (0/3)"
+    ]
+  },
+  {
+    "at": "2026-11-04T21:37:37.557Z",
+    "label": "Phí trễ hạn do hệ thống tự tính + kiểm tra tổng (bản cuối)",
+    "passed": 124,
+    "total": 129,
+    "repeat": 3,
+    "failedIds": [
+      "O1 (2/3)",
+      "O2 (0/3)",
+      "R1 (2/3)"
+    ]
   }
 ]

@@ -380,6 +380,22 @@ export class KnowledgeService implements OnModuleInit {
     return hasIntent ? [] : null;
   }
 
+  /**
+   * Đúng 1 thiết bị được nhắc tên rõ ràng (≥ 2 từ đặc trưng hoặc tên đầy đủ,
+   * hơn hẳn máy đứng thứ 2) — dùng để lấy giá thuê khi tính phí trễ hạn.
+   * Mơ hồ → null (không đoán).
+   */
+  async findDeviceByName(query: string): Promise<DeviceSuggestion | null> {
+    const padded = pad(normalizeVi(query));
+    const ranked = (await this.loadDevices())
+      .map((device) => ({ device, score: nameScore(device, padded) }))
+      .filter((entry) => entry.score >= 6)
+      .sort((a, b) => b.score - a.score);
+    if (ranked.length === 0) return null;
+    if (ranked.length > 1 && ranked[1].score === ranked[0].score) return null;
+    return ranked[0].device;
+  }
+
   async listCategoryNames(): Promise<string[]> {
     const devices = await this.loadDevices();
     return [...new Set(devices.map((device) => device.category))];
@@ -427,7 +443,8 @@ export class KnowledgeService implements OnModuleInit {
   }
 }
 
-function scoreDevice(device: DeviceSuggestion, paddedQuery: string): number {
+/** Điểm khớp riêng theo TÊN máy (tên đầy đủ 20, mỗi từ đặc trưng 3, từ chung chung 0,5). */
+function nameScore(device: DeviceSuggestion, paddedQuery: string): number {
   let score = 0;
   const name = normalizeVi(device.name);
   if (paddedQuery.includes(pad(name))) score += 20;
@@ -436,7 +453,11 @@ function scoreDevice(device: DeviceSuggestion, paddedQuery: string): number {
     score += GENERIC_NAME_TOKENS.has(token) ? 0.5 : 3;
   }
   // Chỉ khớp vài từ chung chung (VD "pro") thì không tính là nhắc tới thiết bị.
-  if (score < 3) score = 0;
+  return score < 3 ? 0 : score;
+}
+
+function scoreDevice(device: DeviceSuggestion, paddedQuery: string): number {
+  let score = nameScore(device, paddedQuery);
 
   const category = normalizeVi(device.category);
   if (paddedQuery.includes(pad(category))) score += 8;

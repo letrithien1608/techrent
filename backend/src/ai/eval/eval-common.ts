@@ -13,6 +13,11 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AiModule } from '../ai.module';
 import { AiService, type ChatStats } from '../ai.service';
 import { buildPolicyValues, formatVnd } from '../knowledge.service';
+import {
+  calculateLateFeeTable,
+  checkLateFeeAnswer,
+  type LateFeeCalculation,
+} from '../late-fee-calc';
 import { normalizeVi } from '../text-utils';
 
 @Module({
@@ -30,6 +35,13 @@ export interface EvalQuestion {
   question: string;
   mustInclude: string[];
   mustNotInclude: string[];
+  /**
+   * Câu tính phí trễ hạn: tổng đúng tính bằng hàm nghiệp vụ (giá thuê lấy từ
+   * `pricePerDay` hoặc thiết bị `device` trong DB) → bắt buộc có đúng TỔNG và
+   * không được có dòng "tổng" nào ra số khác.
+   */
+  lateFee?: { days: number; pricePerDay?: number; device?: string };
+  lateFeeCalc?: LateFeeCalculation;
 }
 
 export interface AskResult {
@@ -107,12 +119,38 @@ export async function loadQuestions(
     return result;
   };
 
+  const lateFeeCalc = async (
+    spec: NonNullable<EvalQuestion['lateFee']>,
+  ): Promise<LateFeeCalculation> => {
+    if (spec.device) {
+      const device = await prisma.device.findFirstOrThrow({
+        where: { name: spec.device },
+      });
+      return calculateLateFeeTable({
+        days: spec.days,
+        pricePerDay: Number(device.pricePerDay),
+        originalPrice: Number(device.originalPrice),
+        deviceName: device.name,
+      });
+    }
+    return calculateLateFeeTable({
+      days: spec.days,
+      pricePerDay: spec.pricePerDay!,
+    });
+  };
+
   return Promise.all(
-    raw.questions.map(async (q) => ({
-      ...q,
-      mustInclude: await Promise.all(q.mustInclude.map(resolve)),
-      mustNotInclude: await Promise.all(q.mustNotInclude.map(resolve)),
-    })),
+    raw.questions.map(async (q) => {
+      const calc = q.lateFee ? await lateFeeCalc(q.lateFee) : undefined;
+      const mustInclude = await Promise.all(q.mustInclude.map(resolve));
+      if (calc) mustInclude.push(stripDong(formatVnd(calc.total)));
+      return {
+        ...q,
+        mustInclude,
+        mustNotInclude: await Promise.all(q.mustNotInclude.map(resolve)),
+        lateFeeCalc: calc,
+      };
+    }),
   );
 }
 
@@ -134,6 +172,12 @@ export function grade(question: EvalQuestion, result: AskResult) {
   const forbidden = question.mustNotInclude.filter((keyword) =>
     containsKeyword(result.answer, keyword),
   );
+  if (
+    question.lateFeeCalc &&
+    checkLateFeeAnswer(result.answer, question.lateFeeCalc) === 'wrong-total'
+  ) {
+    forbidden.push('dòng "tổng" ra số khác tổng đúng');
+  }
   const passed =
     !result.error && missing.length === 0 && forbidden.length === 0;
   return { passed, missing, forbidden };

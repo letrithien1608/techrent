@@ -54,6 +54,7 @@ describe('AiService', () => {
   let knowledge: {
     retrieve: jest.Mock;
     findDevices: jest.Mock;
+    findDeviceByName: jest.Mock;
     listCategoryNames: jest.Mock;
   };
   let service: AiService;
@@ -85,6 +86,7 @@ describe('AiService', () => {
     knowledge = {
       retrieve: jest.fn().mockReturnValue({ core, chunks: [] }),
       findDevices: jest.fn().mockResolvedValue(null),
+      findDeviceByName: jest.fn().mockResolvedValue(null),
       listCategoryNames: jest.fn().mockResolvedValue(['Laptop']),
     };
     service = create();
@@ -394,6 +396,127 @@ describe('AiService', () => {
     await expect(service.health()).resolves.toEqual({
       available: false,
       model: config.model,
+    });
+  });
+
+  describe('phí trễ hạn: hệ thống tự tính, AI chỉ diễn đạt', () => {
+    const question =
+      'giá thuê 400.000đ/ngày, trả trễ 2 ngày thì mỗi ngày bị phạt bao nhiêu và tổng là bao nhiêu?';
+    const answerStream = (...parts: string[]) =>
+      chunks([
+        ...parts.map((content) => ({
+          message: { role: 'assistant' as const, content },
+          done: false,
+        })),
+        { done: true, eval_count: 30, eval_duration: 3e9 },
+      ]);
+    const tokens = (events: ChatStreamEvent[]) =>
+      events
+        .filter((e) => e.type === 'token')
+        .map((e) => (e as { content: string }).content);
+
+    it('đưa bảng tính sẵn (đúng hàm nghiệp vụ) vào tham khảo', async () => {
+      const { references, lateFee } = await service.buildReferences(question);
+      expect(lateFee?.total).toBe(240_000);
+      expect(references).toContain('KẾT QUẢ TÍNH SẴN');
+      expect(references).toContain('TỔNG PHÍ TRỄ 2 NGÀY: 240.000đ');
+      // Bảng nằm ngay sau phần tóm tắt cốt lõi.
+      expect(references.indexOf('KẾT QUẢ TÍNH SẴN')).toBeLessThan(
+        references.indexOf('Cọc 50%') + 200,
+      );
+    });
+
+    it('không nêu giá → lấy giá thuê + mức trần từ thiết bị được nhắc tên', async () => {
+      knowledge.findDeviceByName.mockResolvedValue({
+        name: 'Sony Alpha 7 IV',
+        pricePerDay: 500_000,
+        originalPrice: 1_000_000,
+      });
+      const lateFee = await service.calculateLateFee(
+        'Thuê Sony Alpha 7 IV trả trễ 3 ngày thì phạt bao nhiêu?',
+      );
+      expect(lateFee).toMatchObject({
+        deviceName: 'Sony Alpha 7 IV',
+        pricePerDay: 500_000,
+        uncappedTotal: 600_000,
+        total: 600_000,
+      });
+      const capped = await service.calculateLateFee(
+        'Thuê Sony Alpha 7 IV trả trễ 5 ngày thì phạt bao nhiêu?',
+      );
+      expect(capped).toMatchObject({ total: 1_000_000, capped: true });
+    });
+
+    it('không trích được giá và không có thiết bị → không chèn bảng', async () => {
+      const { references, lateFee } = await service.buildReferences(
+        'Trả trễ 2 ngày thì bị phạt thế nào?',
+      );
+      expect(lateFee).toBeNull();
+      expect(references).not.toContain('KẾT QUẢ TÍNH SẴN');
+    });
+
+    it('trả lời đúng tổng → giữ nguyên câu của model, gửi 1 lần khi xong', async () => {
+      ollama.openChatStream.mockResolvedValue(
+        answerStream('Ngày 1: 80.000đ, ngày 2: 160.000đ. ', 'Tổng: 240.000đ.'),
+      );
+      const events = await collect(
+        await service.openChat(
+          { message: question },
+          undefined,
+          new AbortController().signal,
+        ),
+      );
+      expect(tokens(events)).toEqual([
+        'Ngày 1: 80.000đ, ngày 2: 160.000đ. Tổng: 240.000đ.',
+      ]);
+      const done = events.at(-1) as Extract<ChatStreamEvent, { type: 'done' }>;
+      expect(done.stats.guardrail).toBeNull();
+      expect(done.stats.lateFeeTotal).toBe(240_000);
+    });
+
+    it('câu hỏi pha trộn (hoàn cọc) → có bảng nhưng KHÔNG thay câu trả lời, vẫn stream', async () => {
+      const mixed =
+        'Mình cọc 15.000.000đ, trả trễ 1 ngày (giá thuê 400.000đ/ngày) và bồi thường 1.000.000đ thì được hoàn bao nhiêu?';
+      const { references, lateFee } = await service.buildReferences(mixed);
+      expect(references).toContain('TỔNG PHÍ TRỄ 1 NGÀY: 80.000đ');
+      expect(lateFee?.verifyAnswer).toBe(false);
+      ollama.openChatStream.mockResolvedValue(
+        answerStream(
+          'Tổng khấu trừ 1.080.000đ, ',
+          'bạn được hoàn 13.920.000đ.',
+        ),
+      );
+      const events = await collect(
+        await service.openChat(
+          { message: mixed },
+          undefined,
+          new AbortController().signal,
+        ),
+      );
+      expect(tokens(events).join('')).toBe(
+        'Tổng khấu trừ 1.080.000đ, bạn được hoàn 13.920.000đ.',
+      );
+      const done = events.at(-1) as Extract<ChatStreamEvent, { type: 'done' }>;
+      expect(done.stats.guardrail).toBeNull();
+    });
+
+    it('model nói sai tổng → thay bằng câu dựng từ bảng, không lộ câu sai', async () => {
+      ollama.openChatStream.mockResolvedValue(
+        answerStream('Trễ 2 ngày ', 'tổng phạt 160.000đ nhé.'),
+      );
+      const events = await collect(
+        await service.openChat(
+          { message: question },
+          undefined,
+          new AbortController().signal,
+        ),
+      );
+      const text = tokens(events).join('');
+      expect(text).not.toContain('tổng phạt 160.000đ');
+      expect(text).toContain('Ngày trễ 1: 80.000đ');
+      expect(text).toContain('**Tổng phí trễ hạn: 240.000đ**');
+      const done = events.at(-1) as Extract<ChatStreamEvent, { type: 'done' }>;
+      expect(done.stats.guardrail).toBe('late-fee-corrected');
     });
   });
 });

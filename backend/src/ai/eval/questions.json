@@ -1,5 +1,5 @@
 {
-  "_ghiChu": "mustInclude: mọi từ khoá đều phải có (dùng 'a|b' cho các cách diễn đạt tương đương). mustNotInclude: không được có từ nào. {{PRICE_PER_DAY:<tên thiết bị>}}/{{DEPOSIT:<tên thiết bị>}} được thay bằng số thật trong DB lúc chạy. {{DEPOSIT_RATE}}... lấy từ business-policy.ts.",
+  "_ghiChu": "mustInclude: mọi từ khoá đều phải có (dùng 'a|b' cho các cách diễn đạt tương đương). mustNotInclude: không được có từ nào. {{PRICE_PER_DAY:<tên thiết bị>}}/{{DEPOSIT:<tên thiết bị>}} được thay bằng số thật trong DB lúc chạy. {{DEPOSIT_RATE}}... lấy từ business-policy.ts. lateFee: {days, pricePerDay | device} → tự thêm TỔNG đúng (tính bằng calculateLateFeeForDays) vào mustInclude và chấm trượt nếu có dòng \"tổng\" ra số khác.",
   "questions": [
     {
       "id": "P1",
@@ -31,7 +31,11 @@
       ],
       "mustNotInclude": [
         "160.000đ tổng"
-      ]
+      ],
+      "lateFee": {
+        "days": 2,
+        "pricePerDay": 400000
+      }
     },
     {
       "id": "P4",
@@ -430,6 +434,64 @@
       "mustNotInclude": [
         "mỗi đơn"
       ]
+    },
+    {
+      "id": "F1",
+      "group": "phí trễ hạn",
+      "question": "Giá thuê 400.000đ/ngày, trả trễ 2 ngày thì mỗi ngày bị phạt bao nhiêu và tổng là bao nhiêu?",
+      "mustInclude": [
+        "80.000",
+        "160.000"
+      ],
+      "mustNotInclude": [],
+      "lateFee": {
+        "days": 2,
+        "pricePerDay": 400000
+      }
+    },
+    {
+      "id": "F2",
+      "group": "phí trễ hạn",
+      "question": "Thuê máy 250k/ngày mà trả trễ 1 ngày thì bị phạt bao nhiêu?",
+      "mustInclude": [],
+      "mustNotInclude": [],
+      "lateFee": {
+        "days": 1,
+        "pricePerDay": 250000
+      }
+    },
+    {
+      "id": "F3",
+      "group": "phí trễ hạn",
+      "question": "Mình thuê thiết bị giá 400 nghìn một ngày, trả muộn ba ngày thì tổng phí trễ hạn là bao nhiêu?",
+      "mustInclude": [],
+      "mustNotInclude": [],
+      "lateFee": {
+        "days": 3,
+        "pricePerDay": 400000
+      }
+    },
+    {
+      "id": "F4",
+      "group": "phí trễ hạn",
+      "question": "Thuê máy 250k/ngày, trễ 3 hôm thì tổng tiền phạt bao nhiêu?",
+      "mustInclude": [],
+      "mustNotInclude": [],
+      "lateFee": {
+        "days": 3,
+        "pricePerDay": 250000
+      }
+    },
+    {
+      "id": "F5",
+      "group": "phí trễ hạn",
+      "question": "Thuê Canon EOS R6 Mark II mà trả trễ 2 ngày thì bị phạt tổng bao nhiêu?",
+      "mustInclude": [],
+      "mustNotInclude": [],
+      "lateFee": {
+        "days": 2,
+        "device": "Canon EOS R6 Mark II (body)"
+      }
     }
   ]
 }

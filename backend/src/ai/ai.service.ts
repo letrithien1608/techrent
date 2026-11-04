@@ -28,6 +28,14 @@ import {
   OUTPUT_HOLDBACK_CHARS,
 } from './guardrails';
 import { buildMessages } from './prompts';
+import {
+  calculateLateFeeTable,
+  checkLateFeeAnswer,
+  extractLateFeeQuery,
+  formatLateFeeReference,
+  type LateFeeCalculation,
+  lateFeeTemplateReply,
+} from './late-fee-calc';
 
 export const AI_UNAVAILABLE_MESSAGE =
   'Trợ lý AI tạm thời không khả dụng, bạn vui lòng liên hệ nhân viên nhé.';
@@ -51,7 +59,9 @@ export interface ChatStats {
   knowledgeChunks: number;
   devices: number;
   /** Lớp chặn phía server đã can thiệp (null = câu trả lời đi thẳng từ model). */
-  guardrail: Guardrail | null;
+  guardrail: Guardrail | 'late-fee-corrected' | null;
+  /** Câu hỏi tính phí trễ hạn đã được hệ thống tự tính (có bảng tính sẵn). */
+  lateFeeTotal?: number | null;
 }
 
 export type ChatStreamEvent =
@@ -133,9 +143,8 @@ export class AiService implements OnApplicationBootstrap {
       );
       return this.cannedReply(INJECTION_REPLY, startedAt);
     }
-    const { references, knowledgeChunks, devices } = await this.buildReferences(
-      dto.message,
-    );
+    const { references, knowledgeChunks, devices, lateFee } =
+      await this.buildReferences(dto.message);
     const messages = buildMessages({
       message: dto.message,
       history: dto.history,
@@ -169,6 +178,7 @@ export class AiService implements OnApplicationBootstrap {
       who,
       messageLength: dto.message.length,
       historyLength: dto.history?.length ?? 0,
+      lateFee,
     });
   }
 
@@ -177,10 +187,13 @@ export class AiService implements OnApplicationBootstrap {
     references: string;
     knowledgeChunks: number;
     devices: number;
+    lateFee: LateFeeCalculation | null;
   }> {
     const { core, chunks } = this.knowledge.retrieve(message);
-    // Thứ tự: tóm tắt cốt lõi → thiết bị (nếu có) → các đoạn kiến thức liên quan.
+    // Thứ tự: tóm tắt cốt lõi → bảng phí trễ tính sẵn (nếu có) → thiết bị → các đoạn kiến thức.
     const parts = [formatChunk(core)];
+    const lateFee = await this.calculateLateFee(message);
+    if (lateFee) parts.push(formatLateFeeReference(lateFee));
 
     let devices: DeviceSuggestion[] | null = null;
     try {
@@ -209,7 +222,43 @@ export class AiService implements OnApplicationBootstrap {
       references: [...parts, ...chunks.map(formatChunk)].join('\n\n'),
       knowledgeChunks: 1 + chunks.length,
       devices: devices?.length ?? 0,
+      lateFee,
     };
+  }
+
+  /**
+   * Câu hỏi tính phí trễ hạn: hệ thống tự tính bằng `calculateLateFeeForDays()`.
+   * Giá thuê lấy từ câu hỏi, không có thì lấy từ thiết bị được nhắc tên rõ ràng
+   * (kèm mức trần = giá trị thiết bị). Thiếu số liệu → null, model trả lời như cũ.
+   */
+  async calculateLateFee(message: string): Promise<LateFeeCalculation | null> {
+    const query = extractLateFeeQuery(message);
+    if (!query) return null;
+    let device: DeviceSuggestion | null = null;
+    try {
+      device = await this.knowledge.findDeviceByName(message);
+    } catch (error) {
+      this.logger.warn(
+        `Không tra được thiết bị để tính phí trễ: ${(error as Error).message}`,
+      );
+    }
+    // Khách tự nêu giá khác giá của máy → dùng giá khách nêu, không gắn tên máy.
+    if (
+      device &&
+      query.pricePerDay !== null &&
+      query.pricePerDay !== device.pricePerDay
+    ) {
+      device = null;
+    }
+    const pricePerDay = query.pricePerDay ?? device?.pricePerDay ?? null;
+    if (pricePerDay === null) return null;
+    return calculateLateFeeTable({
+      days: query.days,
+      pricePerDay,
+      originalPrice: device?.originalPrice ?? query.originalPrice,
+      deviceName: device?.name ?? null,
+      verifyAnswer: !query.mixed,
+    });
   }
 
   private async *cannedReply(
@@ -247,6 +296,8 @@ export class AiService implements OnApplicationBootstrap {
       who: string;
       messageLength: number;
       historyLength: number;
+      /** Có bảng tính sẵn → giữ lại cả câu trả lời để kiểm tra tổng trước khi gửi. */
+      lateFee: LateFeeCalculation | null;
     },
   ): AsyncGenerator<ChatStreamEvent> {
     let ttftMs: number | null = null;
@@ -264,6 +315,7 @@ export class AiService implements OnApplicationBootstrap {
       totalMs: Date.now() - meta.startedAt,
       knowledgeChunks: meta.knowledgeChunks,
       devices: meta.devices,
+      lateFeeTotal: meta.lateFee?.total ?? null,
     });
 
     try {
@@ -293,9 +345,37 @@ export class AiService implements OnApplicationBootstrap {
           };
           return;
         }
-        const event = flush(
-          chunk.done ? text.length : text.length - OUTPUT_HOLDBACK_CHARS,
-        );
+        if (chunk.done && meta.lateFee?.verifyAnswer) {
+          const problem = checkLateFeeAnswer(text, meta.lateFee);
+          if (problem) {
+            // Đã giữ lại toàn bộ (chưa gửi gì) → thay hẳn bằng câu dựng từ bảng.
+            this.logger.warn(
+              `AI chat ${meta.who}: thay câu trả lời phí trễ hạn (${problem}, tổng đúng ${meta.lateFee.total})`,
+            );
+            text = lateFeeTemplateReply(meta.lateFee);
+            const event = flush(text.length);
+            if (event) yield event;
+            yield {
+              type: 'done',
+              stats: {
+                ...baseStats(),
+                evalCount: chunk.eval_count ?? 0,
+                tokensPerSecond: null,
+                promptTokens: chunk.prompt_eval_count ?? null,
+                guardrail: 'late-fee-corrected',
+              },
+            };
+            return;
+          }
+        }
+        // Câu tính phí trễ: chưa gửi gì cho tới khi kiểm tra xong ở chunk cuối.
+        const event = meta.lateFee?.verifyAnswer
+          ? chunk.done
+            ? flush(text.length)
+            : null
+          : flush(
+              chunk.done ? text.length : text.length - OUTPUT_HOLDBACK_CHARS,
+            );
         if (event) yield event;
 
         if (chunk.done) {
@@ -314,7 +394,10 @@ export class AiService implements OnApplicationBootstrap {
             `AI chat ${meta.who}: msgLen=${meta.messageLength} history=${meta.historyLength} ` +
               `chunks=${meta.knowledgeChunks} devices=${meta.devices} ttft=${ttftMs}ms ` +
               `total=${stats.totalMs}ms promptTokens=${stats.promptTokens} ` +
-              `evalTokens=${evalCount} tok/s=${stats.tokensPerSecond} outChars=${text.length}`,
+              `evalTokens=${evalCount} tok/s=${stats.tokensPerSecond} outChars=${text.length}` +
+              (meta.lateFee
+                ? ` lateFee=${meta.lateFee.verifyAnswer ? 'checked' : 'reference-only'}`
+                : ''),
           );
           yield { type: 'done', stats };
           return;
