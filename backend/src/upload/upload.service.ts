@@ -12,6 +12,11 @@ const KYC_UPLOAD_FOLDER = 'techrent/kyc';
 // người dùng chọn) — để `generateKycImageViewUrl()` luôn biết đúng `format`
 // cần truyền cho `private_download_url()` mà KHÔNG cần lưu thêm cột riêng.
 const KYC_IMAGE_FORMAT = 'jpg';
+// Ảnh đại diện — CÔNG KHAI (khác ảnh KYC riêng tư), thư mục riêng, cắt sẵn 256x256.
+export const AVATAR_UPLOAD_FOLDER = 'techrent/avatars';
+const AVATAR_TRANSFORMATION = [
+  { width: 256, height: 256, crop: 'fill', gravity: 'auto' },
+];
 
 @Injectable()
 export class UploadService {
@@ -103,6 +108,62 @@ export class UploadService {
           }),
       ),
     );
+  }
+
+  /**
+   * Ảnh đại diện: `buffer` (file người dùng tải lên) hoặc `remoteUrl` (ảnh
+   * Google/Facebook — Cloudinary tự tải về rồi host lại, không dùng link ngoài).
+   * Cloudinary resize về 256x256 ngay lúc lưu (incoming transformation).
+   */
+  async uploadAvatar(
+    source: { buffer: Buffer; mimetype: string } | { remoteUrl: string },
+    publicId: string,
+  ): Promise<{ publicId: string; url: string }> {
+    const input =
+      'remoteUrl' in source
+        ? source.remoteUrl
+        : `data:${source.mimetype};base64,${source.buffer.toString('base64')}`;
+    const result = await new Promise<UploadApiResponse>((resolve, reject) => {
+      cloudinary.uploader.upload(
+        input,
+        {
+          folder: AVATAR_UPLOAD_FOLDER,
+          public_id: publicId,
+          overwrite: true,
+          resource_type: 'image',
+          transformation: AVATAR_TRANSFORMATION,
+        },
+        (error, res) => {
+          if (error || !res) {
+            reject(error ?? new Error('Upload ảnh đại diện thất bại'));
+            return;
+          }
+          resolve(res);
+        },
+      );
+    });
+    return { publicId: result.public_id, url: result.secure_url };
+  }
+
+  /** Xoá 1 ảnh CÔNG KHAI (avatar/ảnh thiết bị) trên Cloudinary — KHÔNG dùng cho ảnh KYC (`type: 'private'`). */
+  async deletePublicImage(publicId: string): Promise<void> {
+    await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
+  }
+
+  /**
+   * Suy ra `public_id` từ URL ảnh Cloudinary CỦA CHÍNH project (đúng cloud
+   * name) và nằm trong `folderPrefix`. URL khác (link ngoài, cloud khác,
+   * thư mục khác) → `null` — không bao giờ xoá nhầm ảnh không thuộc mình.
+   */
+  publicIdFromUrl(url: string, folderPrefix: string): string | null {
+    const cloudName = cloudinary.config().cloud_name;
+    const match =
+      /^https:\/\/res\.cloudinary\.com\/([^/]+)\/image\/upload\/(?:[^/]*,[^/]*\/)?(?:v\d+\/)?(.+)\.[a-z0-9]+$/i.exec(
+        url,
+      );
+    if (!match || match[1] !== cloudName) return null;
+    const publicId = decodeURIComponent(match[2]);
+    return publicId.startsWith(`${folderPrefix}/`) ? publicId : null;
   }
 
   private uploadDataUri(

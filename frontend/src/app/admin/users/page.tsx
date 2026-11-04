@@ -4,7 +4,7 @@ import { cn } from "cn";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search, Trash2, Users, WifiOff } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/account/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,10 +34,6 @@ import { formatDateTimeVi } from "@/lib/device-format";
 import { useAuthStore, type UserRole } from "@/stores/auth-store";
 
 const PAGE_SIZE = 10;
-
-function initialsOf(name: string): string {
-  return name.trim().charAt(0).toUpperCase() || "?";
-}
 
 export default function AdminUsersPage() {
   const queryClient = useQueryClient();
@@ -158,11 +154,7 @@ export default function AdminUsersPage() {
                     <TableRow key={user.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <Avatar className="size-8 shrink-0">
-                            <AvatarFallback className="bg-gradient-to-br from-primary to-cyan-400 text-xs font-semibold text-primary-foreground">
-                              {initialsOf(user.name)}
-                            </AvatarFallback>
-                          </Avatar>
+                          <UserAvatar name={user.name} src={user.avatarUrl} size="xs" className="ring-0" />
                           <div className="max-w-[200px] min-w-0">
                             <p className="truncate font-medium">
                               {user.name}

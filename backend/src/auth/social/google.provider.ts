@@ -19,6 +19,7 @@ interface GoogleUserInfo {
   email?: string;
   email_verified?: boolean;
   name?: string;
+  picture?: string;
 }
 
 /** Tự viết (không dùng passport) — state/ticket do `SocialAuthService` quản lý trên Redis. */
@@ -81,6 +82,10 @@ export class GoogleOAuthProvider implements SocialOAuthProvider {
       email: info.email ?? null,
       emailVerified: info.email_verified === true && !!info.email,
       name: info.name ?? null,
+      // Ảnh Google mặc định 96px (`=s96-c`) — xin bản 256px cho rõ nét.
+      avatarUrl: info.picture
+        ? info.picture.replace(/=s\d+-c$/, '=s256-c')
+        : null,
     };
   }
 }

@@ -8,6 +8,8 @@ export interface SocialProfile {
   /** `true` chỉ khi provider xác nhận email thuộc về người này. */
   emailVerified: boolean;
   name: string | null;
+  /** Ảnh hồ sơ (https) — chỉ dùng 1 lần lúc đăng ký để chép sang Cloudinary của TechRent. */
+  avatarUrl?: string | null;
 }
 
 /**

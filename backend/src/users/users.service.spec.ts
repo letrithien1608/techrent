@@ -40,6 +40,8 @@ describe('UsersService', () => {
     isBlacklisted: false,
     blacklistReason: null,
     blacklistedAt: null,
+    avatarPublicId: null,
+    avatarUrl: null,
   };
 
   beforeEach(() => {
@@ -345,6 +347,7 @@ describe('UsersService', () => {
         kycVerified: false,
         emailVerifiedAt: baseUser.emailVerifiedAt,
         hasPassword: true,
+        avatarUrl: null,
         createdAt: baseUser.createdAt,
         isBlacklisted: baseUser.isBlacklisted,
         blacklistReason: baseUser.blacklistReason,

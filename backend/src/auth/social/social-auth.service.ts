@@ -58,6 +58,7 @@ export interface TicketData {
   email: string | null;
   emailVerified: boolean;
   name: string | null;
+  avatarUrl?: string | null;
 }
 
 export interface SocialAccountsOverview {
@@ -216,6 +217,7 @@ export class SocialAuthService {
       email: profile.email,
       emailVerified: profile.emailVerified,
       name: profile.name,
+      avatarUrl: profile.avatarUrl ?? null,
     };
     await this.redis.client.set(
       TICKET_PREFIX + ticket,
@@ -334,7 +336,29 @@ export class SocialAuthService {
     });
 
     await this.redis.client.del(TICKET_PREFIX + dto.ticket);
-    return this.authService.issueSession(user);
+    return this.authService.issueSession(
+      await this.copyProviderAvatar(user, ticket.avatarUrl),
+    );
+  }
+
+  /**
+   * Lần đầu đăng ký: chép ảnh Google/Facebook sang Cloudinary của TechRent
+   * (không lưu link ngoài). Chỉ nhận URL https; lỗi thì bỏ qua — tài khoản
+   * vẫn tạo xong, người dùng tự đổi ảnh sau.
+   */
+  private async copyProviderAvatar(
+    user: User,
+    avatarUrl: string | null | undefined,
+  ): Promise<User> {
+    if (!avatarUrl || !avatarUrl.startsWith('https://')) return user;
+    try {
+      return await this.authService.setAvatarFromRemote(user.id, avatarUrl);
+    } catch {
+      this.logger.warn(
+        `Không chép được ảnh đại diện từ mạng xã hội cho user ${user.id}`,
+      );
+      return user;
+    }
   }
 
   /** Đổi mã 1 lần (60 s) lấy access/refresh token — giống hệt đăng nhập thường. */

@@ -136,6 +136,11 @@ model User {
   kycCccdFrontPublicId String? @map("kyc_cccd_front_public_id")
   kycCccdBackPublicId  String? @map("kyc_cccd_back_public_id")
   kycSelfiePublicId    String? @map("kyc_selfie_public_id")
+  // Ảnh đại diện (04/11) — ảnh CÔNG KHAI (khác hẳn ảnh eKYC riêng tư ở trên):
+  // thư mục Cloudinary `techrent/avatars`, resize 256x256. Lưu cả public_id (để
+  // xoá ảnh cũ) lẫn URL hiển thị (đọc thẳng, không cần ký).
+  avatarPublicId    String?  @map("avatar_public_id")
+  avatarUrl         String?  @map("avatar_url")
   emailVerifiedAt   DateTime? @map("email_verified_at")
   // Danh sách đen (mở rộng 22/10 buổi 6) — admin đánh dấu khi khách chiếm giữ/
   // không trả thiết bị. Chặn NGAY tại `BookingsService.create()`. Chặn "theo

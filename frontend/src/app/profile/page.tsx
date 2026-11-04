@@ -72,7 +72,7 @@ export default function ProfilePage() {
   const profileQuery = useQuery({ queryKey: ["profile", "me"], queryFn: fetchMyProfile, enabled: ready });
   useEffect(() => {
     const p = profileQuery.data;
-    if (p) updateUser({ name: p.name, phone: p.phone, cccdMasked: p.cccdMasked, kycVerified: p.kycVerified, hasPassword: p.hasPassword, createdAt: p.createdAt });
+    if (p) updateUser({ name: p.name, phone: p.phone, cccdMasked: p.cccdMasked, kycVerified: p.kycVerified, hasPassword: p.hasPassword, avatarUrl: p.avatarUrl, createdAt: p.createdAt });
   }, [profileQuery.data, updateUser]);
 
   if (!ready) return null;

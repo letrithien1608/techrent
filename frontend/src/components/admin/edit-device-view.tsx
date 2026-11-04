@@ -48,7 +48,7 @@ export function EditDeviceView({ deviceId }: { deviceId: string }) {
         <AdminBackButton href="/admin/devices" label="Quay lại danh sách thiết bị" />
         <DeviceForm device={device} />
       </div>
-      <div className="max-w-2xl border-t border-border/60 pt-6">
+      <div className="max-w-4xl border-t border-border/60 pt-6">
         <h2 className="font-heading text-base font-semibold">Ảnh thiết bị</h2>
         <div className="mt-3">
           <DeviceImageManager device={device} />

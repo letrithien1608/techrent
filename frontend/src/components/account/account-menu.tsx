@@ -81,7 +81,7 @@ export function AccountMenu({ user }: { user: AuthUser }) {
         aria-label={`Menu tài khoản của ${user.name}`}
         className="group flex h-10 items-center gap-1.5 rounded-full p-0.5 pr-2 outline-none transition-colors hover:bg-muted/60 focus-visible:ring-3 focus-visible:ring-ring/50 data-popup-open:bg-muted/60"
       >
-        <UserAvatar name={user.name} />
+        <UserAvatar name={user.name} src={user.avatarUrl} />
         <ChevronDown
           aria-hidden
           className="size-4 text-muted-foreground transition-transform group-data-popup-open:rotate-180"
@@ -104,7 +104,7 @@ export function AccountMenu({ user }: { user: AuthUser }) {
                 className="w-[280px] max-w-[calc(100vw-1.5rem)] origin-(--transform-origin) overflow-hidden rounded-2xl border border-border bg-popover text-popover-foreground shadow-2xl shadow-black/40 outline-none"
               >
                 <div className="flex items-center gap-3 border-b border-border bg-gradient-to-br from-primary/10 to-transparent px-4 py-4">
-                  <UserAvatar name={user.name} size="lg" />
+                  <UserAvatar name={user.name} src={user.avatarUrl} size="lg" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[15px] font-semibold" title={user.name}>
                       {user.name}

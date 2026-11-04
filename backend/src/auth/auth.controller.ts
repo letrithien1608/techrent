@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -9,10 +10,14 @@ import {
   Post,
   Query,
   Req,
+  UploadedFile,
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import {
+  FileFieldsInterceptor,
+  FileInterceptor,
+} from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { Throttle, minutes } from '@nestjs/throttler';
 import { Request } from 'express';
@@ -148,6 +153,30 @@ export class AuthController {
       }
     }
     return this.authService.submitKycVerification(user.userId, files);
+  }
+
+  /**
+   * Đổi ảnh đại diện của CHÍNH mình (field `avatar`). Multer chặn cứng 10MB
+   * để bảo vệ bộ nhớ; giới hạn thật 5MB + loại JPG/PNG/WEBP kiểm tra lại ở
+   * `AuthService.updateAvatar()` theo nội dung file (không tin frontend).
+   */
+  @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
+  @Patch('avatar')
+  @UseInterceptors(
+    FileInterceptor('avatar', { limits: { fileSize: 10 * 1024 * 1024 } }),
+  )
+  updateAvatar(
+    @CurrentUser() user: RequestUser,
+    @UploadedFile() file: { buffer: Buffer; size: number } | undefined,
+  ) {
+    return this.authService.updateAvatar(user.userId, file);
+  }
+
+  @ApiBearerAuth()
+  @Delete('avatar')
+  removeAvatar(@CurrentUser() user: RequestUser) {
+    return this.authService.removeAvatar(user.userId);
   }
 
   @Public()

@@ -1,4 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import { UploadService } from '../upload/upload.service';
+import { MIN_DEVICE_IMAGES } from './dto/create-device.dto';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
@@ -42,12 +49,18 @@ export type DeviceWithCategory = Prisma.DeviceGetPayload<
   typeof deviceWithCategory
 >;
 
+/** Thư mục Cloudinary của ảnh thiết bị (seed + ảnh admin tải lên). */
+const DEVICE_IMAGE_FOLDER = 'techrent/devices';
+
 @Injectable()
 export class DevicesService {
+  private readonly logger = new Logger(DevicesService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly realtimeGateway: RealtimeGateway,
     private readonly devicesCacheService: DevicesCacheService,
+    private readonly uploadService: UploadService,
   ) {}
 
   async findAll(
@@ -235,6 +248,69 @@ export class DevicesService {
   }
 
   /** Gắn thêm ảnh mới (từ Cloudinary) vào danh sách ảnh hiện có của thiết bị. */
+  /**
+   * Lưu bộ ảnh đã sắp xếp (ảnh đầu = ảnh đại diện). Chỉ nhận ảnh đã có của
+   * thiết bị hoặc ảnh Cloudinary trong `techrent/devices` (không nhận link
+   * ngoài). Lưu DB + xoá cache XONG mới xoá trên Cloudinary các ảnh bị bỏ (và
+   * ảnh tải lên trong phiên nhưng bỏ trước khi lưu), trừ ảnh thiết bị khác
+   * còn dùng. Lỗi xoá Cloudinary chỉ log, không làm hỏng thao tác lưu.
+   */
+  async replaceImages(
+    id: string,
+    images: string[],
+    discardedUploads: string[] = [],
+  ): Promise<DeviceWithCategory> {
+    const device = await this.findByIdOrThrow(id);
+    if (new Set(images).size !== images.length) {
+      throw new BadRequestException('Danh sách ảnh bị trùng');
+    }
+    if (images.length < MIN_DEVICE_IMAGES) {
+      throw new BadRequestException(
+        `Thiết bị cần tối thiểu ${MIN_DEVICE_IMAGES} ảnh`,
+      );
+    }
+    for (const url of images) {
+      if (
+        !device.images.includes(url) &&
+        !this.uploadService.publicIdFromUrl(url, DEVICE_IMAGE_FOLDER)
+      ) {
+        throw new BadRequestException(
+          'Ảnh không hợp lệ — hãy tải ảnh lên qua form quản trị',
+        );
+      }
+    }
+
+    await this.prisma.device.update({ where: { id }, data: { images } });
+    await this.devicesCacheService.invalidateAll();
+
+    const removed = new Set(
+      [...device.images, ...discardedUploads].filter(
+        (url) => !images.includes(url),
+      ),
+    );
+    for (const url of removed) {
+      await this.deleteDeviceImageIfUnused(url);
+    }
+    return this.findByIdOrThrow(id);
+  }
+
+  private async deleteDeviceImageIfUnused(url: string): Promise<void> {
+    const publicId = this.uploadService.publicIdFromUrl(
+      url,
+      DEVICE_IMAGE_FOLDER,
+    );
+    if (!publicId) return;
+    const stillUsed = await this.prisma.device.count({
+      where: { images: { has: url } },
+    });
+    if (stillUsed > 0) return;
+    try {
+      await this.uploadService.deletePublicImage(publicId);
+    } catch {
+      this.logger.warn(`Không xoá được ảnh thiết bị cũ ${publicId}`);
+    }
+  }
+
   async addImages(id: string, imageUrls: string[]): Promise<Device> {
     const device = await this.findByIdOrThrow(id);
     const updated = await this.prisma.device.update({

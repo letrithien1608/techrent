@@ -59,6 +59,7 @@ describe('SocialAuthService', () => {
   let authService: {
     createCustomerAccount: jest.Mock;
     issueSession: jest.Mock;
+    setAvatarFromRemote: jest.Mock;
   };
   let usersService: {
     findByEmailInsensitive: jest.Mock;
@@ -103,6 +104,11 @@ describe('SocialAuthService', () => {
       createCustomerAccount: jest.fn(async (input) => ({
         id: 'new-user',
         email: input.email,
+      })),
+      setAvatarFromRemote: jest.fn(async (id: string) => ({
+        id,
+        avatarUrl:
+          'https://res.cloudinary.com/demo/image/upload/v1/techrent/avatars/x.jpg',
       })),
       issueSession: jest.fn(async (user) => ({
         accessToken: 'access',
@@ -459,6 +465,46 @@ describe('SocialAuthService', () => {
       expect(createOrder).toBeLessThan(sessionOrder);
       expect(result.accessToken).toBe('access');
       expect(redis.ttlOf('oauth:ticket:')).toBeNull();
+    });
+
+    it('có ảnh Google → chép sang Cloudinary (setAvatarFromRemote) SAU khi tạo user, token phát kèm avatar mới', async () => {
+      const ticket = await ticketFor({
+        ...googleProfile,
+        avatarUrl: 'https://lh3.googleusercontent.com/a/abc=s256-c',
+      });
+      await service.register({ ...form, ticket });
+
+      expect(authService.setAvatarFromRemote).toHaveBeenCalledWith(
+        'new-user',
+        'https://lh3.googleusercontent.com/a/abc=s256-c',
+      );
+      expect(authService.issueSession).toHaveBeenCalledWith(
+        expect.objectContaining({
+          avatarUrl: expect.stringContaining('techrent/avatars'),
+        }),
+      );
+    });
+
+    it('chép ảnh lỗi → vẫn đăng ký xong (không có avatar)', async () => {
+      authService.setAvatarFromRemote.mockRejectedValue(new Error('cdn'));
+      const ticket = await ticketFor({
+        ...googleProfile,
+        avatarUrl: 'https://lh3.googleusercontent.com/a/abc',
+      });
+      await expect(
+        service.register({ ...form, ticket }),
+      ).resolves.toMatchObject({
+        accessToken: 'access',
+      });
+    });
+
+    it('không có ảnh hoặc link không phải https → không chép', async () => {
+      const ticket = await ticketFor({
+        ...googleProfile,
+        avatarUrl: 'http://insecure.example.com/a.jpg',
+      });
+      await service.register({ ...form, ticket });
+      expect(authService.setAvatarFromRemote).not.toHaveBeenCalled();
     });
 
     it('phiếu đã dùng → 410, không tạo thêm user', async () => {

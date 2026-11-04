@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { CalendarDays, CircleDollarSign, PackageCheck, ShieldAlert, ShieldCheck, Ticket, UserCheck } from "lucide-react";
 import { cn } from "cn";
-import { UserAvatar } from "@/components/account/user-avatar";
+import { AvatarEditor } from "./avatar-editor";
 import { isIdentityVerified } from "@/components/account/account-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { MyProfile } from "@/lib/auth-api";
@@ -35,7 +35,7 @@ export function ProfileHeaderCard({ user, profile }: { user: AuthUser; profile?:
     <section className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] shadow-2xl shadow-black/20 backdrop-blur-xl">
       <div className="bg-gradient-to-br from-primary/15 via-transparent to-violet-500/10 p-5 sm:p-8">
         <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
-          <UserAvatar name={user.name} size="xl" className="ring-4" />
+          <AvatarEditor user={user} />
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">{user.name}</h1>
             <p className="mt-1 truncate text-[15px] text-muted-foreground">{user.email}</p>

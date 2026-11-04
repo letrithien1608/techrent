@@ -151,7 +151,8 @@ describe('UploadService', () => {
       uploadMock.mockImplementation((_source, _options, callback) => {
         callback(null, {
           public_id: 'techrent/kyc/kyc-user-1-cccd-front',
-          secure_url: 'https://res.cloudinary.com/d7mchans/image/private/xxx.jpg',
+          secure_url:
+            'https://res.cloudinary.com/d7mchans/image/private/xxx.jpg',
         });
       });
 
@@ -164,7 +165,9 @@ describe('UploadService', () => {
 
       expect(publicId).toBe('techrent/kyc/kyc-user-1-cccd-front');
       const [source, options] = uploadMock.mock.calls[0];
-      expect(source).toBe(`data:image/jpeg;base64,${buffer.toString('base64')}`);
+      expect(source).toBe(
+        `data:image/jpeg;base64,${buffer.toString('base64')}`,
+      );
       expect(options).toEqual({
         folder: 'techrent/kyc',
         type: 'private',
@@ -180,7 +183,11 @@ describe('UploadService', () => {
       });
 
       await expect(
-        service.uploadKycImage(Buffer.from('x'), 'image/png', 'kyc-user-1-selfie'),
+        service.uploadKycImage(
+          Buffer.from('x'),
+          'image/png',
+          'kyc-user-1-selfie',
+        ),
       ).rejects.toThrow('Cloudinary quota exceeded');
     });
   });

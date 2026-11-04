@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ShieldAlert, WifiOff } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/account/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -21,10 +21,6 @@ import { fetchUsers } from "@/lib/admin-api";
 import { formatDateTimeVi } from "@/lib/device-format";
 
 const PAGE_SIZE = 10;
-
-function initialsOf(name: string): string {
-  return name.trim().charAt(0).toUpperCase() || "?";
-}
 
 export default function AdminBlacklistPage() {
   const queryClient = useQueryClient();
@@ -92,11 +88,13 @@ export default function AdminBlacklistPage() {
                   <TableRow key={user.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <Avatar className="size-8 shrink-0">
-                          <AvatarFallback className="bg-gradient-to-br from-destructive to-amber-500 text-xs font-semibold text-white">
-                            {initialsOf(user.name)}
-                          </AvatarFallback>
-                        </Avatar>
+                        <UserAvatar
+                          name={user.name}
+                          src={user.avatarUrl}
+                          size="xs"
+                          className="text-white ring-0"
+                          gradientClassName="from-destructive to-amber-500"
+                        />
                         <div className="max-w-[200px] min-w-0">
                           <p className="truncate font-medium">{user.name}</p>
                           <p className="truncate text-xs text-muted-foreground">

@@ -17,6 +17,10 @@ describe('DevicesService', () => {
     category: { findUnique: jest.Mock };
   };
   let realtimeGateway: { emitDeviceStatusChanged: jest.Mock };
+  let uploadService: {
+    publicIdFromUrl: jest.Mock;
+    deletePublicImage: jest.Mock;
+  };
   let devicesCacheService: {
     buildKey: jest.Mock;
     get: jest.Mock;
@@ -48,6 +52,17 @@ describe('DevicesService', () => {
   };
 
   beforeEach(() => {
+    // Giả lập đúng quy tắc thật: chỉ URL Cloudinary của project trong techrent/devices mới có public_id.
+    uploadService = {
+      publicIdFromUrl: jest.fn((url: string) => {
+        const m =
+          /res\.cloudinary\.com\/demo\/image\/upload\/v1\/(techrent\/devices\/[^.]+)\./.exec(
+            url,
+          );
+        return m ? m[1] : null;
+      }),
+      deletePublicImage: jest.fn().mockResolvedValue(undefined),
+    };
     prisma = {
       device: {
         findMany: jest.fn(),
@@ -87,6 +102,7 @@ describe('DevicesService', () => {
       prisma as unknown as PrismaService,
       realtimeGateway as any,
       devicesCacheService as any,
+      uploadService as any,
     );
   });
 
@@ -502,6 +518,100 @@ describe('DevicesService', () => {
         brand: 'Apple',
         accessories: [{ name: 'Bộ sạc', quantity: 1 }],
       }),
+    });
+  });
+
+  describe('replaceImages — sửa ảnh thiết bị', () => {
+    const cdn = (n: string) =>
+      `https://res.cloudinary.com/demo/image/upload/v1/techrent/devices/${n}.jpg`;
+    const oldImages = ['a', 'b', 'c', 'd', 'e'].map(cdn);
+
+    beforeEach(() => {
+      prisma.device.findUnique.mockResolvedValue({
+        ...baseDevice,
+        images: oldImages,
+      });
+      prisma.device.update.mockResolvedValue(baseDevice);
+      prisma.device.count.mockResolvedValue(0);
+    });
+
+    it('đổi thứ tự (đặt ảnh đại diện) → lưu đúng thứ tự, xoá cache, không xoá ảnh nào', async () => {
+      const reordered = [oldImages[3], ...oldImages.filter((_, i) => i !== 3)];
+      await service.replaceImages('device-1', reordered);
+
+      expect(prisma.device.update).toHaveBeenCalledWith({
+        where: { id: 'device-1' },
+        data: { images: reordered },
+      });
+      expect(devicesCacheService.invalidateAll).toHaveBeenCalled();
+      expect(uploadService.deletePublicImage).not.toHaveBeenCalled();
+    });
+
+    it('ảnh bị bỏ được xoá trên Cloudinary SAU khi lưu thành công', async () => {
+      const next = [...oldImages.slice(1), cdn('moi')];
+      await service.replaceImages('device-1', next);
+
+      expect(uploadService.deletePublicImage).toHaveBeenCalledWith(
+        'techrent/devices/a',
+      );
+      const saveOrder = prisma.device.update.mock.invocationCallOrder[0];
+      const deleteOrder =
+        uploadService.deletePublicImage.mock.invocationCallOrder[0];
+      expect(saveOrder).toBeLessThan(deleteOrder);
+    });
+
+    it('lưu DB lỗi → KHÔNG xoá ảnh nào', async () => {
+      prisma.device.update.mockRejectedValue(new Error('db down'));
+      await expect(
+        service.replaceImages('device-1', [...oldImages.slice(1), cdn('moi')]),
+      ).rejects.toThrow('db down');
+      expect(uploadService.deletePublicImage).not.toHaveBeenCalled();
+    });
+
+    it('ảnh tải lên trong phiên nhưng bỏ trước khi lưu cũng bị xoá', async () => {
+      await service.replaceImages('device-1', oldImages, [cdn('bo-ngang')]);
+      expect(uploadService.deletePublicImage).toHaveBeenCalledWith(
+        'techrent/devices/bo-ngang',
+      );
+    });
+
+    it('ảnh còn được thiết bị khác dùng → không xoá', async () => {
+      prisma.device.count.mockResolvedValue(1);
+      await service.replaceImages('device-1', [
+        ...oldImages.slice(1),
+        cdn('moi'),
+      ]);
+      expect(uploadService.deletePublicImage).not.toHaveBeenCalled();
+    });
+
+    it('dưới 5 ảnh → 400, không lưu', async () => {
+      await expect(
+        service.replaceImages('device-1', oldImages.slice(0, 4)),
+      ).rejects.toThrow('tối thiểu 5 ảnh');
+      expect(prisma.device.update).not.toHaveBeenCalled();
+    });
+
+    it('link ngoài / ảnh không thuộc techrent/devices → 400', async () => {
+      await expect(
+        service.replaceImages('device-1', [
+          ...oldImages.slice(1),
+          'https://evil.example.com/x.jpg',
+        ]),
+      ).rejects.toThrow('Ảnh không hợp lệ');
+      expect(prisma.device.update).not.toHaveBeenCalled();
+    });
+
+    it('trùng ảnh → 400', async () => {
+      await expect(
+        service.replaceImages('device-1', [...oldImages, oldImages[0]]),
+      ).rejects.toThrow('trùng');
+    });
+
+    it('lỗi xoá Cloudinary không làm hỏng thao tác lưu', async () => {
+      uploadService.deletePublicImage.mockRejectedValue(new Error('cdn'));
+      await expect(
+        service.replaceImages('device-1', [...oldImages.slice(1), cdn('moi')]),
+      ).resolves.toBeDefined();
     });
   });
 });

@@ -1,5 +1,6 @@
 "use client";
 
+import { UserAvatar } from "@/components/account/user-avatar";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -13,9 +14,7 @@ function TestimonialCard({ review }: { review: FeaturedReview }) {
       <StarRating rating={review.rating} size={16} />
       <p className="line-clamp-4 text-sm text-muted-foreground">&ldquo;{review.comment}&rdquo;</p>
       <div className="mt-auto flex items-center gap-3 pt-2">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-          {review.reviewerName.charAt(0)}
-        </div>
+        <UserAvatar name={review.reviewerName} src={review.reviewerAvatarUrl} size="lg" className="size-10 text-sm ring-0" />
         <div className="min-w-0">
           <p className="flex items-center gap-1 text-sm font-medium text-foreground">
             {review.reviewerName}

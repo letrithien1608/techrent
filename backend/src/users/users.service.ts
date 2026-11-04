@@ -25,6 +25,8 @@ export interface SafeUser {
   emailVerifiedAt: Date | null;
   /** `false` = tài khoản đăng ký bằng Google/Facebook chưa đặt mật khẩu. */
   hasPassword: boolean;
+  /** Ảnh đại diện CÔNG KHAI (Cloudinary techrent/avatars), `null` = hiện chữ viết tắt. */
+  avatarUrl: string | null;
   createdAt: Date;
   isBlacklisted: boolean;
   blacklistReason: string | null;
@@ -162,6 +164,8 @@ export class UsersService {
       kycCccdFrontPublicId?: string;
       kycCccdBackPublicId?: string;
       kycSelfiePublicId?: string;
+      avatarPublicId?: string | null;
+      avatarUrl?: string | null;
     },
     currentUserId: string,
   ): Promise<User> {
@@ -295,6 +299,7 @@ export class UsersService {
       ),
       emailVerifiedAt: user.emailVerifiedAt,
       hasPassword: !!user.passwordHash,
+      avatarUrl: user.avatarUrl,
       createdAt: user.createdAt,
       isBlacklisted: user.isBlacklisted,
       blacklistReason: user.blacklistReason,

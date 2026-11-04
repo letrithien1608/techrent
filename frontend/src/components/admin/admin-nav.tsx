@@ -103,7 +103,7 @@ export function AdminAccountMenu({ user, compact = false }: { user: AuthUser; co
           compact && "w-auto justify-center",
         )}
       >
-        <UserAvatar name={user.name} size="md" />
+        <UserAvatar name={user.name} src={user.avatarUrl} size="md" />
         {!compact && (
           <>
             <span className="min-w-0 flex-1">

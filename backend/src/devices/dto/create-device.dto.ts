@@ -18,6 +18,9 @@ import {
 import { SpecSheetEntryDto } from './spec-sheet-entry.dto';
 import { AccessoryDto } from './accessory.dto';
 
+/** Số ảnh tối thiểu của 1 thiết bị — dùng chung DTO tạo/sửa/sắp xếp ảnh. */
+export const MIN_DEVICE_IMAGES = 5;
+
 /** Serial/IMEI: 3–60 ký tự chữ, số, gạch ngang, gạch chéo, khoảng trắng. */
 export const SERIAL_PATTERN = /^[A-Za-z0-9][A-Za-z0-9\-/ ]{2,59}$/;
 export const SERIAL_MESSAGE =
@@ -115,7 +118,9 @@ export class CreateDeviceDto {
   })
   @IsOptional()
   @IsArray()
-  @ArrayMinSize(5, { message: 'Thiết bị cần tối thiểu 5 ảnh' })
+  @ArrayMinSize(MIN_DEVICE_IMAGES, {
+    message: `Thiết bị cần tối thiểu ${MIN_DEVICE_IMAGES} ảnh`,
+  })
   @IsString({ each: true })
   images?: string[];
 }

@@ -147,3 +147,18 @@ export async function fetchMyProfile(): Promise<MyProfile> {
   const { data } = await api.get<MyProfile>("/auth/me");
   return data;
 }
+
+// ---- Ảnh đại diện (công khai, Cloudinary techrent/avatars) ----
+
+/** Gửi ảnh đã cắt vuông; backend kiểm tra lại loại/kích thước rồi resize 256x256. */
+export async function uploadAvatarRequest(image: Blob): Promise<AuthUser> {
+  const form = new FormData();
+  form.append("avatar", image, "avatar.jpg");
+  const { data } = await api.patch<AuthUser>("/auth/avatar", form);
+  return data;
+}
+
+export async function removeAvatarRequest(): Promise<AuthUser> {
+  const { data } = await api.delete<AuthUser>("/auth/avatar");
+  return data;
+}

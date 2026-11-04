@@ -41,6 +41,8 @@ export interface PublicReview {
   createdAt: Date;
   editedAt: Date | null;
   reviewerName: string;
+  /** Ảnh đại diện CÔNG KHAI của người đánh giá (null = hiện chữ cái đầu). */
+  reviewerAvatarUrl: string | null;
   /** Luôn true: chỉ người đã thuê và trả thiết bị mới đánh giá được. */
   verifiedRental: true;
   /** Ngày kết thúc đơn thuê làm căn cứ đánh giá. */
@@ -77,7 +79,7 @@ export interface ReviewEligibility {
 }
 
 const publicInclude = {
-  user: { select: { name: true } },
+  user: { select: { name: true, avatarUrl: true } },
   booking: { select: { endTime: true } },
 } satisfies Prisma.ReviewInclude;
 
@@ -124,6 +126,7 @@ function toPublic(review: ReviewWithAuthor): PublicReview {
     createdAt: review.createdAt,
     editedAt: review.editedAt,
     reviewerName: maskReviewerName(review.user.name),
+    reviewerAvatarUrl: review.user.avatarUrl,
     verifiedRental: true,
     rentedAt: review.booking.endTime,
   };

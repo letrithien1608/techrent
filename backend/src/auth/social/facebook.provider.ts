@@ -17,6 +17,7 @@ interface FacebookMe {
   id: string;
   name?: string;
   email?: string;
+  picture?: { data?: { url?: string; is_silhouette?: boolean } };
 }
 
 /** Manual login flow (developers.facebook.com/docs/facebook-login/guides/advanced/manual-flow). */
@@ -73,7 +74,7 @@ export class FacebookOAuthProvider implements SocialOAuthProvider {
       .update(token.access_token)
       .digest('hex');
     const meParams = new URLSearchParams({
-      fields: 'id,name,email',
+      fields: 'id,name,email,picture.width(256).height(256)',
       access_token: token.access_token,
       appsecret_proof: proof,
     });
@@ -92,6 +93,11 @@ export class FacebookOAuthProvider implements SocialOAuthProvider {
       email: me.email ?? null,
       emailVerified: !!me.email,
       name: me.name ?? null,
+      // Bỏ qua ảnh bóng xám mặc định của Facebook (người dùng chưa đặt ảnh).
+      avatarUrl:
+        me.picture?.data?.url && !me.picture.data.is_silhouette
+          ? me.picture.data.url
+          : null,
     };
   }
 }

@@ -36,7 +36,11 @@ describe('AuthService', () => {
     sendVerificationEmail: jest.Mock;
     sendPasswordResetEmail: jest.Mock;
   };
-  let uploadService: { uploadKycImage: jest.Mock };
+  let uploadService: {
+    uploadKycImage: jest.Mock;
+    uploadAvatar: jest.Mock;
+    deletePublicImage: jest.Mock;
+  };
 
   const baseUser: User = {
     id: 'user-1',
@@ -57,6 +61,8 @@ describe('AuthService', () => {
     isBlacklisted: false,
     blacklistReason: null,
     blacklistedAt: null,
+    avatarPublicId: null,
+    avatarUrl: null,
   };
 
   // 32 byte (64 ký tự hex) — đúng chuẩn AES-256 đọc từ CCCD_ENCRYPTION_KEY.
@@ -120,6 +126,11 @@ describe('AuthService', () => {
     };
     uploadService = {
       uploadKycImage: jest.fn().mockResolvedValue('kyc/mock-public-id'),
+      uploadAvatar: jest.fn().mockResolvedValue({
+        publicId: 'techrent/avatars/new',
+        url: 'https://res.cloudinary.com/demo/image/upload/v2/techrent/avatars/new.jpg',
+      }),
+      deletePublicImage: jest.fn().mockResolvedValue(undefined),
     };
 
     service = new AuthService(
@@ -873,6 +884,103 @@ describe('AuthService', () => {
       await service.verifyEmail('valid-token');
 
       expect(usersService.markEmailVerified).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('ảnh đại diện', () => {
+    const PNG = Buffer.from([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0,
+    ]);
+    const withOld = {
+      ...baseUser,
+      avatarPublicId: 'techrent/avatars/old',
+      avatarUrl:
+        'https://res.cloudinary.com/demo/image/upload/v1/techrent/avatars/old.jpg',
+    };
+
+    beforeEach(() => {
+      usersService.findByIdOrThrow.mockResolvedValue(withOld);
+      usersService.update.mockImplementation((_id, data) => ({
+        ...withOld,
+        ...data,
+      }));
+    });
+
+    it('đổi ảnh: upload mới → lưu DB → RỒI mới xoá ảnh cũ', async () => {
+      await service.updateAvatar(baseUser.id, {
+        buffer: PNG,
+        size: PNG.length,
+      });
+
+      expect(uploadService.uploadAvatar).toHaveBeenCalledWith(
+        { buffer: PNG, mimetype: 'image/png' },
+        expect.stringMatching(/^user-user-1-/),
+      );
+      expect(usersService.update).toHaveBeenCalledWith(
+        baseUser.id,
+        {
+          avatarPublicId: 'techrent/avatars/new',
+          avatarUrl: expect.stringContaining('avatars/new'),
+        },
+        baseUser.id,
+      );
+      expect(uploadService.deletePublicImage).toHaveBeenCalledWith(
+        'techrent/avatars/old',
+      );
+      expect(usersService.update.mock.invocationCallOrder[0]).toBeLessThan(
+        uploadService.deletePublicImage.mock.invocationCallOrder[0],
+      );
+    });
+
+    it('lưu DB lỗi → xoá ảnh VỪA upload, giữ nguyên ảnh cũ', async () => {
+      usersService.update.mockRejectedValue(new Error('db'));
+      await expect(
+        service.updateAvatar(baseUser.id, { buffer: PNG, size: PNG.length }),
+      ).rejects.toThrow('db');
+      expect(uploadService.deletePublicImage).toHaveBeenCalledWith(
+        'techrent/avatars/new',
+      );
+      expect(uploadService.deletePublicImage).not.toHaveBeenCalledWith(
+        'techrent/avatars/old',
+      );
+    });
+
+    it('file không phải ảnh (theo nội dung) → 400, không upload', async () => {
+      const fake = Buffer.from('%PDF-1.7');
+      await expect(
+        service.updateAvatar(baseUser.id, { buffer: fake, size: fake.length }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(uploadService.uploadAvatar).not.toHaveBeenCalled();
+    });
+
+    it('vượt 5MB → 400, không upload', async () => {
+      await expect(
+        service.updateAvatar(baseUser.id, {
+          buffer: PNG,
+          size: 5 * 1024 * 1024 + 1,
+        }),
+      ).rejects.toThrow('vượt quá 5MB');
+      expect(uploadService.uploadAvatar).not.toHaveBeenCalled();
+    });
+
+    it('xoá ảnh: DB về null trước, rồi xoá trên Cloudinary', async () => {
+      const result = await service.removeAvatar(baseUser.id);
+      expect(usersService.update).toHaveBeenCalledWith(
+        baseUser.id,
+        { avatarPublicId: null, avatarUrl: null },
+        baseUser.id,
+      );
+      expect(uploadService.deletePublicImage).toHaveBeenCalledWith(
+        'techrent/avatars/old',
+      );
+      expect(result).toBeDefined();
+    });
+
+    it('lỗi xoá ảnh cũ trên Cloudinary không làm hỏng việc đổi ảnh', async () => {
+      uploadService.deletePublicImage.mockRejectedValue(new Error('cdn'));
+      await expect(
+        service.updateAvatar(baseUser.id, { buffer: PNG, size: PNG.length }),
+      ).resolves.toBeDefined();
     });
   });
 });

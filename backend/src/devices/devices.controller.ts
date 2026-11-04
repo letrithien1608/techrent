@@ -10,16 +10,20 @@ import {
   ParseFilePipe,
   Patch,
   Post,
+  Put,
   Query,
+  UploadedFile,
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
-import { FilesInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../generated/prisma/client';
+import { assertAllowedImage } from '../common/image-file.util';
 import { UploadService } from '../upload/upload.service';
+import { ReplaceDeviceImagesDto } from './dto/replace-device-images.dto';
 import { CreateDeviceDto } from './dto/create-device.dto';
 import { ListDevicesQueryDto } from './dto/list-devices-query.dto';
 import { UpdateDeviceDto } from './dto/update-device.dto';
@@ -76,6 +80,37 @@ export class DevicesController {
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string) {
     return this.devicesService.remove(id);
+  }
+
+  /**
+   * Form "Sửa ảnh thiết bị": tải TỪNG ảnh một (frontend hiện tiến độ từng
+   * ảnh), CHƯA gắn vào thiết bị — chỉ gắn khi bấm Lưu (`PUT :id/images`).
+   * Kiểm tra lại loại JPG/PNG/WEBP theo nội dung + ≤ 5MB ở backend.
+   */
+  @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
+  @Roles(Role.staff, Role.admin)
+  @Post('images/upload')
+  @UseInterceptors(
+    FileInterceptor('image', { limits: { fileSize: 10 * 1024 * 1024 } }),
+  )
+  async uploadStagedImage(
+    @UploadedFile() file: { buffer: Buffer; size: number } | undefined,
+  ) {
+    const type = assertAllowedImage(file, MAX_IMAGE_SIZE_BYTES);
+    return { url: await this.uploadService.uploadImage(file!.buffer, type) };
+  }
+
+  /** Lưu bộ ảnh đã sắp xếp — ảnh đầu là ảnh đại diện; ảnh bị bỏ xoá trên Cloudinary SAU khi lưu. */
+  @ApiBearerAuth()
+  @Roles(Role.staff, Role.admin)
+  @Put(':id/images')
+  replaceImages(@Param('id') id: string, @Body() dto: ReplaceDeviceImagesDto) {
+    return this.devicesService.replaceImages(
+      id,
+      dto.images,
+      dto.discardedUploads,
+    );
   }
 
   @ApiBearerAuth()

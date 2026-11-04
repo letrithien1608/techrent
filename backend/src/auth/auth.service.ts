@@ -16,6 +16,7 @@ import {
   hashCccd,
   maskCccd,
 } from '../common/crypto/cccd-crypto.util';
+import { assertAllowedImage } from '../common/image-file.util';
 import { translateUniqueConstraintError } from '../common/prisma-error.util';
 import { Role, SocialProvider, User } from '../generated/prisma/client';
 import { MailService } from '../mail/mail.service';
@@ -35,6 +36,7 @@ import {
 } from './interfaces/jwt-payload.interface';
 
 const PASSWORD_SALT_ROUNDS = 10;
+export const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 const INVALID_CREDENTIALS_MESSAGE = 'Email hoặc mật khẩu không đúng';
 const INVALID_VERIFICATION_TOKEN_MESSAGE =
   'Token xác thực email không hợp lệ hoặc đã hết hạn';
@@ -371,6 +373,79 @@ export class AuthService {
 
     await this.blacklistTokenUntilExpiry(accessToken);
     await this.usersService.updateRefreshTokenHash(user.id, null);
+  }
+
+  /**
+   * Đổi ảnh đại diện của CHÍNH người gọi (`userId` lấy từ token, không có
+   * tham số id nào để đổi hộ người khác). Kiểm tra lại loại file theo nội dung
+   * + kích thước ở backend, upload lên `techrent/avatars` (256x256), lưu DB
+   * thành công RỒI MỚI xoá ảnh cũ; lưu DB lỗi thì xoá ảnh vừa upload.
+   */
+  async updateAvatar(
+    userId: string,
+    file: { buffer: Buffer; size?: number } | undefined,
+  ): Promise<SafeUser> {
+    const type = assertAllowedImage(file, MAX_AVATAR_BYTES);
+    const user = await this.usersService.findByIdOrThrow(userId);
+    const uploaded = await this.uploadService.uploadAvatar(
+      { buffer: file!.buffer, mimetype: type },
+      `user-${userId}-${randomUUID()}`,
+    );
+    return this.saveAvatar(user, uploaded);
+  }
+
+  /** Ảnh Google/Facebook lúc đăng ký lần đầu — Cloudinary tự tải về, không dùng link ngoài. */
+  async setAvatarFromRemote(userId: string, remoteUrl: string): Promise<User> {
+    const user = await this.usersService.findByIdOrThrow(userId);
+    const uploaded = await this.uploadService.uploadAvatar(
+      { remoteUrl },
+      `user-${userId}-${randomUUID()}`,
+    );
+    await this.saveAvatar(user, uploaded);
+    return this.usersService.findByIdOrThrow(userId);
+  }
+
+  /** Xoá ảnh đại diện → quay về chữ viết tắt. Xoá trên Cloudinary SAU khi DB đã cập nhật. */
+  async removeAvatar(userId: string): Promise<SafeUser> {
+    const user = await this.usersService.findByIdOrThrow(userId);
+    const updated = await this.usersService.update(
+      userId,
+      { avatarPublicId: null, avatarUrl: null },
+      userId,
+    );
+    if (user.avatarPublicId)
+      await this.deleteAvatarQuietly(user.avatarPublicId);
+    return this.usersService.sanitize(updated);
+  }
+
+  private async saveAvatar(
+    user: User,
+    uploaded: { publicId: string; url: string },
+  ): Promise<SafeUser> {
+    let updated: User;
+    try {
+      updated = await this.usersService.update(
+        user.id,
+        { avatarPublicId: uploaded.publicId, avatarUrl: uploaded.url },
+        user.id,
+      );
+    } catch (error) {
+      await this.deleteAvatarQuietly(uploaded.publicId);
+      throw error;
+    }
+    if (user.avatarPublicId && user.avatarPublicId !== uploaded.publicId) {
+      await this.deleteAvatarQuietly(user.avatarPublicId);
+    }
+    return this.usersService.sanitize(updated);
+  }
+
+  /** Lỗi xoá ảnh trên Cloudinary không làm hỏng thao tác chính — chỉ log (không có dữ liệu nhạy cảm). */
+  private async deleteAvatarQuietly(publicId: string): Promise<void> {
+    try {
+      await this.uploadService.deletePublicImage(publicId);
+    } catch {
+      this.logger.warn(`Không xoá được ảnh đại diện cũ ${publicId}`);
+    }
   }
 
   /**

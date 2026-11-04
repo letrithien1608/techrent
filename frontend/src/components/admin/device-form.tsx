@@ -1,5 +1,6 @@
 "use client";
 
+import { revalidateDevices } from "@/app/actions/revalidate-devices";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -150,6 +151,8 @@ export function DeviceForm({ device }: { device?: Device }) {
       }
     },
     onSuccess: ({ device: result, imageUploadFailed }) => {
+      // Trang chủ/chi tiết (Server Component, cache 60 s) hiện thông tin mới ngay.
+      void revalidateDevices().catch(() => undefined);
       if (isEdit) {
         toast.success("Đã lưu thay đổi");
         router.push("/admin/devices");

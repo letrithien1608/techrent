@@ -16,6 +16,8 @@ export interface AuthUser {
   emailVerifiedAt?: string | null;
   /** `false` = tài khoản đăng ký bằng Google/Facebook chưa đặt mật khẩu. */
   hasPassword?: boolean;
+  /** Ảnh đại diện công khai (Cloudinary). `null`/thiếu = hiện chữ viết tắt. */
+  avatarUrl?: string | null;
   createdAt?: string;
 }
 

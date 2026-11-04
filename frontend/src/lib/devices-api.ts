@@ -76,6 +76,8 @@ export interface Review {
   createdAt: string;
   editedAt: string | null;
   reviewerName: string;
+  /** Ảnh đại diện công khai của người đánh giá, `null` = hiện chữ cái đầu. */
+  reviewerAvatarUrl?: string | null;
   /** Luôn true: chỉ người đã thuê và trả thiết bị mới đánh giá được. */
   verifiedRental: true;
   rentedAt: string;
@@ -128,7 +130,8 @@ export async function fetchDevices(
 
   try {
     const res = await fetch(`${API_URL}/devices?${search.toString()}`, {
-      next: { revalidate: 60 },
+      // Tag "devices": admin lưu ảnh/thông tin xong gọi updateTag("devices") để làm mới ngay.
+      next: { revalidate: 60, tags: ["devices"] },
     });
     if (!res.ok) {
       throw new Error(`HTTP ${res.status}`);
@@ -143,7 +146,7 @@ export async function fetchDevices(
 export async function fetchDevice(id: string): Promise<Device | null> {
   try {
     const res = await fetch(`${API_URL}/devices/${id}`, {
-      next: { revalidate: 60 },
+      next: { revalidate: 60, tags: ["devices"] },
     });
     if (!res.ok) return null;
     return (await res.json()) as Device;

@@ -128,6 +128,7 @@ export interface AdminUser {
   isBlacklisted: boolean;
   blacklistReason: string | null;
   blacklistedAt: string | null;
+  avatarUrl: string | null;
 }
 
 export interface PaginatedUsers {
@@ -214,4 +215,31 @@ export async function fetchKycImages(userId: string): Promise<KycImagesResponse>
 /** Xoá cả 3 ảnh KYC (DB + Cloudinary) để user nộp lại — dùng khi ảnh mờ/sai. */
 export async function resetKycImages(userId: string): Promise<void> {
   await api.patch(`/users/${userId}/kyc-reset`);
+}
+
+// ---- Sửa ảnh thiết bị: tải từng ảnh (có tiến độ) rồi lưu bộ ảnh đã sắp xếp ----
+
+/** Tải 1 ảnh lên Cloudinary, CHƯA gắn vào thiết bị (chỉ gắn khi bấm Lưu). */
+export async function uploadStagedDeviceImage(
+  file: File,
+  onProgress?: (percent: number) => void,
+): Promise<string> {
+  const formData = new FormData();
+  formData.append("image", file);
+  const { data } = await api.post<{ url: string }>("/devices/images/upload", formData, {
+    onUploadProgress: (event) => {
+      if (onProgress && event.total) onProgress(Math.round((event.loaded / event.total) * 100));
+    },
+  });
+  return data.url;
+}
+
+/** Lưu bộ ảnh theo thứ tự (ảnh đầu = ảnh đại diện). Backend xoá trên Cloudinary ảnh bị bỏ SAU khi lưu. */
+export async function replaceDeviceImages(
+  id: string,
+  images: string[],
+  discardedUploads: string[] = [],
+): Promise<Device> {
+  const { data } = await api.put<Device>(`/devices/${id}/images`, { images, discardedUploads });
+  return data;
 }

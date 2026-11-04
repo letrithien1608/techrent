@@ -1,5 +1,6 @@
 "use client";
 
+import { UserAvatar } from "@/components/account/user-avatar";
 import { cn } from "cn";
 import { useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
@@ -44,9 +45,7 @@ function formatReviewDate(value: string): string {
 function ReviewItem({ review }: { review: Review }) {
   return (
     <div className="-mx-3 flex items-start gap-3 rounded-xl px-3 py-5 transition-colors first:pt-3 hover:bg-muted/30">
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-cyan-400 text-sm font-medium text-primary-foreground">
-        {review.reviewerName.charAt(0).toUpperCase()}
-      </div>
+      <UserAvatar name={review.reviewerName} src={review.reviewerAvatarUrl} size="lg" className="size-10 text-sm ring-0" />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
