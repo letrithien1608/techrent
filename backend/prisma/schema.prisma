@@ -297,6 +297,10 @@ model Booking {
   @@index([deviceId, startTime, endTime], map: "idx_bookings_device_time")
   @@index([userId], map: "idx_bookings_user")
   @@index([depositRefundStatus, depositRefundDueAt], map: "idx_bookings_deposit_refund")
+  // Sắp "ngày nhận máy" + lọc khoảng ngày ở trang quản trị. Các index tìm
+  // kiếm bỏ dấu (GIN trigram trên lower(f_unaccent(...))) là index biểu thức,
+  // Prisma không biểu diễn được — chỉ có trong migration admin_search_unaccent.
+  @@index([startTime], map: "idx_bookings_start_time")
   @@map("bookings")
 }
 

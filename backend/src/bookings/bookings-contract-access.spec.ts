@@ -1,4 +1,4 @@
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
@@ -11,6 +11,7 @@ import { Role } from '../generated/prisma/client';
 import { RedisService } from '../redis/redis.service';
 import { BookingsController } from './bookings.controller';
 import { BookingsService } from './bookings.service';
+import { BookingSearchService } from './booking-search.service';
 
 /**
  * Phân quyền hợp đồng ở tầng HTTP: guard THẬT (JwtAuthGuard + RolesGuard +
@@ -24,6 +25,9 @@ describe('BookingsController — quyền xem hợp đồng (HTTP)', () => {
     jwt.sign({ sub, email: `${sub}@test.vn`, role });
 
   let app: INestApplication;
+  const searchService = {
+    search: jest.fn().mockResolvedValue({ data: [], meta: { total: 0 } }),
+  };
   const service = {
     getOwnContract: jest.fn().mockResolvedValue({
       html: '<html>CCCD ********1234</html>',
@@ -44,6 +48,7 @@ describe('BookingsController — quyền xem hợp đồng (HTTP)', () => {
       controllers: [BookingsController],
       providers: [
         { provide: BookingsService, useValue: service },
+        { provide: BookingSearchService, useValue: searchService },
         {
           provide: ConfigService,
           useValue: { get: () => SECRET },
@@ -58,6 +63,9 @@ describe('BookingsController — quyền xem hợp đồng (HTTP)', () => {
       ],
     }).compile();
     app = moduleRef.createNestApplication();
+    app.useGlobalPipes(
+      new ValidationPipe({ whitelist: true, transform: true }),
+    );
     await app.init();
   });
 
@@ -124,4 +132,50 @@ describe('BookingsController — quyền xem hợp đồng (HTTP)', () => {
       );
     },
   );
+
+  describe('GET /bookings/search (tìm đơn ở trang quản trị)', () => {
+    it('khách hàng gọi → 403, chưa đăng nhập → 401', async () => {
+      await request(app.getHttpServer())
+        .get('/bookings/search?q=canon')
+        .set('Authorization', `Bearer ${tokenFor('user-1', Role.customer)}`)
+        .expect(403);
+      await request(app.getHttpServer()).get('/bookings/search').expect(401);
+      expect(searchService.search).not.toHaveBeenCalled();
+    });
+
+    it.each([Role.staff, Role.admin])(
+      '%s gọi được, query param đã chuyển kiểu (hideDemo mặc định true)',
+      async (role) => {
+        await request(app.getHttpServer())
+          .get('/bookings/search?q=nguyen%20van%20an&hasDebt=true&page=2')
+          .set('Authorization', `Bearer ${tokenFor('staff-1', role)}`)
+          .expect(200);
+        expect(searchService.search).toHaveBeenCalledWith(
+          expect.objectContaining({
+            q: 'nguyen van an',
+            hasDebt: true,
+            hideDemo: true,
+            page: 2,
+            sort: 'newest',
+          }),
+        );
+      },
+    );
+
+    it('từ khoá quá dài, ngày sai định dạng hoặc sort lạ → 400', async () => {
+      const token = tokenFor('staff-1', Role.staff);
+      for (const query of [
+        `q=${'a'.repeat(101)}`,
+        'from=05/11/2026',
+        'sort=price',
+        'hideDemo=maybe',
+      ]) {
+        await request(app.getHttpServer())
+          .get(`/bookings/search?${query}`)
+          .set('Authorization', `Bearer ${token}`)
+          .expect(400);
+      }
+      expect(searchService.search).not.toHaveBeenCalled();
+    });
+  });
 });

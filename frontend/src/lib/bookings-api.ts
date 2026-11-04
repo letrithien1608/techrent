@@ -13,6 +13,8 @@ export interface BookingDeviceSummary {
   name: string;
   images: string[];
   categoryId: string;
+  /** Chỉ có ở kết quả `GET /bookings/search` (trang quản trị). */
+  serialNumber?: string | null;
 }
 
 export type RentalPaymentMethod = "cash" | "bank_transfer";
@@ -94,7 +96,7 @@ export interface Booking {
   /** Chỉ có ở `GET /bookings` và `GET /bookings/:id` (BookingsService trả kèm include) */
   device?: BookingDeviceSummary;
   /** Khách thuê (tên + SĐT) — nhân viên dùng để liên hệ hoàn cọc. */
-  user?: { id: string; name: string; phone: string | null };
+  user?: { id: string; name: string; phone: string | null; email?: string };
 }
 
 export interface BookingContract {
@@ -160,6 +162,33 @@ export async function fetchBookings(
   } = {},
 ): Promise<PaginatedBookings> {
   const { data } = await api.get<PaginatedBookings>("/bookings", { params });
+  return data;
+}
+
+export type BookingSearchSort = "newest" | "pickup" | "value";
+
+export interface BookingSearchParams {
+  page?: number;
+  limit?: number;
+  /** Mã đơn, tên/email/SĐT khách, tên/serial thiết bị — không phân biệt dấu. */
+  q?: string;
+  status?: BookingStatus;
+  depositRefundStatus?: DepositRefundStatus;
+  /** YYYY-MM-DD theo giờ Việt Nam. */
+  from?: string;
+  to?: string;
+  hasDebt?: boolean;
+  suspectedLost?: boolean;
+  /** Mặc định backend ẩn đơn dữ liệu mẫu. */
+  hideDemo?: boolean;
+  sort?: BookingSearchSort;
+}
+
+/** Tìm + lọc đơn ở trang quản trị — chỉ staff/admin (khách gọi bị 403). */
+export async function searchAdminBookings(
+  params: BookingSearchParams,
+): Promise<PaginatedBookings> {
+  const { data } = await api.get<PaginatedBookings>("/bookings/search", { params });
   return data;
 }
 

@@ -3,6 +3,7 @@ import { ROLES_KEY } from '../auth/decorators/roles.decorator';
 import { Role } from '../generated/prisma/client';
 import { BookingsController } from './bookings.controller';
 import type { BookingsService } from './bookings.service';
+import type { BookingSearchService } from './booking-search.service';
 
 describe('BookingsController — phân quyền xác nhận đơn', () => {
   const reflector = new Reflector();
@@ -17,6 +18,7 @@ describe('BookingsController — phân quyền xác nhận đơn', () => {
     const service = { confirm: jest.fn().mockResolvedValue({}) };
     const controller = new BookingsController(
       service as unknown as BookingsService,
+      {} as BookingSearchService,
     );
     await controller.confirm('booking-1', {
       userId: 'admin-1',

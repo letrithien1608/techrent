@@ -355,7 +355,7 @@ export default function AdminDashboardPage() {
             tone={finance.openIssueCount > 0 ? "bg-amber-500/15 text-amber-400" : "bg-muted text-muted-foreground"}
           />
         </Link>
-        <Link href="/admin/bookings?status=ongoing" className="block rounded-2xl focus-visible:outline-2 focus-visible:outline-primary">
+        <Link href="/admin/bookings?status=ongoing&suspectedLost=true" className="block rounded-2xl focus-visible:outline-2 focus-visible:outline-primary">
           <StatCard
             icon={AlertTriangle}
             label="Đơn nghi mất thiết bị"

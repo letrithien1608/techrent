@@ -27,6 +27,8 @@ import { CancelBookingDto } from './dto/cancel-booking.dto';
 import { CheckAvailabilityQueryDto } from './dto/check-availability-query.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { ListBookingsQueryDto } from './dto/list-bookings-query.dto';
+import { SearchBookingsQueryDto } from './dto/search-bookings-query.dto';
+import { BookingSearchService } from './booking-search.service';
 import { SetContractSignedDto } from './dto/set-contract-signed.dto';
 import { RecordHandoverDto } from './dto/record-handover.dto';
 import { RecordRentalPaymentDto } from './dto/record-rental-payment.dto';
@@ -48,7 +50,10 @@ const inspectionImagesPipe = new ParseFilePipe({
 @ApiBearerAuth()
 @Controller('bookings')
 export class BookingsController {
-  constructor(private readonly bookingsService: BookingsService) {}
+  constructor(
+    private readonly bookingsService: BookingsService,
+    private readonly bookingSearchService: BookingSearchService,
+  ) {}
 
   @Public()
   @Get('availability')
@@ -81,6 +86,13 @@ export class BookingsController {
       depositRefundStatus: query.depositRefundStatus,
       excludeDemo: query.excludeDemo,
     });
+  }
+
+  // Tìm + lọc đơn ở trang quản trị — khách hàng gọi bị 403. Đặt TRƯỚC `GET :id`.
+  @Roles(Role.staff, Role.admin)
+  @Get('search')
+  search(@Query() query: SearchBookingsQueryDto) {
+    return this.bookingSearchService.search(query);
   }
 
   // Đặt TRƯỚC route `GET :id` để "stats" không bị hiểu là 1 id.

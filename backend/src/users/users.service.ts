@@ -7,6 +7,40 @@ import {
 import { decryptCccd } from '../common/crypto/cccd-crypto.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma, Role, SocialProvider, User } from '../generated/prisma/client';
+import {
+  joinSql,
+  orderByIds,
+  parseSearch,
+  plainLike,
+  unaccentContains,
+} from '../common/search/admin-search.util';
+import type {
+  KycFilter,
+  LoginMethod,
+  UserSearchSort,
+} from './dto/list-users-query.dto';
+
+/** Tài khoản dữ liệu mẫu do prisma/seed-reviews.ts tạo (demo.review1..10). */
+export const DEMO_USER_EMAIL_PATTERN = 'demo.review%@techrent.test';
+
+export interface UserListFilter {
+  page: number;
+  limit: number;
+  role?: Role;
+  search?: string;
+  isBlacklisted?: boolean;
+  kycStatus?: KycFilter;
+  hasDebt?: boolean;
+  loginMethod?: LoginMethod;
+  hideDemo?: boolean;
+  sort?: UserSearchSort;
+}
+
+/** 1 dòng ở danh sách quản trị: SafeUser + cách đăng nhập MXH + còn nợ. */
+export interface AdminUserRow extends SafeUser {
+  socialProviders: SocialProvider[];
+  hasDebt: boolean;
+}
 
 export interface SafeUser {
   id: string;
@@ -103,38 +137,49 @@ export class UsersService {
     });
   }
 
+  /**
+   * Danh sách người dùng ở trang quản trị: tìm + lọc + sắp xếp + phân trang
+   * chạy trong 1 câu SQL (cần `f_unaccent`), rồi nạp đúng trang đó.
+   * CCCD chỉ so với `cccd_masked` (4 số cuối) — KHÔNG giải mã để tìm.
+   */
   async findAll(
-    page: number,
-    limit: number,
-    role?: Role,
-    search?: string,
-    isBlacklisted?: boolean,
-  ): Promise<PaginatedResult<SafeUser>> {
-    const where: Prisma.UserWhereInput = {
-      ...(role ? { role } : {}),
-      ...(isBlacklisted !== undefined ? { isBlacklisted } : {}),
-      ...(search
-        ? {
-            OR: [
-              { name: { contains: search, mode: 'insensitive' } },
-              { email: { contains: search, mode: 'insensitive' } },
-            ],
-          }
-        : {}),
-    };
-    const skip = (page - 1) * limit;
-    const [users, total] = await this.prisma.$transaction([
-      this.prisma.user.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-      }),
-      this.prisma.user.count({ where }),
+    filter: UserListFilter,
+  ): Promise<PaginatedResult<AdminUserRow>> {
+    const { page, limit } = filter;
+    const where = this.buildListWhere(filter);
+    const orderBy =
+      filter.sort === 'name'
+        ? Prisma.sql`lower(f_unaccent(u.name)), u.name, u.id`
+        : Prisma.sql`u.created_at DESC, u.id`;
+    const [idRows, countRows] = await Promise.all([
+      this.prisma.$queryRaw<{ id: string }[]>(
+        Prisma.sql`SELECT u.id FROM users u WHERE ${where} ORDER BY ${orderBy} LIMIT ${limit} OFFSET ${(page - 1) * limit}`,
+      ),
+      this.prisma.$queryRaw<{ total: bigint }[]>(
+        Prisma.sql`SELECT COUNT(*) AS total FROM users u WHERE ${where}`,
+      ),
     ]);
+    const ids = idRows.map((row) => row.id);
+    const [users, debtors] = ids.length
+      ? await Promise.all([
+          this.prisma.user.findMany({
+            where: { id: { in: ids } },
+            include: { socialAccounts: { select: { provider: true } } },
+          }),
+          this.prisma.$queryRaw<{ user_id: string }[]>(
+            Prisma.sql`SELECT DISTINCT user_id FROM bookings WHERE amount_owed > debt_paid_amount AND user_id IN (${Prisma.join(ids)})`,
+          ),
+        ])
+      : [[], []];
+    const debtorIds = new Set(debtors.map((row) => row.user_id));
+    const total = Number(countRows[0]?.total ?? 0);
 
     return {
-      data: users.map((user) => this.sanitize(user)),
+      data: orderByIds(users, ids).map(({ socialAccounts, ...user }) => ({
+        ...this.sanitize(user),
+        socialProviders: socialAccounts.map((account) => account.provider),
+        hasDebt: debtorIds.has(user.id),
+      })),
       meta: {
         page,
         limit,
@@ -142,6 +187,74 @@ export class UsersService {
         totalPages: Math.max(1, Math.ceil(total / limit)),
       },
     };
+  }
+
+  /** Điều kiện WHERE trên bảng `users u`. Xuất ra để test. */
+  buildListWhere(filter: Omit<UserListFilter, 'page' | 'limit'>): Prisma.Sql {
+    const conditions: Prisma.Sql[] = [];
+    const search = parseSearch(filter.search);
+    if (search?.digits) {
+      const fields = [plainLike('u.phone', search.digits, 'contains')];
+      // Đúng 4 số → thêm 4 số cuối CCCD (bản che lưu sẵn, VD "********1234").
+      if (search.digits.length === 4) {
+        fields.push(Prisma.sql`right(u.cccd_masked, 4) = ${search.digits}`);
+      }
+      conditions.push(joinSql(fields, 'OR'));
+    } else if (search) {
+      for (const token of search.tokens) {
+        conditions.push(
+          joinSql(
+            [
+              unaccentContains('u.name', token),
+              plainLike('u.email', token, 'contains'),
+            ],
+            'OR',
+          ),
+        );
+      }
+    }
+    if (filter.role) {
+      conditions.push(Prisma.sql`u.role = ${filter.role}::"Role"`);
+    }
+    if (filter.isBlacklisted !== undefined) {
+      conditions.push(Prisma.sql`u.is_blacklisted = ${filter.isBlacklisted}`);
+    }
+    const kycParts = [
+      'u.kyc_cccd_front_public_id',
+      'u.kyc_cccd_back_public_id',
+      'u.kyc_selfie_public_id',
+    ];
+    if (filter.kycStatus === 'verified') {
+      conditions.push(
+        Prisma.raw(kycParts.map((col) => `${col} IS NOT NULL`).join(' AND ')),
+      );
+    } else if (filter.kycStatus === 'none') {
+      conditions.push(
+        Prisma.raw(kycParts.map((col) => `${col} IS NULL`).join(' AND ')),
+      );
+    } else if (filter.kycStatus === 'pending') {
+      conditions.push(
+        Prisma.raw(
+          `(${kycParts.map((col) => `${col} IS NOT NULL`).join(' OR ')}) AND NOT (${kycParts.map((col) => `${col} IS NOT NULL`).join(' AND ')})`,
+        ),
+      );
+    }
+    if (filter.hasDebt) {
+      conditions.push(
+        Prisma.sql`EXISTS (SELECT 1 FROM bookings b WHERE b.user_id = u.id AND b.amount_owed > b.debt_paid_amount)`,
+      );
+    }
+    if (filter.loginMethod === 'password') {
+      conditions.push(Prisma.sql`u.password_hash IS NOT NULL`);
+    } else if (filter.loginMethod) {
+      conditions.push(
+        Prisma.sql`EXISTS (SELECT 1 FROM social_accounts s WHERE s.user_id = u.id AND s.provider = ${filter.loginMethod}::"SocialProvider")`,
+      );
+    }
+    if (filter.hideDemo !== false) {
+      conditions.push(Prisma.sql`u.email NOT LIKE ${DEMO_USER_EMAIL_PATTERN}`);
+    }
+    return joinSql(conditions, 'AND');
   }
 
   /**

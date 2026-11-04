@@ -5,6 +5,7 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, ClipboardList, Loader2, WifiOff } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,6 +26,15 @@ import {
 } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AdminPagination } from "@/components/admin/admin-pagination";
+import {
+  AdminFilterPanel,
+  AdminSearchInput,
+  FilterSwitch,
+  HighlightText,
+  NoResults,
+  ResultSummary,
+} from "@/components/admin/admin-list-filters";
+import { useUrlFilters } from "@/hooks/use-url-filters";
 import { BookingDetailDialog } from "@/components/admin/booking-detail-dialog";
 import { BookingHandoverDialog } from "@/components/admin/booking-handover-dialog";
 import { BookingReturnDialog } from "@/components/admin/booking-return-dialog";
@@ -35,11 +45,13 @@ import { CancelBookingDialog } from "@/components/bookings/cancel-booking-dialog
 import {
   confirmBooking,
   fetchBookingById,
-  fetchBookings,
   runOverdueCheck,
+  searchAdminBookings,
+  type BookingSearchSort,
   type BookingStatus,
+  type DepositRefundStatus,
 } from "@/lib/bookings-api";
-import { BOOKING_STATUS_LABEL } from "@/lib/booking-format";
+import { BOOKING_STATUS_LABEL, DEPOSIT_REFUND_STATUS_LABEL } from "@/lib/booking-format";
 import { formatDateTimeVi, formatVnd } from "@/lib/device-format";
 import { getErrorMessage } from "@/lib/get-error-message";
 
@@ -54,6 +66,25 @@ const FILTERS: { value: BookingStatus | "all"; label: string }[] = [
   { value: "cancelled", label: "Đã huỷ" },
   { value: "lost", label: "Mất thiết bị" },
 ];
+
+const REFUND_FILTERS: { value: DepositRefundStatus | "all"; label: string }[] = [
+  { value: "all", label: "Mọi trạng thái cọc" },
+  ...(Object.keys(DEPOSIT_REFUND_STATUS_LABEL) as DepositRefundStatus[]).map((value) => ({
+    value,
+    label: DEPOSIT_REFUND_STATUS_LABEL[value].label,
+  })),
+];
+
+const SORTS: { value: BookingSearchSort; label: string }[] = [
+  { value: "newest", label: "Mới tạo nhất" },
+  { value: "pickup", label: "Ngày nhận máy gần nhất" },
+  { value: "value", label: "Giá trị cao nhất" },
+];
+
+// Tham số trên URL. `demo=show` = hiện đơn dữ liệu mẫu (mặc định ẩn).
+const FILTER_KEYS = ["q", "status", "refund", "from", "to", "debt", "lost", "demo", "sort"] as const;
+
+const bookingCode = (id: string) => `#${id.slice(0, 8).toUpperCase()}`;
 
 export default function AdminBookingsPage() {
   // useSearchParams() bắt buộc nằm trong <Suspense> (quy tắc mục 2 CLAUDE.md).
@@ -80,7 +111,13 @@ function FocusedBookingDialog({ bookingId }: { bookingId: string }) {
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        if (!next) router.replace("/admin/bookings");
+        if (!next) {
+          // Chỉ bỏ ?bookingId=, giữ nguyên bộ lọc đang dùng.
+          const params = new URLSearchParams(window.location.search);
+          params.delete("bookingId");
+          const query = params.toString();
+          router.replace(query ? `/admin/bookings?${query}` : "/admin/bookings", { scroll: false });
+        }
       }}
     />
   );
@@ -90,20 +127,34 @@ function AdminBookingsContent() {
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const focusBookingId = searchParams.get("bookingId");
-  const [page, setPage] = useState(1);
-  // `?status=` từ thẻ Dashboard (VD đơn nghi mất → "Đang thuê").
-  const [status, setStatus] = useState<BookingStatus | "all">(() => {
-    const fromUrl = searchParams.get("status");
-    return FILTERS.some((f) => f.value === fromUrl) ? (fromUrl as BookingStatus) : "all";
-  });
+  const filters = useUrlFilters(FILTER_KEYS);
+  const { values: f, page } = filters;
+  const status = FILTERS.some((item) => item.value === f.status) ? (f.status as BookingStatus) : "all";
+  const refund = REFUND_FILTERS.some((item) => item.value === f.refund)
+    ? (f.refund as DepositRefundStatus)
+    : "all";
+  const sort = SORTS.some((item) => item.value === f.sort) ? (f.sort as BookingSearchSort) : "newest";
+  const showDemo = f.demo === "show";
+  // Chỉ đổi cách sắp xếp thì không tính là đang lọc.
+  const isFiltered = filters.activeCount - (f.sort ? 1 : 0) > 0;
+
+  const clearFilters = filters.clear;
 
   const bookingsQuery = useQuery({
-    queryKey: ["admin", "bookings", page, status],
+    queryKey: ["admin", "bookings", "search", page, f],
     queryFn: () =>
-      fetchBookings({
+      searchAdminBookings({
         page,
         limit: PAGE_SIZE,
+        q: f.q || undefined,
         status: status === "all" ? undefined : status,
+        depositRefundStatus: refund === "all" ? undefined : refund,
+        from: f.from || undefined,
+        to: f.to || undefined,
+        hasDebt: f.debt === "1" || undefined,
+        suspectedLost: f.lost === "1" || undefined,
+        hideDemo: !showDemo,
+        sort,
       }),
   });
 
@@ -139,31 +190,109 @@ function AdminBookingsContent() {
     <div className="space-y-4">
       {focusBookingId && <FocusedBookingDialog key={focusBookingId} bookingId={focusBookingId} />}
       <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/50">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 p-4">
-          <Select
-            value={status}
-            onValueChange={(value) => {
-              setStatus(value as BookingStatus | "all");
-              setPage(1);
-            }}
+        <div className="flex flex-wrap items-center gap-2 border-b border-border/60 p-4">
+          <AdminSearchInput
+            value={f.q}
+            onSearch={(q) => filters.update({ q })}
+            placeholder="Mã đơn, tên, email, SĐT khách, thiết bị, serial..."
+            className="min-w-0 flex-1 basis-60"
+          />
+          <AdminFilterPanel
+            activeCount={filters.activeCount - (f.q ? 1 : 0)}
+            onClear={clearFilters}
           >
-            <SelectTrigger className="w-48">
-              <SelectValue>
-                {(value: string) => FILTERS.find((item) => item.value === value)?.label}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {FILTERS.map((item) => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Select
+              value={status}
+              onValueChange={(value) => filters.update({ status: value === "all" ? null : value })}
+            >
+              <SelectTrigger className="h-9 w-40" aria-label="Trạng thái đơn">
+                <SelectValue>
+                  {(value: string) => FILTERS.find((item) => item.value === value)?.label}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {FILTERS.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={refund}
+              onValueChange={(value) => filters.update({ refund: value === "all" ? null : value })}
+            >
+              <SelectTrigger className="h-9 w-48" aria-label="Trạng thái hoàn cọc">
+                <SelectValue>
+                  {(value: string) => REFUND_FILTERS.find((item) => item.value === value)?.label}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {REFUND_FILTERS.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+              <span className="shrink-0">Thuê từ</span>
+              <Input
+                type="date"
+                value={f.from}
+                max={f.to || undefined}
+                aria-label="Từ ngày"
+                onChange={(event) => filters.update({ from: event.target.value })}
+                className="h-9 w-[9.5rem]"
+              />
+              <span className="shrink-0">đến</span>
+              <Input
+                type="date"
+                value={f.to}
+                min={f.from || undefined}
+                aria-label="Đến ngày"
+                onChange={(event) => filters.update({ to: event.target.value })}
+                className="h-9 w-[9.5rem]"
+              />
+            </div>
+            <FilterSwitch
+              label="Chỉ đơn còn nợ"
+              checked={f.debt === "1"}
+              onCheckedChange={(checked) => filters.update({ debt: checked ? "1" : null })}
+            />
+            <FilterSwitch
+              label="Chỉ đơn nghi mất"
+              checked={f.lost === "1"}
+              onCheckedChange={(checked) => filters.update({ lost: checked ? "1" : null })}
+            />
+            <FilterSwitch
+              label="Ẩn đơn dữ liệu mẫu"
+              checked={!showDemo}
+              onCheckedChange={(checked) => filters.update({ demo: checked ? null : "show" })}
+            />
+            <Select
+              value={sort}
+              onValueChange={(value) => filters.update({ sort: value === "newest" ? null : value })}
+            >
+              <SelectTrigger className="h-9 w-72" aria-label="Sắp xếp">
+                <SelectValue>
+                  {(value: string) => `Sắp xếp: ${SORTS.find((item) => item.value === value)?.label}`}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {SORTS.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </AdminFilterPanel>
           {isAdmin && (
             <Button
               variant="outline"
               size="sm"
+              className="h-9"
               disabled={overdueMutation.isPending}
               onClick={() => overdueMutation.mutate()}
             >
@@ -172,6 +301,14 @@ function AdminBookingsContent() {
             </Button>
           )}
         </div>
+
+        <ResultSummary
+          total={meta?.total}
+          unit="đơn"
+          loading={bookingsQuery.isPending}
+          filtered={isFiltered}
+          onClear={clearFilters}
+        />
 
         {bookingsQuery.isPending ? (
           <div className="space-y-2 p-4">
@@ -186,16 +323,21 @@ function AdminBookingsContent() {
             <Button onClick={() => bookingsQuery.refetch()}>Thử lại</Button>
           </div>
         ) : bookings.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
-            <ClipboardList className="size-10 text-muted-foreground/40" />
-            <p className="text-muted-foreground">Không có đơn thuê nào.</p>
-          </div>
+          isFiltered ? (
+            <NoResults message="Không có đơn thuê nào khớp từ khoá và bộ lọc." onClear={clearFilters} />
+          ) : (
+            <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
+              <ClipboardList className="size-10 text-muted-foreground/40" />
+              <p className="text-muted-foreground">Không có đơn thuê nào.</p>
+            </div>
+          )
         ) : (
           <>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Thiết bị</TableHead>
+                  <TableHead>Đơn / thiết bị</TableHead>
+                  <TableHead>Khách</TableHead>
                   <TableHead>Thời gian</TableHead>
                   <TableHead>Giá trị</TableHead>
                   <TableHead>Trạng thái</TableHead>
@@ -210,10 +352,41 @@ function AdminBookingsContent() {
                     transitionMutation.variables?.id === booking.id;
                   return (
                     <TableRow key={booking.id}>
+                      <TableCell className="max-w-[220px]">
+                        <p className="font-mono text-xs text-muted-foreground">
+                          <HighlightText text={bookingCode(booking.id)} query={f.q} />
+                          {booking.isDemo && (
+                            <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 font-sans text-[10px]">
+                              Dữ liệu mẫu
+                            </span>
+                          )}
+                        </p>
+                        <p className="truncate font-medium">
+                          <HighlightText text={booking.device?.name ?? "Thiết bị"} query={f.q} />
+                        </p>
+                        {booking.device?.serialNumber && (
+                          <p className="truncate font-mono text-xs text-muted-foreground">
+                            SN <HighlightText text={booking.device.serialNumber} query={f.q} />
+                          </p>
+                        )}
+                      </TableCell>
                       <TableCell className="max-w-[200px]">
-                        <p className="truncate font-medium">{booking.device?.name ?? "Thiết bị"}</p>
                         {booking.user && (
-                          <p className="truncate text-xs text-muted-foreground">{booking.user.name}</p>
+                          <>
+                            <p className="truncate font-medium">
+                              <HighlightText text={booking.user.name} query={f.q} />
+                            </p>
+                            {booking.user.phone && (
+                              <p className="truncate text-xs text-muted-foreground">
+                                <HighlightText text={booking.user.phone} query={f.q} />
+                              </p>
+                            )}
+                            {booking.user.email && (
+                              <p className="truncate text-xs text-muted-foreground">
+                                <HighlightText text={booking.user.email} query={f.q} />
+                              </p>
+                            )}
+                          </>
                         )}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
@@ -316,7 +489,7 @@ function AdminBookingsContent() {
             <AdminPagination
               page={page}
               totalPages={meta?.totalPages ?? 1}
-              onPageChange={setPage}
+              onPageChange={filters.setPage}
             />
           </>
         )}

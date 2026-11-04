@@ -1,4 +1,8 @@
-import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { RequestUser } from '../auth/interfaces/jwt-payload.interface';
 import { Prisma, Role } from '../generated/prisma/client';
@@ -6,7 +10,9 @@ import { UploadService } from '../upload/upload.service';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
-function makeP2002Error(target: string[]): Prisma.PrismaClientKnownRequestError {
+function makeP2002Error(
+  target: string[],
+): Prisma.PrismaClientKnownRequestError {
   return new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
     code: 'P2002',
     clientVersion: 'test',
@@ -150,13 +156,7 @@ describe('UsersController', () => {
 
       await controller.findAll({ page: 2, limit: 10 });
 
-      expect(usersService.findAll).toHaveBeenCalledWith(
-        2,
-        10,
-        undefined,
-        undefined,
-        undefined,
-      );
+      expect(usersService.findAll).toHaveBeenCalledWith({ page: 2, limit: 10 });
     });
 
     it('truyền tiếp role/search/isBlacklisted từ query xuống UsersService.findAll', async () => {
@@ -170,13 +170,13 @@ describe('UsersController', () => {
         isBlacklisted: true,
       });
 
-      expect(usersService.findAll).toHaveBeenCalledWith(
-        1,
-        20,
-        Role.staff,
-        'an',
-        true,
-      );
+      expect(usersService.findAll).toHaveBeenCalledWith({
+        page: 1,
+        limit: 20,
+        role: Role.staff,
+        search: 'an',
+        isBlacklisted: true,
+      });
     });
   });
 
@@ -186,7 +186,11 @@ describe('UsersController', () => {
         Promise.resolve({ id: 'u1', ...data }),
       );
 
-      await controller.update('u1', { password: 'NewStr0ngP@ss' }, currentAdmin);
+      await controller.update(
+        'u1',
+        { password: 'NewStr0ngP@ss' },
+        currentAdmin,
+      );
 
       const updateArg = usersService.update.mock.calls[0][1];
       expect(updateArg.passwordHash).toBeDefined();
@@ -290,7 +294,10 @@ describe('UsersController', () => {
     it('gọi UsersService.remove với đúng id VÀ id của người đang gọi', async () => {
       await controller.remove('u1', currentAdmin);
 
-      expect(usersService.remove).toHaveBeenCalledWith('u1', currentAdmin.userId);
+      expect(usersService.remove).toHaveBeenCalledWith(
+        'u1',
+        currentAdmin.userId,
+      );
     });
   });
 
@@ -301,7 +308,10 @@ describe('UsersController', () => {
       const result = await controller.revealCccd('u1');
 
       expect(configService.get).toHaveBeenCalledWith('CCCD_ENCRYPTION_KEY');
-      expect(usersService.revealCccd).toHaveBeenCalledWith('u1', 'a'.repeat(64));
+      expect(usersService.revealCccd).toHaveBeenCalledWith(
+        'u1',
+        'a'.repeat(64),
+      );
       expect(result).toEqual({ cccd: '079203012345' });
     });
 
@@ -384,9 +394,15 @@ describe('UsersController', () => {
       await controller.resetKycImages('u1');
 
       expect(usersService.resetKycImages).toHaveBeenCalledWith('u1');
-      expect(uploadService.deleteKycImage).toHaveBeenCalledWith('kyc/u1-cccd-front');
-      expect(uploadService.deleteKycImage).toHaveBeenCalledWith('kyc/u1-cccd-back');
-      expect(uploadService.deleteKycImage).toHaveBeenCalledWith('kyc/u1-selfie');
+      expect(uploadService.deleteKycImage).toHaveBeenCalledWith(
+        'kyc/u1-cccd-front',
+      );
+      expect(uploadService.deleteKycImage).toHaveBeenCalledWith(
+        'kyc/u1-cccd-back',
+      );
+      expect(uploadService.deleteKycImage).toHaveBeenCalledWith(
+        'kyc/u1-selfie',
+      );
       expect(uploadService.deleteKycImage).toHaveBeenCalledTimes(3);
     });
 
@@ -401,7 +417,9 @@ describe('UsersController', () => {
       await controller.resetKycImages('u1');
 
       expect(uploadService.deleteKycImage).toHaveBeenCalledTimes(1);
-      expect(uploadService.deleteKycImage).toHaveBeenCalledWith('kyc/u1-cccd-front');
+      expect(uploadService.deleteKycImage).toHaveBeenCalledWith(
+        'kyc/u1-cccd-front',
+      );
     });
   });
 

@@ -37,9 +37,21 @@ const DUPLICATE_PHONE_MESSAGE =
 const KYC_IMAGE_VIEW_TTL_SECONDS = 300;
 
 const KYC_IMAGE_SLOTS = [
-  { slot: 'cccd-front', label: 'CCCD mặt trước', field: 'kycCccdFrontPublicId' as const },
-  { slot: 'cccd-back', label: 'CCCD mặt sau', field: 'kycCccdBackPublicId' as const },
-  { slot: 'selfie', label: 'Ảnh chân dung xác thực', field: 'kycSelfiePublicId' as const },
+  {
+    slot: 'cccd-front',
+    label: 'CCCD mặt trước',
+    field: 'kycCccdFrontPublicId' as const,
+  },
+  {
+    slot: 'cccd-back',
+    label: 'CCCD mặt sau',
+    field: 'kycCccdBackPublicId' as const,
+  },
+  {
+    slot: 'selfie',
+    label: 'Ảnh chân dung xác thực',
+    field: 'kycSelfiePublicId' as const,
+  },
 ];
 
 @ApiTags('users')
@@ -79,13 +91,11 @@ export class UsersController {
 
   @Get()
   findAll(@Query() query: ListUsersQueryDto) {
-    return this.usersService.findAll(
-      query.page ?? 1,
-      query.limit ?? 20,
-      query.role,
-      query.search,
-      query.isBlacklisted,
-    );
+    return this.usersService.findAll({
+      ...query,
+      page: query.page ?? 1,
+      limit: query.limit ?? 20,
+    });
   }
 
   @Get(':id')
@@ -190,9 +200,7 @@ export class UsersController {
    */
   @Get(':id/cccd')
   async revealCccd(@Param('id') id: string) {
-    const encryptionKey = this.configService.get<string>(
-      'CCCD_ENCRYPTION_KEY',
-    );
+    const encryptionKey = this.configService.get<string>('CCCD_ENCRYPTION_KEY');
     const cccd = await this.usersService.revealCccd(id, encryptionKey!);
     return { cccd };
   }
@@ -211,16 +219,14 @@ export class UsersController {
   @Get(':id/kyc-images')
   async getKycImages(@Param('id') id: string) {
     const user = await this.usersService.findByIdOrThrow(id);
-    const images = KYC_IMAGE_SLOTS.filter((s) => !!user[s.field]).map(
-      (s) => ({
-        slot: s.slot,
-        label: s.label,
-        url: this.uploadService.generateKycImageViewUrl(
-          user[s.field]!,
-          KYC_IMAGE_VIEW_TTL_SECONDS,
-        ),
-      }),
-    );
+    const images = KYC_IMAGE_SLOTS.filter((s) => !!user[s.field]).map((s) => ({
+      slot: s.slot,
+      label: s.label,
+      url: this.uploadService.generateKycImageViewUrl(
+        user[s.field]!,
+        KYC_IMAGE_VIEW_TTL_SECONDS,
+      ),
+    }));
     return {
       submitted: images.length === KYC_IMAGE_SLOTS.length,
       expiresInSeconds: KYC_IMAGE_VIEW_TTL_SECONDS,

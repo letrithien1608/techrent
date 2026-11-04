@@ -18,6 +18,7 @@ import { ContractService } from './contract/contract.service';
 import { ContractPdfService } from './contract/contract-pdf.service';
 import { BOOKING_OVERDUE_QUEUE } from './bookings.constants';
 import { BookingsService, BOOKING_TTL_QUEUE } from './bookings.service';
+import { BookingSearchService } from './booking-search.service';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { BookingsService, BOOKING_TTL_QUEUE } from './bookings.service';
   ],
   providers: [
     BookingsService,
+    BookingSearchService,
     BookingIssuesService,
     BookingLossService,
     DebtsService,

@@ -121,6 +121,10 @@ export interface AdminUser {
   email: string;
   role: UserRole;
   phone: string | null;
+  /** Bản che CCCD (VD "********1234") — danh sách không bao giờ có CCCD đầy đủ. */
+  cccdMasked?: string | null;
+  /** `false` = tài khoản Google/Facebook chưa đặt mật khẩu. */
+  hasPassword?: boolean;
   /** `true` khi user đã nộp ĐỦ 3 ảnh eKYC (CCCD mặt trước/sau + ảnh chân dung). */
   kycVerified: boolean;
   emailVerifiedAt: string | null;
@@ -132,8 +136,17 @@ export interface AdminUser {
 }
 
 export interface PaginatedUsers {
-  data: AdminUser[];
+  data: AdminUserRow[];
   meta: { page: number; limit: number; total: number; totalPages: number };
+}
+
+export type KycFilter = "none" | "pending" | "verified";
+export type LoginMethod = "password" | "google" | "facebook";
+
+/** 1 dòng danh sách quản trị: kèm cách đăng nhập MXH + còn nợ. */
+export interface AdminUserRow extends AdminUser {
+  socialProviders: ("google" | "facebook")[];
+  hasDebt: boolean;
 }
 
 export async function fetchUsers(
@@ -141,8 +154,15 @@ export async function fetchUsers(
     page?: number;
     limit?: number;
     role?: UserRole;
+    /** Tên, email, SĐT hoặc 4 số cuối CCCD — không phân biệt dấu. */
     search?: string;
     isBlacklisted?: boolean;
+    kycStatus?: KycFilter;
+    hasDebt?: boolean;
+    loginMethod?: LoginMethod;
+    /** Mặc định backend ẩn tài khoản mẫu demo.review*. */
+    hideDemo?: boolean;
+    sort?: "newest" | "name";
   } = {},
 ): Promise<PaginatedUsers> {
   const { data } = await api.get<PaginatedUsers>("/users", { params });

@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Role, User } from '../generated/prisma/client';
+import { Prisma, Role, User } from '../generated/prisma/client';
 import { UsersService } from './users.service';
 
 describe('UsersService', () => {
@@ -19,6 +19,7 @@ describe('UsersService', () => {
       delete: jest.Mock;
     };
     $transaction: jest.Mock;
+    $queryRaw: jest.Mock;
   };
 
   const baseUser: User = {
@@ -55,6 +56,7 @@ describe('UsersService', () => {
         delete: jest.fn(),
       },
       $transaction: jest.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
+      $queryRaw: jest.fn(),
     };
     service = new UsersService(prisma as unknown as PrismaService);
   });
@@ -77,67 +79,112 @@ describe('UsersService', () => {
     });
   });
 
-  describe('findAll', () => {
-    it('trả về danh sách đã sanitize kèm meta phân trang đúng', async () => {
-      prisma.user.findMany.mockResolvedValue([baseUser]);
-      prisma.user.count.mockResolvedValue(45);
+  describe('findAll (tìm + lọc bằng SQL)', () => {
+    // Ngữ nghĩa lọc thật (bỏ dấu, SĐT, CCCD...) được kiểm tra trên Postgres
+    // thật ở test/admin-search.e2e-spec.ts — ở đây kiểm tra lắp ráp kết quả.
+    function mockQueries(ids: string[], total: number, debtors: string[] = []) {
+      prisma.$queryRaw.mockImplementation((query: Prisma.Sql) => {
+        if (query.sql.includes('COUNT(*)'))
+          return Promise.resolve([{ total: BigInt(total) }]);
+        if (query.sql.includes('DISTINCT user_id'))
+          return Promise.resolve(debtors.map((user_id) => ({ user_id })));
+        return Promise.resolve(ids.map((id) => ({ id })));
+      });
+    }
 
-      const result = await service.findAll(2, 20);
+    it('giữ đúng thứ tự SQL, sanitize, kèm cách đăng nhập + còn nợ, meta phân trang đúng', async () => {
+      const second = { ...baseUser, id: 'user-2', name: 'B' };
+      mockQueries(['user-2', 'user-1'], 45, ['user-1']);
+      prisma.user.findMany.mockResolvedValue([
+        { ...baseUser, socialAccounts: [{ provider: 'google' }] },
+        { ...second, socialAccounts: [] },
+      ]);
 
-      expect(prisma.user.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ skip: 20, take: 20, where: {} }),
-      );
-      expect(result.data).toEqual([service.sanitize(baseUser)]);
+      const result = await service.findAll({ page: 2, limit: 20 });
+
+      expect(result.data.map((u) => u.id)).toEqual(['user-2', 'user-1']);
+      expect(result.data[1]).toMatchObject({
+        socialProviders: ['google'],
+        hasDebt: true,
+      });
+      expect(result.data[0].hasDebt).toBe(false);
       expect(result.data[0]).not.toHaveProperty('passwordHash');
+      expect(result.data[0]).not.toHaveProperty('cccdEncrypted');
       expect(result.meta).toEqual({
         page: 2,
         limit: 20,
         total: 45,
         totalPages: 3,
       });
+      const idQuery = prisma.$queryRaw.mock.calls[0][0] as Prisma.Sql;
+      expect(idQuery.sql).toContain('ORDER BY u.created_at DESC');
+      expect(idQuery.values).toEqual(
+        expect.arrayContaining([20, 20, 'demo.review%@techrent.test']),
+      );
     });
 
-    it('lọc theo role khi có truyền vào', async () => {
-      prisma.user.findMany.mockResolvedValue([baseUser]);
-      prisma.user.count.mockResolvedValue(1);
+    it('trang rỗng: không nạp thêm user, tổng vẫn đúng', async () => {
+      mockQueries([], 3);
+      const result = await service.findAll({ page: 9, limit: 20 });
+      expect(result.data).toEqual([]);
+      expect(result.meta.total).toBe(3);
+      expect(prisma.user.findMany).not.toHaveBeenCalled();
+    });
 
-      await service.findAll(1, 20, Role.admin);
+    it('sắp xếp tên A–Z theo tên đã bỏ dấu', async () => {
+      mockQueries([], 0);
+      await service.findAll({ page: 1, limit: 10, sort: 'name' });
+      const idQuery = prisma.$queryRaw.mock.calls[0][0] as Prisma.Sql;
+      expect(idQuery.sql).toContain('ORDER BY lower(f_unaccent(u.name))');
+    });
+  });
 
-      expect(prisma.user.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { role: Role.admin } }),
-      );
-      expect(prisma.user.count).toHaveBeenCalledWith({
-        where: { role: Role.admin },
+  describe('buildListWhere', () => {
+    it('chuỗi số 4 chữ số → so SĐT + 4 số cuối cccd_masked, không đụng cccd_encrypted', () => {
+      const where = service.buildListWhere({ search: '1234', hideDemo: false });
+      expect(where.sql).toContain('right(u.cccd_masked, 4)');
+      expect(where.sql).not.toContain('cccd_encrypted');
+      expect(where.values).toEqual(['%1234%', '1234']);
+    });
+
+    it('SĐT có khoảng trắng / +84 → chuẩn hoá về 0xxxxxxxxx, không so CCCD', () => {
+      const where = service.buildListWhere({
+        search: '+84 901 234 567',
+        hideDemo: false,
       });
+      expect(where.values).toEqual(['%0901234567%']);
+      expect(where.sql).not.toContain('cccd_masked');
     });
 
-    it('tìm theo tên hoặc email khi có search', async () => {
-      prisma.user.findMany.mockResolvedValue([baseUser]);
-      prisma.user.count.mockResolvedValue(1);
-
-      await service.findAll(1, 20, undefined, 'nguyen');
-
-      expect(prisma.user.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: {
-            OR: [
-              { name: { contains: 'nguyen', mode: 'insensitive' } },
-              { email: { contains: 'nguyen', mode: 'insensitive' } },
-            ],
-          },
-        }),
+    it('chữ: mỗi từ khớp tên (bỏ dấu) hoặc email; kết hợp nhiều bộ lọc', () => {
+      const where = service.buildListWhere({
+        search: 'Nguyễn An',
+        role: Role.customer,
+        kycStatus: 'verified',
+        hasDebt: true,
+        loginMethod: 'google',
+        isBlacklisted: false,
+      });
+      expect(where.sql.match(/lower\(f_unaccent\(u\.name\)\)/g)).toHaveLength(
+        2,
       );
+      expect(where.sql).toContain('u.kyc_selfie_public_id IS NOT NULL');
+      expect(where.sql).toContain('amount_owed > b.debt_paid_amount');
+      expect(where.sql).toContain('"SocialProvider"');
+      expect(where.values).toEqual([
+        'Nguyễn',
+        '%nguyễn%',
+        'An',
+        '%an%',
+        Role.customer,
+        false,
+        'google',
+        'demo.review%@techrent.test',
+      ]);
     });
 
-    it('lọc theo isBlacklisted khi có truyền vào', async () => {
-      prisma.user.findMany.mockResolvedValue([baseUser]);
-      prisma.user.count.mockResolvedValue(1);
-
-      await service.findAll(1, 20, undefined, undefined, true);
-
-      expect(prisma.user.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { isBlacklisted: true } }),
-      );
+    it('hideDemo=false thì không lọc tài khoản mẫu', () => {
+      expect(service.buildListWhere({ hideDemo: false }).sql).toBe('TRUE');
     });
   });
 
