@@ -17,7 +17,7 @@ import {
   maskCccd,
 } from '../common/crypto/cccd-crypto.util';
 import { translateUniqueConstraintError } from '../common/prisma-error.util';
-import { Role, User } from '../generated/prisma/client';
+import { Role, SocialProvider, User } from '../generated/prisma/client';
 import { MailService } from '../mail/mail.service';
 import { RedisService } from '../redis/redis.service';
 import { UploadService } from '../upload/upload.service';
@@ -45,6 +45,11 @@ const DUPLICATE_CCCD_MESSAGE =
   'Số CCCD này đã được đăng ký bởi một tài khoản khác';
 const DUPLICATE_PHONE_MESSAGE =
   'Số điện thoại này đã được đăng ký bởi một tài khoản khác';
+const DUPLICATE_EMAIL_MESSAGE = 'Email đã được sử dụng';
+export const DUPLICATE_SOCIAL_MESSAGE =
+  'Tài khoản mạng xã hội này đã được liên kết với một tài khoản TechRent khác';
+const NO_PASSWORD_MESSAGE =
+  'Tài khoản chưa có mật khẩu (đăng ký bằng Google/Facebook) — hãy dùng chức năng Đặt mật khẩu';
 
 export interface AuthTokens {
   accessToken: string;
@@ -77,41 +82,85 @@ export class AuthService {
    * gần như đồng thời.
    */
   async register(dto: RegisterDto): Promise<AuthTokens & { user: SafeUser }> {
-    const existingEmail = await this.usersService.findByEmail(dto.email);
+    const passwordHash = await bcrypt.hash(dto.password, PASSWORD_SALT_ROUNDS);
+    const user = await this.createCustomerAccount({
+      name: dto.name,
+      email: dto.email,
+      phone: dto.phone,
+      cccd: dto.cccd,
+      passwordHash,
+      emailVerified: false,
+    });
+    return this.issueSession(user);
+  }
+
+  /**
+   * Tạo tài khoản khách hàng — dùng CHUNG cho đăng ký thường VÀ đăng ký bằng
+   * Google/Facebook (`SocialAuthService.register()`), để 2 đường KHÔNG BAO GIỜ
+   * lệch nhau về các lớp chống rủi ro: kiểm tra trùng email/CCCD trước, băm +
+   * mã hoá + che CCCD, dịch lỗi trùng SĐT/CCCD lọt qua pre-check (race).
+   * `socialAccount` (nếu có) được tạo trong CÙNG câu lệnh Prisma (nested
+   * create = 1 transaction) — không bao giờ có user mà thiếu liên kết hoặc
+   * ngược lại.
+   */
+  async createCustomerAccount(input: {
+    name: string;
+    email: string;
+    phone: string;
+    cccd: string;
+    passwordHash: string | null;
+    /** `true` khi email đã được Google/Facebook xác minh — khỏi gửi email xác thực. */
+    emailVerified: boolean;
+    socialAccount?: {
+      provider: SocialProvider;
+      providerUserId: string;
+      email: string | null;
+    };
+  }): Promise<User> {
+    const existingEmail = await this.usersService.findByEmail(input.email);
     if (existingEmail) {
-      throw new ConflictException('Email đã được sử dụng');
+      throw new ConflictException(DUPLICATE_EMAIL_MESSAGE);
     }
 
-    const cccdHash = hashCccd(dto.cccd);
+    const cccdHash = hashCccd(input.cccd);
     const existingCccd = await this.usersService.findByCccdHash(cccdHash);
     if (existingCccd) {
       throw new ConflictException(DUPLICATE_CCCD_MESSAGE);
     }
 
-    const passwordHash = await bcrypt.hash(dto.password, PASSWORD_SALT_ROUNDS);
     const encryptionKey = this.getCccdEncryptionKey();
 
     let user: User;
     try {
       user = await this.usersService.create({
-        name: dto.name,
-        email: dto.email,
-        passwordHash,
-        phone: dto.phone,
+        name: input.name,
+        email: input.email,
+        passwordHash: input.passwordHash,
+        phone: input.phone,
         cccdHash,
-        cccdEncrypted: encryptCccd(dto.cccd, encryptionKey),
-        cccdMasked: maskCccd(dto.cccd),
+        cccdEncrypted: encryptCccd(input.cccd, encryptionKey),
+        cccdMasked: maskCccd(input.cccd),
         role: Role.customer,
+        ...(input.emailVerified ? { emailVerifiedAt: new Date() } : {}),
+        ...(input.socialAccount ? { socialAccount: input.socialAccount } : {}),
       });
     } catch (error) {
       throw translateUniqueConstraintError(error, {
         phone: DUPLICATE_PHONE_MESSAGE,
         cccd: DUPLICATE_CCCD_MESSAGE,
+        provider_user: DUPLICATE_SOCIAL_MESSAGE,
+        email: DUPLICATE_EMAIL_MESSAGE,
       });
     }
 
-    await this.sendVerificationEmail(user);
+    if (!input.emailVerified) {
+      await this.sendVerificationEmail(user);
+    }
+    return user;
+  }
 
+  /** Phát access/refresh token (xoay vòng refresh token) — GIỐNG HỆT đăng nhập thường. */
+  async issueSession(user: User): Promise<AuthTokens & { user: SafeUser }> {
     const tokens = await this.issueTokens(user);
     return { ...tokens, user: this.usersService.sanitize(user) };
   }
@@ -149,7 +198,9 @@ export class AuthService {
       );
       return this.usersService.sanitize(updated);
     } catch (error) {
-      throw translateUniqueConstraintError(error, { cccd: DUPLICATE_CCCD_MESSAGE });
+      throw translateUniqueConstraintError(error, {
+        cccd: DUPLICATE_CCCD_MESSAGE,
+      });
     }
   }
 
@@ -222,7 +273,10 @@ export class AuthService {
 
   async login(dto: LoginDto): Promise<AuthTokens & { user: SafeUser }> {
     const user = await this.usersService.findByEmail(dto.email);
-    if (!user) {
+    // Tài khoản đăng ký bằng Google/Facebook chưa đặt mật khẩu (passwordHash
+    // NULL) KHÔNG đăng nhập bằng mật khẩu được — trả CÙNG thông báo chung để
+    // không lộ email đó có tồn tại / là tài khoản mạng xã hội hay không.
+    if (!user || !user.passwordHash) {
       throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
     }
 
@@ -234,8 +288,7 @@ export class AuthService {
       throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
     }
 
-    const tokens = await this.issueTokens(user);
-    return { ...tokens, user: this.usersService.sanitize(user) };
+    return this.issueSession(user);
   }
 
   async refreshTokens(refreshToken: string): Promise<AuthTokens> {
@@ -298,6 +351,9 @@ export class AuthService {
     accessToken: string,
   ): Promise<void> {
     const user = await this.usersService.findByIdOrThrow(userId);
+    if (!user.passwordHash) {
+      throw new BadRequestException(NO_PASSWORD_MESSAGE);
+    }
 
     const currentPasswordMatches = await bcrypt.compare(
       dto.currentPassword,
@@ -315,6 +371,27 @@ export class AuthService {
 
     await this.blacklistTokenUntilExpiry(accessToken);
     await this.usersService.updateRefreshTokenHash(user.id, null);
+  }
+
+  /**
+   * Tài khoản đăng ký bằng Google/Facebook (chưa có mật khẩu) tự đặt mật khẩu
+   * để đăng nhập THÊM bằng email. Đã có mật khẩu thì phải dùng "Đổi mật khẩu"
+   * (bắt nhập mật khẩu cũ) — không cho dùng đường này để bỏ qua bước đó.
+   */
+  async setPassword(userId: string, newPassword: string): Promise<SafeUser> {
+    const user = await this.usersService.findByIdOrThrow(userId);
+    if (user.passwordHash) {
+      throw new BadRequestException(
+        'Tài khoản đã có mật khẩu — dùng chức năng Đổi mật khẩu',
+      );
+    }
+    const passwordHash = await bcrypt.hash(newPassword, PASSWORD_SALT_ROUNDS);
+    const updated = await this.usersService.update(
+      user.id,
+      { passwordHash },
+      user.id,
+    );
+    return this.usersService.sanitize(updated);
   }
 
   /**

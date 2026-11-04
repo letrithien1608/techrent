@@ -344,6 +344,7 @@ describe('UsersService', () => {
         cccdMasked: baseUser.cccdMasked,
         kycVerified: false,
         emailVerifiedAt: baseUser.emailVerifiedAt,
+        hasPassword: true,
         createdAt: baseUser.createdAt,
         isBlacklisted: baseUser.isBlacklisted,
         blacklistReason: baseUser.blacklistReason,
@@ -420,9 +421,7 @@ describe('UsersService', () => {
     });
 
     it('giải mã đúng CCCD gốc từ cccdEncrypted', async () => {
-      const { encryptCccd } = await import(
-        '../common/crypto/cccd-crypto.util'
-      );
+      const { encryptCccd } = await import('../common/crypto/cccd-crypto.util');
       const cccdEncrypted = encryptCccd('079203012345', encryptionKey);
       prisma.user.findUnique.mockResolvedValue({ ...baseUser, cccdEncrypted });
 
@@ -436,9 +435,9 @@ describe('UsersService', () => {
     it('ném NotFoundException nếu user không tồn tại', async () => {
       prisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.resetKycImages('missing-id'),
-      ).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.resetKycImages('missing-id')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
       expect(prisma.user.update).not.toHaveBeenCalled();
     });
 

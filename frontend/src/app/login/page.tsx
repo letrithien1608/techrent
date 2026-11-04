@@ -18,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { SocialLoginButtons } from "@/components/auth/social-login-buttons";
 import { FormErrorBanner } from "@/components/form-error-banner";
 import { loginRequest } from "@/lib/auth-api";
 import { getErrorMessage } from "@/lib/get-error-message";
@@ -151,6 +152,9 @@ function LoginForm() {
               </Link>
             </p>
           </form>
+          <div className="mt-5">
+            <SocialLoginButtons redirectTo={redirectTo} />
+          </div>
         </CardContent>
       </Card>
     </div>

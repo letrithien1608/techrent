@@ -83,3 +83,16 @@ export const changePasswordSchema = z
   });
 
 export type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
+
+// Đăng ký bằng Google/Facebook: CÙNG quy tắc SĐT/CCCD với registerSchema, bỏ
+// mật khẩu, bắt buộc đồng ý điều khoản. Email chỉ bắt nhập khi provider không
+// trả email đã xác minh (form tự khoá ô email trong trường hợp ngược lại).
+export const socialRegisterSchema = z.object({
+  name: z.string().min(2, "Họ tên phải có ít nhất 2 ký tự"),
+  email: z.string().min(1, "Vui lòng nhập email").email("Email không hợp lệ"),
+  phone: z.string().min(1, "Vui lòng nhập số điện thoại").regex(VN_PHONE_REGEX, VN_PHONE_MESSAGE),
+  cccd: z.string().min(1, "Vui lòng nhập số CCCD").regex(CCCD_REGEX, CCCD_MESSAGE),
+  acceptTerms: z.boolean().refine((v) => v, "Bạn cần đồng ý với điều khoản sử dụng"),
+});
+
+export type SocialRegisterFormValues = z.infer<typeof socialRegisterSchema>;

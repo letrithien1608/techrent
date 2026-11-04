@@ -104,7 +104,9 @@ model User {
   id                String   @id @default(uuid())
   name              String
   email             String   @unique(map: "idx_users_email")
-  passwordHash      String   @map("password_hash")
+  // NULL = tài khoản đăng ký bằng Google/Facebook chưa đặt mật khẩu (không
+  // đăng nhập bằng email + mật khẩu được cho tới khi tự "Đặt mật khẩu").
+  passwordHash      String?  @map("password_hash")
   refreshTokenHash  String?  @map("refresh_token_hash")
   role              Role     @default(customer)
   // Cả phone lẫn cccdHash đều unique CẤP DATABASE (không chỉ validate ở tầng
@@ -151,6 +153,7 @@ model User {
   reviews           Review[]
   reportedIssues    Maintenance[]  @relation("ReportedBy")
   notifications     Notification[]
+  socialAccounts    SocialAccount[]
 
   @@map("users")
 }
@@ -440,4 +443,27 @@ model DebtPayment {
 
   @@index([userId], map: "idx_debt_payments_user")
   @@map("debt_payments")
+}
+
+enum SocialProvider {
+  google
+  facebook
+}
+
+// Danh tính Google/Facebook gắn với 1 user. CHỈ thay bước nhập email + mật
+// khẩu — user vẫn phải đăng ký đủ SĐT/CCCD như đăng ký thường mới có hàng ở
+// đây. 1 tài khoản Google/Facebook chỉ gắn với đúng 1 user (unique).
+model SocialAccount {
+  id             String         @id @default(uuid())
+  userId         String         @map("user_id")
+  provider       SocialProvider
+  providerUserId String         @map("provider_user_id")
+  email          String?
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId], map: "idx_social_accounts_provider_user")
+  @@unique([userId, provider], map: "idx_social_accounts_user_provider")
+  @@map("social_accounts")
 }

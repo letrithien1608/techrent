@@ -269,6 +269,41 @@ describe('BookingsService', () => {
       expect(prisma.$transaction).not.toHaveBeenCalled();
     });
 
+    // Đăng ký bằng Google/Facebook (04/11): tài khoản mới có CCCD nhưng chưa
+    // eKYC, không mật khẩu — vẫn bị chặn đặt thuê y như tài khoản thường.
+    it('tài khoản mới đăng ký bằng mạng xã hội (không mật khẩu, chưa eKYC) bị chặn đặt thuê', async () => {
+      usersService.findByIdOrThrow.mockResolvedValue({
+        id: customer.userId,
+        passwordHash: null,
+        isBlacklisted: false,
+        cccdHash: 'a'.repeat(64),
+        kycCccdFrontPublicId: null,
+        kycCccdBackPublicId: null,
+        kycSelfiePublicId: null,
+      });
+
+      await expect(service.create(customer.userId, validDto)).rejects.toThrow(
+        'xác thực danh tính',
+      );
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('tài khoản mạng xã hội trong danh sách đen vẫn bị chặn đặt thuê', async () => {
+      usersService.findByIdOrThrow.mockResolvedValue({
+        id: customer.userId,
+        passwordHash: null,
+        isBlacklisted: true,
+        cccdHash: 'a'.repeat(64),
+        kycCccdFrontPublicId: 'f',
+        kycCccdBackPublicId: 'b',
+        kycSelfiePublicId: 's',
+      });
+
+      await expect(
+        service.create(customer.userId, validDto),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
     // Mở rộng KYC (22/10) — số CCCD thôi không còn đủ, phải đủ cả 3 ảnh eKYC.
     it('ném BadRequestException nếu user CÓ cccdHash nhưng CHƯA đủ 3 ảnh KYC', async () => {
       usersService.findByIdOrThrow.mockResolvedValue({

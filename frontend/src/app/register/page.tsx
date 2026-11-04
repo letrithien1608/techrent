@@ -18,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { SocialLoginButtons } from "@/components/auth/social-login-buttons";
 import { FormErrorBanner } from "@/components/form-error-banner";
 import { registerRequest } from "@/lib/auth-api";
 import { getErrorMessage } from "@/lib/get-error-message";
@@ -184,6 +185,9 @@ export default function RegisterPage() {
               </Link>
             </p>
           </form>
+          <div className="mt-5">
+            <SocialLoginButtons />
+          </div>
         </CardContent>
       </Card>
     </div>

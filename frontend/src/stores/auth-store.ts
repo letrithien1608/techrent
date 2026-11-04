@@ -14,6 +14,8 @@ export interface AuthUser {
   /** `true` khi ĐỦ cả 3 ảnh eKYC (CCCD mặt trước/sau + ảnh chân dung) — KHÔNG BAO GIỜ có ảnh/URL ở đây, chỉ 1 cờ boolean. */
   kycVerified?: boolean;
   emailVerifiedAt?: string | null;
+  /** `false` = tài khoản đăng ký bằng Google/Facebook chưa đặt mật khẩu. */
+  hasPassword?: boolean;
   createdAt?: string;
 }
 

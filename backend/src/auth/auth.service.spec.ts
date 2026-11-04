@@ -258,9 +258,9 @@ describe('AuthService', () => {
         cccdHash: 'a'.repeat(64),
       });
 
-      await expect(
-        service.addCccd(baseUser.id, dto),
-      ).rejects.toBeInstanceOf(BadRequestException);
+      await expect(service.addCccd(baseUser.id, dto)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
       expect(usersService.update).not.toHaveBeenCalled();
     });
 
@@ -271,9 +271,9 @@ describe('AuthService', () => {
         id: 'someone-else',
       });
 
-      await expect(
-        service.addCccd(baseUser.id, dto),
-      ).rejects.toBeInstanceOf(ConflictException);
+      await expect(service.addCccd(baseUser.id, dto)).rejects.toBeInstanceOf(
+        ConflictException,
+      );
       expect(usersService.update).not.toHaveBeenCalled();
     });
 
@@ -411,6 +411,111 @@ describe('AuthService', () => {
       expect(result.accessToken).toBe('access-token');
       expect(result.refreshToken).toBe('refresh-token');
       expect(usersService.updateRefreshTokenHash).toHaveBeenCalled();
+    });
+
+    it('tài khoản không mật khẩu (đăng ký bằng mạng xã hội) KHÔNG đăng nhập thường được, cùng thông báo chung', async () => {
+      usersService.findByEmail.mockResolvedValue({
+        ...baseUser,
+        passwordHash: null,
+      });
+
+      await expect(
+        service.login({ email: baseUser.email, password: 'whatever1' }),
+      ).rejects.toThrow('Email hoặc mật khẩu không đúng');
+      expect(usersService.updateRefreshTokenHash).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('đăng nhập mạng xã hội — phần dùng chung trong AuthService', () => {
+    it('createCustomerAccount: email provider đã xác minh → đặt emailVerifiedAt, tạo kèm social account, KHÔNG gửi email xác thực', async () => {
+      usersService.findByEmail.mockResolvedValue(null);
+      usersService.create.mockResolvedValue({ ...baseUser, id: 'new-user' });
+
+      await service.createCustomerAccount({
+        name: 'A',
+        email: 'a@gmail.com',
+        phone: '0901234567',
+        cccd: '079203012345',
+        passwordHash: null,
+        emailVerified: true,
+        socialAccount: {
+          provider: 'google',
+          providerUserId: 'g-1',
+          email: 'a@gmail.com',
+        },
+      });
+
+      const data = usersService.create.mock.calls[0][0];
+      expect(data.passwordHash).toBeNull();
+      expect(data.emailVerifiedAt).toBeInstanceOf(Date);
+      expect(data.socialAccount).toEqual({
+        provider: 'google',
+        providerUserId: 'g-1',
+        email: 'a@gmail.com',
+      });
+      expect(data.cccdMasked).toBe('********2345');
+      expect(data.cccdHash).not.toContain('079203012345');
+      expect(mailService.sendVerificationEmail).not.toHaveBeenCalled();
+    });
+
+    it('createCustomerAccount: trùng CCCD bị chặn y như đăng ký thường', async () => {
+      usersService.findByEmail.mockResolvedValue(null);
+      usersService.findByCccdHash.mockResolvedValue({ ...baseUser });
+
+      await expect(
+        service.createCustomerAccount({
+          name: 'A',
+          email: 'a@gmail.com',
+          phone: '0901234567',
+          cccd: '079203012345',
+          passwordHash: null,
+          emailVerified: true,
+        }),
+      ).rejects.toBeInstanceOf(ConflictException);
+      expect(usersService.create).not.toHaveBeenCalled();
+    });
+
+    it('setPassword: tài khoản chưa có mật khẩu → lưu hash mới', async () => {
+      usersService.findByIdOrThrow.mockResolvedValue({
+        ...baseUser,
+        passwordHash: null,
+      });
+      usersService.update.mockImplementation((_id, data) => ({
+        ...baseUser,
+        ...data,
+      }));
+
+      await service.setPassword(baseUser.id, 'NewPass123');
+
+      const { passwordHash } = usersService.update.mock.calls[0][1];
+      expect(await bcrypt.compare('NewPass123', passwordHash)).toBe(true);
+    });
+
+    it('setPassword: đã có mật khẩu → chặn (phải dùng Đổi mật khẩu)', async () => {
+      usersService.findByIdOrThrow.mockResolvedValue({
+        ...baseUser,
+        passwordHash: 'hash',
+      });
+
+      await expect(
+        service.setPassword(baseUser.id, 'NewPass123'),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(usersService.update).not.toHaveBeenCalled();
+    });
+
+    it('changePassword: tài khoản chưa có mật khẩu → 400, không gọi bcrypt với null', async () => {
+      usersService.findByIdOrThrow.mockResolvedValue({
+        ...baseUser,
+        passwordHash: null,
+      });
+
+      await expect(
+        service.changePassword(
+          baseUser.id,
+          { currentPassword: 'x', newPassword: 'NewPass123' },
+          'access',
+        ),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
   });
 
@@ -635,7 +740,10 @@ describe('AuthService', () => {
       jwtService.verifyAsync.mockRejectedValue(new Error('invalid signature'));
 
       await expect(
-        service.resetPassword({ token: 'bad-token', newPassword: 'NewStr0ngPass1' }),
+        service.resetPassword({
+          token: 'bad-token',
+          newPassword: 'NewStr0ngPass1',
+        }),
       ).rejects.toBeInstanceOf(BadRequestException);
       expect(usersService.update).not.toHaveBeenCalled();
     });
@@ -647,7 +755,10 @@ describe('AuthService', () => {
       });
 
       await expect(
-        service.resetPassword({ token: 'some-token', newPassword: 'NewStr0ngPass1' }),
+        service.resetPassword({
+          token: 'some-token',
+          newPassword: 'NewStr0ngPass1',
+        }),
       ).rejects.toBeInstanceOf(BadRequestException);
       expect(usersService.update).not.toHaveBeenCalled();
     });
@@ -660,7 +771,10 @@ describe('AuthService', () => {
       usersService.findById.mockResolvedValue(null);
 
       await expect(
-        service.resetPassword({ token: 'some-token', newPassword: 'NewStr0ngPass1' }),
+        service.resetPassword({
+          token: 'some-token',
+          newPassword: 'NewStr0ngPass1',
+        }),
       ).rejects.toBeInstanceOf(BadRequestException);
     });
 

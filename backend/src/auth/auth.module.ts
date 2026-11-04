@@ -10,6 +10,11 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
+import { FacebookOAuthProvider } from './social/facebook.provider';
+import { GoogleOAuthProvider } from './social/google.provider';
+import { SocialAuthController } from './social/social-auth.controller';
+import { SocialAuthService } from './social/social-auth.service';
+import { SOCIAL_OAUTH_PROVIDERS } from './social/social-provider.interface';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
@@ -40,10 +45,23 @@ import { JwtStrategy } from './strategies/jwt.strategy';
       },
     ]),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, SocialAuthController],
   providers: [
     AuthService,
     JwtStrategy,
+    // Đăng nhập bằng mạng xã hội: thêm provider mới (VD Zalo) = thêm 1 class
+    // vào danh sách này (+ 1 giá trị enum SocialProvider trong schema).
+    GoogleOAuthProvider,
+    FacebookOAuthProvider,
+    {
+      provide: SOCIAL_OAUTH_PROVIDERS,
+      useFactory: (
+        google: GoogleOAuthProvider,
+        facebook: FacebookOAuthProvider,
+      ) => [google, facebook],
+      inject: [GoogleOAuthProvider, FacebookOAuthProvider],
+    },
+    SocialAuthService,
     // Thứ tự guard toàn cục CÓ Ý NGHĨA: JwtAuthGuard chạy trước để gán req.user,
     // rồi mới tới RolesGuard/ThrottlerGuard (ThrottlerGuard cần req.user để rate
     // limit theo user thay vì theo IP — xem getTracker trong AppModule). Cả 3 khai

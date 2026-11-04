@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { MouseEvent } from "react";
 import { motion, useMotionValue, useTransform, type MotionValue } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { useSignedInCta } from "./use-signed-in-cta";
 
 const container = {
   hidden: {},
@@ -78,6 +79,7 @@ export function HeroSection({
   totalDevices: number;
   deviceImages: string[];
 }) {
+  const { loggedIn, secondary } = useSignedInCta();
   const badgeText =
     totalDevices > 0
       ? `Đang phục vụ ${totalDevices}+ thiết bị công nghệ`
@@ -151,21 +153,24 @@ export function HeroSection({
             variants={fadeUp}
             className="flex flex-wrap items-center justify-center gap-3 pt-2 lg:justify-start"
           >
+            {/* Đã đăng nhập thì không mời đăng ký/đăng nhập nữa — dẫn tới việc
+                có ích tiếp theo. Trước khi đọc xong localStorage (hasHydrated)
+                vẫn hiện nút khách để khớp HTML phía server. */}
             <Button
               size="lg"
               nativeButton={false}
-              render={<Link href="/register" />}
+              render={<Link href={loggedIn ? "/devices" : "/register"} />}
               className="shadow-lg shadow-primary/40 hover:scale-[1.02] hover:shadow-primary/60"
             >
-              Bắt đầu ngay
+              {loggedIn ? "Xem thiết bị" : "Bắt đầu ngay"}
             </Button>
             <Button
               size="lg"
               variant="outline"
               nativeButton={false}
-              render={<Link href="/login" />}
+              render={<Link href={loggedIn ? secondary.href : "/login"} />}
             >
-              Tôi đã có tài khoản
+              {loggedIn ? secondary.label : "Tôi đã có tài khoản"}
             </Button>
           </motion.div>
         </motion.div>

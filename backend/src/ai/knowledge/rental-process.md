@@ -14,6 +14,7 @@
 - Đăng ký ở trang "Đăng ký" với họ tên, email, mật khẩu (tối thiểu 8 ký tự), số điện thoại (10 số, bắt đầu bằng 0) và số CCCD (12 số).
 - Mỗi số CCCD và mỗi số điện thoại chỉ dùng được cho 1 tài khoản.
 - Hệ thống gửi email xác thực tới địa chỉ email bạn đăng ký.
+- Có thể bấm "Tiếp tục với Google" hoặc "Tiếp tục với Facebook" thay cho email + mật khẩu, nhưng lần đầu vẫn phải nhập số điện thoại, số CCCD và đồng ý điều khoản; sau đó vẫn phải làm eKYC như tài khoản thường.
 - Quên mật khẩu: bấm "Quên mật khẩu?" ở trang đăng nhập, link đặt lại gửi qua email và chỉ dùng được 1 lần trong 15 phút.
 
 ## Bước 2: Xác thực danh tính (CCCD và ảnh chân dung)

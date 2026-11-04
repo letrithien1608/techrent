@@ -4,12 +4,13 @@ import { DebtNotice } from "@/components/bookings/debt-notice";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { KeyRound, LayoutGrid, ShieldCheck, UserRound, type LucideIcon } from "lucide-react";
+import { KeyRound, LayoutGrid, LogIn, ShieldCheck, UserRound, type LucideIcon } from "lucide-react";
 import { cn } from "cn";
 import { SiteBackground } from "@/components/home/site-background";
 import { AccountOverviewSection } from "@/components/profile/account-overview-section";
 import { ChangePasswordSection } from "@/components/profile/change-password-section";
 import { KycVerificationSection } from "@/components/profile/kyc-verification-section";
+import { LoginMethodsSection } from "@/components/profile/login-methods-section";
 import { ProfileHeaderCard } from "@/components/profile/profile-header-card";
 import { ProfileInfoSection } from "@/components/profile/profile-info-section";
 import { fetchMyProfile } from "@/lib/auth-api";
@@ -18,6 +19,7 @@ import { useAuthStore } from "@/stores/auth-store";
 const SECTIONS: { id: string; label: string; icon: LucideIcon }[] = [
   { id: "personal-info", label: "Thông tin cá nhân", icon: UserRound },
   { id: "kyc-verification", label: "Xác thực danh tính", icon: ShieldCheck },
+  { id: "login-methods", label: "Phương thức đăng nhập", icon: LogIn },
   { id: "security", label: "Bảo mật", icon: KeyRound },
   { id: "overview", label: "Tổng quan tài khoản", icon: LayoutGrid },
 ];
@@ -70,7 +72,7 @@ export default function ProfilePage() {
   const profileQuery = useQuery({ queryKey: ["profile", "me"], queryFn: fetchMyProfile, enabled: ready });
   useEffect(() => {
     const p = profileQuery.data;
-    if (p) updateUser({ name: p.name, phone: p.phone, cccdMasked: p.cccdMasked, kycVerified: p.kycVerified, createdAt: p.createdAt });
+    if (p) updateUser({ name: p.name, phone: p.phone, cccdMasked: p.cccdMasked, kycVerified: p.kycVerified, hasPassword: p.hasPassword, createdAt: p.createdAt });
   }, [profileQuery.data, updateUser]);
 
   if (!ready) return null;
@@ -130,6 +132,7 @@ export default function ProfilePage() {
           <div className="flex min-w-0 flex-col gap-8">
             <ProfileInfoSection />
             <KycVerificationSection />
+            <LoginMethodsSection />
             <ChangePasswordSection />
             <AccountOverviewSection />
           </div>

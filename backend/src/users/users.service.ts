@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { decryptCccd } from '../common/crypto/cccd-crypto.util';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma, Role, User } from '../generated/prisma/client';
+import { Prisma, Role, SocialProvider, User } from '../generated/prisma/client';
 
 export interface SafeUser {
   id: string;
@@ -23,6 +23,8 @@ export interface SafeUser {
    */
   kycVerified: boolean;
   emailVerifiedAt: Date | null;
+  /** `false` = tài khoản đăng ký bằng Google/Facebook chưa đặt mật khẩu. */
+  hasPassword: boolean;
   createdAt: Date;
   isBlacklisted: boolean;
   blacklistReason: string | null;
@@ -64,17 +66,39 @@ export class UsersService {
     return user;
   }
 
+  /** Tìm theo email không phân biệt hoa/thường — dùng khi liên kết theo email Google/Facebook trả về. */
+  findByEmailInsensitive(email: string) {
+    return this.prisma.user.findFirst({
+      where: { email: { equals: email, mode: 'insensitive' } },
+    });
+  }
+
+  /**
+   * `socialAccount` (đăng ký bằng Google/Facebook) tạo bằng nested create —
+   * Prisma chạy user + social_account trong CÙNG 1 transaction.
+   */
   create(data: {
     name: string;
     email: string;
-    passwordHash: string;
+    passwordHash: string | null;
     phone?: string;
     cccdHash?: string;
     cccdEncrypted?: string;
     cccdMasked?: string;
     role?: Role;
+    emailVerifiedAt?: Date;
+    socialAccount?: {
+      provider: SocialProvider;
+      providerUserId: string;
+      email: string | null;
+    };
   }) {
-    return this.prisma.user.create({ data });
+    const { socialAccount, ...userData } = data;
+    return this.prisma.user.create({
+      data: socialAccount
+        ? { ...userData, socialAccounts: { create: socialAccount } }
+        : userData,
+    });
   }
 
   async findAll(
@@ -270,6 +294,7 @@ export class UsersService {
         user.kycSelfiePublicId
       ),
       emailVerifiedAt: user.emailVerifiedAt,
+      hasPassword: !!user.passwordHash,
       createdAt: user.createdAt,
       isBlacklisted: user.isBlacklisted,
       blacklistReason: user.blacklistReason,

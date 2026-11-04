@@ -382,6 +382,29 @@
         "vẫn đặt được",
         "vẫn có thể đặt"
       ]
+    },
+    {
+      "id": "A1",
+      "group": "quy trình",
+      "question": "Mình đăng ký bằng Google thì có phải nhập CCCD với số điện thoại nữa không?",
+      "mustInclude": [
+        "số điện thoại|SĐT",
+        "CCCD|căn cước",
+        "eKYC|xác thực danh tính"
+      ],
+      "mustNotInclude": [
+        "không cần nhập CCCD",
+        "không cần CCCD"
+      ]
+    },
+    {
+      "id": "A2",
+      "group": "quy trình",
+      "question": "Tài khoản tạo bằng Facebook có đăng nhập bằng email mật khẩu được không?",
+      "mustInclude": [
+        "Đặt mật khẩu"
+      ],
+      "mustNotInclude": []
     }
   ]
 }

@@ -57,6 +57,7 @@ function StrengthMeter({ password }: { password: string }) {
 export function ChangePasswordSection() {
   const router = useRouter();
   const clearAuth = useAuthStore((state) => state.clearAuth);
+  const hasPassword = useAuthStore((state) => state.user?.hasPassword !== false);
   const {
     register,
     handleSubmit,
@@ -79,6 +80,21 @@ export function ChangePasswordSection() {
     },
     onError: (error) => toast.error(getErrorMessage(error, "Không thể đổi mật khẩu, vui lòng thử lại")),
   });
+
+  // Tài khoản đăng ký bằng Google/Facebook chưa có mật khẩu → không có gì để "đổi".
+  if (!hasPassword) {
+    return (
+      <SectionCard id="security" icon={KeyRound} title="Bảo mật" description="Đổi mật khẩu đăng nhập.">
+        <p className="text-sm text-muted-foreground">
+          Tài khoản của bạn đăng ký bằng Google/Facebook nên chưa có mật khẩu. Đặt mật khẩu ở mục{" "}
+          <a href="#login-methods" className="font-medium text-primary hover:underline">
+            Phương thức đăng nhập
+          </a>{" "}
+          nếu muốn đăng nhập thêm bằng email.
+        </p>
+      </SectionCard>
+    );
+  }
 
   return (
     <SectionCard

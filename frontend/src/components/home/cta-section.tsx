@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { useSignedInCta } from "./use-signed-in-cta";
 
 export function CtaSection() {
+  const { loggedIn } = useSignedInCta();
   return (
     <section className="relative px-4 py-20 sm:px-6 sm:py-28">
       {/* Blob trang trí quanh viền ngoài khối CTA — không chỉ bên trong card */}
@@ -35,17 +37,18 @@ export function CtaSection() {
             Sẵn sàng thuê thiết bị ngay hôm nay?
           </h2>
           <p className="relative mx-auto mt-4 max-w-xl text-lg text-cyan-50/90">
-            Tạo tài khoản miễn phí và bắt đầu thuê thiết bị công nghệ chỉ trong
-            vài phút.
+            {loggedIn
+              ? "Chọn thiết bị, đặt lịch và thanh toán cọc chỉ trong vài phút."
+              : "Tạo tài khoản miễn phí và bắt đầu thuê thiết bị công nghệ chỉ trong vài phút."}
           </p>
           <div className="relative mt-10">
             <Button
               size="lg"
               nativeButton={false}
-              render={<Link href="/register" />}
+              render={<Link href={loggedIn ? "/devices" : "/register"} />}
               className="bg-white text-cyan-900 shadow-lg hover:bg-white/90 hover:scale-[1.02]"
             >
-              Bắt đầu miễn phí
+              {loggedIn ? "Khám phá thiết bị" : "Bắt đầu miễn phí"}
             </Button>
           </div>
         </div>
